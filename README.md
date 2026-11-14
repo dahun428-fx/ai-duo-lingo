@@ -25,8 +25,11 @@
 
 ```
 lessons/             레슨 원문 (마크다운). 내용을 고칠 때는 여기를 고칩니다.
+  stage0/            0단계 수학 준비편 (prep01~)
+  stage1/            1단계에 새로 넣은 레슨 (기댓값과 분산 ev01, 기울기 dx01)
+  week1/, week2/     Seq2Seq 코스 Day 01~10 (1·2단계에 나뉘어 배치)
 src/
-  data.js            도입 장면(HOOKS), 즉석 퀴즈(QUICK), 용어 사전, 과목과 챕터(SUBJECTS)
+  data.js            도입 장면(HOOKS), 즉석 퀴즈(QUICK), 용어 사전, 학습 로드맵 9단계와 챕터(SUBJECTS, 이 순서가 학습 순서)
   practice-data.js   연습 문제 은행 (DRILL)
   practice.js        연습 모드 (하트, 힌트, XP, 레벨, 연속 학습)
   speak-data.js      면접 질문과 답변 스크립트 (SPEAK)

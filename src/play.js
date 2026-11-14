@@ -117,7 +117,7 @@ function renderPath() {
   lessonEl.innerHTML = ""; tocEl.innerHTML = "";
   const n = LESSONS.filter(x => DONE.has(x.id)).length, nextL = nextLesson(), s = streak(), L = levelInfo(STATS.xp);
   const all = n === LESSONS.length;
-  const say = all ? "열 챕터를 모두 끝냈어요! 복습으로 별 세 개를 채워 볼까요?" : !n && !STATS.xp ? "안녕하세요, 저는 벡이예요. 첫 챕터부터 같이 가요!" : todayXp() >= DAILY_GOAL ? "오늘 목표 달성! 내일도 만나요." : s >= 2 ? `${s}일째 이어 가는 중이에요. 오늘도 한 챕터만!` : "오늘은 「" + chapterOf(nextL.id).ch.name + "」 차례예요.";
+  const say = all ? "지금 열린 챕터를 모두 끝냈어요! 복습으로 별 세 개를 채워 볼까요?" : !n && !STATS.xp ? "안녕하세요, 저는 벡이예요. 첫 챕터부터 같이 가요!" : todayXp() >= DAILY_GOAL ? "오늘 목표 달성! 내일도 만나요." : s >= 2 ? `${s}일째 이어 가는 중이에요. 오늘도 한 챕터만!` : "오늘은 「" + chapterOf(nextL.id).ch.name + "」 차례예요.";
   lessonEl.append(
     h("section", { class: "greet" }, mascot(all || todayXp() >= DAILY_GOAL ? "cheer" : "happy", 80),
       h("div", { class: "say" }, h("p", {}, say), h("a", { class: "btn pri big", href: all ? "#practice-mix" : "#" + nextL.id }, ico("play"), all ? "전체 복습" : n ? "이어서 하기" : "시작하기"))),
@@ -126,6 +126,13 @@ function renderPath() {
   let gi = 0;
   SUBJECTS.forEach((sub, si) => {
     const live = sub.chapters.filter(c => c.l), dn = live.filter(c => DONE.has(c.l)).length;
+    if (!live.length) {
+      // 아직 레슨이 없는 단계: 길 대신 무엇을 배우게 되는지만 짧게 보여 준다
+      lessonEl.append(h("section", { class: "unit unit-later " + UNIT_COLORS[si % 5] },
+        h("div", { class: "unit-head" }, h("div", {}, h("small", {}, sub.stage + " · 준비 중"), h("h2", {}, sub.name), h("p", {}, sub.desc)), ico("lock")),
+        h("ul", { class: "later-list" }, ...sub.chapters.map(c => h("li", {}, c.soon)))));
+      return;
+    }
     const path = h("ol", { class: "path" });
     sub.chapters.forEach((c, k) => {
       const done = c.l && DONE.has(c.l), isNext = c.l === nextL.id && !all, st = c.l ? stars(c.l) : 0;
@@ -143,7 +150,7 @@ function renderPath() {
     path.append(h("li", { class: "pstep", style: `--x:${zig[gi++ % zig.length]}px` },
       h("span", { class: "node trophy" + (won ? " done" : " locked"), "aria-label": won ? sub.name + " 과목 완료 트로피" : sub.name + " 과목 트로피 (아직)" }, ico("trophy"))));
     lessonEl.append(h("section", { class: "unit " + UNIT_COLORS[si % 5] },
-      h("div", { class: "unit-head" }, h("div", {}, h("small", {}, "과목 " + (si + 1)), h("h2", {}, sub.name), h("p", {}, sub.desc)),
+      h("div", { class: "unit-head" }, h("div", {}, h("small", {}, sub.stage), h("h2", {}, sub.name), h("p", {}, sub.desc)),
         h("div", { class: "unit-prog", "aria-label": `${live.length}개 중 ${dn}개 완료` }, h("b", {}, dn + " / " + live.length), h("div", { class: "lvl-track" }, h("i", { style: `width:${live.length ? dn / live.length * 100 : 0}%` })))),
       path));
   });

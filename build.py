@@ -10,19 +10,23 @@ cur=open(f'{SRC}/00_커리큘럼.md').read()
 cur=re.sub(r'\((week[12])/(day\d\d)_[^)]*\.md\)', lambda m:f'(#{m.group(2)})', cur)
 cur=cur.replace('(week3-4_개요.md)','(#roadmap)')
 pages.append(dict(id='home',short='교재 소개',md=clean(cur),link=''))
-for f in sorted(glob.glob(f'{SRC}/week[12]/day*.md')):
-    did=os.path.basename(f)[:5]
+LESSON_FILES=sorted(glob.glob(f'{SRC}/stage*/*.md'))+sorted(glob.glob(f'{SRC}/week[12]/day*.md'))
+for f in LESSON_FILES:
+    did=os.path.basename(f).split('_')[0]
     md=open(f).read()
     if did=='day01':
         md=re.sub(r'```\n.*?```', '<div class="widget" data-w="papermap"></div>', md, count=1, flags=re.S)
-    block='## 직접 만져보기\n\n'+'\n\n'.join(f'<div class="widget" data-w="{w}"></div>' for w in WID[did])+'\n\n'
-    md=re.sub(r'(?m)^(## [^\n]*능동 연습)', lambda m: block+m.group(1), md, count=1)
+    if WID.get(did):
+        block='## 직접 만져보기\n\n'+'\n\n'.join(f'<div class="widget" data-w="{w}"></div>' for w in WID[did])+'\n\n'
+        md=re.sub(r'(?m)^(## [^\n]*능동 연습)', lambda m: block+m.group(1), md, count=1)
     md=clean(md)
-    title=re.search(r'^# Day \d\d\. (.*)$', md, re.M).group(1).strip()
-    link=re.search(r'논문 연결: (.*)$', md, re.M).group(1)
+    title=re.search(r'^# (.*)$', md, re.M).group(1).strip()
+    title=re.sub(r'^[^.]{1,12}\.\s*','',title)
+    lk=re.search(r'논문 연결: (.*)$', md, re.M)
+    link=lk.group(1) if lk else ''
     link=re.sub(r'\*\*|\$[^$]*\$|"[^"]*"','',link).strip(' ,')
     link=re.sub(r'\s+',' ',link)[:70]
-    pages.append(dict(id=did,short=title,md=md,link='논문 연결: '+link))
+    pages.append(dict(id=did,short=title,md=md,link=('논문 연결: '+link) if link else '',lesson=True))
 rm=open(f'{SRC}/week3-4_개요.md').read()
 pages.append(dict(id='roadmap',short='3~4주차 개요',md=clean(rm),link=''))
 css=open(f'{HERE}/style.css').read()+'\n'+open(f'{HERE}/play.css').read()

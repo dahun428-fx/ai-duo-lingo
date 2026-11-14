@@ -44,7 +44,7 @@ $$P(B) = P(B\mid A)P(A) + P(B\mid \text{not }A)P(\text{not }A)$$
 $$\arg\max_A P(A\mid B) = \arg\max_A P(B\mid A)\,P(A)$$
 `argmax`는 "값이 가장 큰 *것*(값 자체가 아니라 그 후보)"을 돌려준다는 뜻입니다.
 
-### 1-5. 번역 이야기: 옛날 방식 vs 이 논문
+### 1-5. 번역 이야기: 옛날 방식 vs 이 논문 (선택)
 - **옛날 통계 번역(SMT):** 영어 S를 프랑스어 T로 바꿀 때 베이즈 정리로 뒤집어서
   $\arg\max_T P(T\mid S) = \arg\max_T P(S\mid T)\cdot P(T)$
   "번역 모델 P(S|T)"와 "프랑스어다움을 재는 언어 모델 P(T)"를 따로 만들어 곱했습니다.

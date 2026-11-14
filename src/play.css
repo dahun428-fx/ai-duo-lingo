@@ -326,3 +326,8 @@ details{border-width:2px;border-radius:16px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .t-sun{--t-ink:var(--sun)}}
 :root[data-theme="dark"] .t-sun{--t-ink:var(--sun)}
 body{word-break:keep-all;overflow-wrap:break-word}
+/* 아직 레슨이 없는 단계: 접힌 카드 */
+.unit-later .unit-head{opacity:.92}
+.unit-later .unit-head > svg{width:28px;height:28px;flex:none;opacity:.8}
+.later-list{list-style:none;margin:10px 0 28px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
+.later-list li{font-size:14px;padding:6px 12px;border:2px solid var(--line);border-radius:999px;background:var(--card);color:var(--muted)}

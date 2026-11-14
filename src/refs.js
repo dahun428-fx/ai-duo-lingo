@@ -53,6 +53,39 @@ const REFS = {
     { t: "Bengio 외 (2015) Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks", u: "https://arxiv.org/abs/1506.03099", w: "2장", n: "학습 때와 실전의 입력이 달라 생기는 문제(노출 편향)와 완화 방법" },
     { t: "Hochreiter, Schmidhuber (1997) Long Short-Term Memory", u: "https://doi.org/10.1162/neco.1997.9.8.1735", w: "", n: "LSTM의 원 논문 (3주차에서 자세히)" },
     { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "rnn.html", w: "10장 (10.2.1)", n: "teacher forcing 설명" }
+  ],
+  prep01: [
+    { t: "칸아카데미 한국어 수학 (분수, 소수, 비율)", u: "https://ko.khanacademy.org/math", w: "기초 산수", n: "분수와 소수, 비율 계산을 영상과 연습 문제로 다시 익힐 수 있는 무료 강의" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "prob.html", w: "3장 3.3절", n: "확률이 0과 1 사이의 값이고 모두 더하면 1이라는 정의" }
+  ],
+  prep02: [
+    { t: "칸아카데미 한국어 수학 (지수와 거듭제곱)", u: "https://ko.khanacademy.org/math", w: "지수", n: "0제곱, 음수 지수, 지수법칙 연습" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "numerical.html", w: "4장 4.1절", n: "소프트맥스가 exp로 계산되고, 같은 수를 빼도 결과가 같다는 성질" }
+  ],
+  prep03: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "입력 단어 160,000개, 출력 단어 80,000개, 파라미터 3억 8천4백만 개라는 모델 규모" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "numerical.html", w: "4장 4.1절", n: "아주 작은 수가 0으로 뭉개지는 underflow" }
+  ],
+  prep04: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.2절", n: "정답 번역의 로그 확률을 최대화하도록 학습한다는 목표" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "numerical.html", w: "4장 4.1절", n: "underflow와, 로그 영역에서 계산해 이를 피하는 방법" },
+    { t: "칸아카데미 한국어 수학 (로그)", u: "https://ko.khanacademy.org/math", w: "로그", n: "로그의 정의와 성질 연습" }
+  ],
+  prep05: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "2장 식 (1), 3.2절", n: "출력 확률을 단어별 조건부확률의 곱(∏)으로 쓰고, 학습 목표를 문장들의 평균(1/|S| Σ)으로 쓴 식" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "notation.html", w: "표기법", n: "Σ, ∏, 아래첨자 같은 기호의 뜻" }
+  ],
+  prep06: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "2장", n: "LSTM으로 문장을 읽고 쓴다는 구조 (게이트에 시그모이드, 기억에 tanh가 쓰임)" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "mlp.html", w: "6장 6.3절", n: "ReLU, 시그모이드, tanh 같은 은닉층 함수와 비선형 함수가 필요한 이유" }
+  ],
+  ev01: [
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "prob.html", w: "3장 3.8절", n: "기댓값과 분산, 표준편차의 정의" },
+    { t: "Seeing Theory (Brown University)", u: "https://seeing-theory.brown.edu/", w: "Basic Probability", n: "기댓값과 분산을 움직이는 그림으로 보여 주는 무료 사이트" }
+  ],
+  dx01: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "학습률 0.7의 SGD로 학습했다는 설정" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "numerical.html", w: "4장 4.3절", n: "기울기와 경사하강, 학습률의 정의" }
   ]
 };
 // 이 앱의 학습 방식(문제를 풀며 떠올리기, 능동 학습)이 기대는 연구

@@ -3,7 +3,10 @@ const KEY = "seq2seq30-done";
 function loadDone() { try { return new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch (e) { return new Set(); } }
 function saveDone(sd) { try { localStorage.setItem(KEY, JSON.stringify([...sd])); } catch (e) { } }
 let DONE = loadDone();
-const LESSONS = PAGES.filter(p => p.id.startsWith("day"));
+const byIdAll = Object.fromEntries(PAGES.map(p => [p.id, p]));
+// 학습 순서 = 로드맵(SUBJECTS) 순서. 챕터로 연결되지 않은 레슨은 뒤에 붙인다.
+const LESSONS = [...new Set([...SUBJECTS.flatMap(s => s.chapters.filter(c => c.l && byIdAll[c.l]).map(c => c.l)), ...PAGES.filter(p => p.lesson).map(p => p.id)])].map(id => byIdAll[id]);
+const COURSE = LESSONS.filter(p => p.id.startsWith("day"));
 const ORDER = ["home", ...LESSONS.map(p => p.id), "roadmap"];
 const byId = Object.fromEntries(PAGES.map(p => [p.id, p]));
 
@@ -50,7 +53,8 @@ function buildRail(cur) {
   const link = (id, dn, title, done, soon, extra) => h("a", { href: "#" + id, class: (id === cur || "practice-" + id === cur ? "on " : "") + (soon ? "soon" : "") }, h("span", { class: "dn" }, dn), h("span", {}, title, extra ? h("small", { class: "st" }, extra) : null), done != null ? h("span", { class: "ck" + (done ? " done" : "") }) : null);
   rail.append(h("h4", {}, "홈"), link("home", "⌂", "학습 지도"), link("practice-mix", "✦", "전체 복습 퀴즈"), link("course-seq2seq", "▤", "논문 코스: Seq2Seq"), link("speak", "◉", "면접에서 말해보기"), link("refs", "§", "참고 자료"), link("settings", "⚙", "앱 설치와 진도"), h("a", { href: "#", onclick: e => { e.preventDefault(); rail.classList.remove("open"); openGlossary(); } }, h("span", { class: "dn" }, "?"), h("span", {}, "용어 사전")));
   SUBJECTS.forEach(sub => {
-    rail.append(h("h4", {}, sub.name));
+    rail.append(h("h4", {}, sub.stage + " " + sub.name));
+    if (!sub.chapters.some(c => c.l)) { rail.append(h("a", { class: "soon locked", "aria-disabled": "true" }, h("span", { class: "dn" }, "·"), h("span", {}, sub.chapters.length + "개 챕터", h("small", { class: "st" }, "준비 중")))); return; }
     sub.chapters.forEach((c, k) => {
       if (c.l) rail.append(link(c.l, String(k + 1), c.name, DONE.has(c.l), false, stars(c.l) ? starText(stars(c.l)) : null));
       else rail.append(h("a", { class: "soon locked", "aria-disabled": "true" }, h("span", { class: "dn" }, String(k + 1)), h("span", {}, c.soon, h("small", { class: "st" }, "준비 중"))));
@@ -170,9 +174,8 @@ function buildToc(root) {
 function renderLesson(p) {
   lessonEl.innerHTML = renderMD(p.md);
   const h1 = lessonEl.querySelector("h1");
-  const wk = LESSONS.indexOf(p) < 5 ? "1주차" : "2주차";
   const co = chapterOf(p.id);
-  h1.before(h("div", { class: "eyebrow" }, `${co ? co.sub.name + " · 챕터 " + (co.k + 1) : wk} · Seq2Seq 코스 ${p.id.replace("day", "Day ")} · 30분`));
+  h1.before(h("div", { class: "eyebrow" }, `${co ? co.sub.stage + " " + co.sub.name + " · 챕터 " + (co.k + 1) : "레슨"}${p.id.startsWith("day") ? " · Seq2Seq 코스 " + p.id.replace("day", "Day ") : ""} · 30분`));
   const meta = h1.nextElementSibling; if (meta && meta.tagName === "P") meta.classList.add("meta");
   if (HOOKS[p.id]) (meta || h1).after(h("div", { class: "hook" }, mascot("think", 64), h("div", { class: "hook-say" }, h("span", { class: "tag" }, "오늘의 장면"), h("p", {}, HOOKS[p.id]))));
   lessonEl.querySelector(".hook")?.after(practiceCard(p.id));
@@ -227,8 +230,8 @@ function renderHome() {
 function renderCourse() {
   const p = byId.home;
   lessonEl.innerHTML = "";
-  const n = LESSONS.filter(x => DONE.has(x.id)).length;
-  const nextL = LESSONS.find(x => !DONE.has(x.id)) || LESSONS[0];
+  const n = COURSE.filter(x => DONE.has(x.id)).length;
+  const nextL = COURSE.find(x => !DONE.has(x.id)) || COURSE[0];
   lessonEl.append(
     h("div", { class: "hero" },
       h("div", { class: "eyebrow" }, "논문 코스 · Sutskever · Vinyals · Le · NIPS 2014"),
@@ -241,7 +244,7 @@ function renderCourse() {
     h("div", { style: "overflow-x:auto" }, h("div", { class: "routine" },
       ...[["1분", "목표 확인", 1], ["8분", "개념 + 직관", 8], ["6분", "예제 따라 풀기", 6], ["10분", "손계산 + 코드 + 실습 위젯", 10], ["4분", "퀴즈", 4], ["1분", "한 줄 정리", 1]].map(([t, l, w]) => h("div", { style: `flex:${w + 1.2}` }, h("b", {}, t), l)))),
     h("h2", {}, "학습 경로"),
-    h("div", { class: "cards" }, ...LESSONS.map(x => h("a", { class: "card", href: "#" + x.id }, h("small", {}, x.id.replace("day", "DAY ") + (DONE.has(x.id) ? " · 완료" : " · 30분")), h("b", {}, x.short), h("span", {}, x.link))), h("a", { class: "card", href: "#roadmap" }, h("small", {}, "DAY 11–20 · 개요"), h("b", {}, "3~4주차: 모델 해부와 미니 구현"), h("span", {}, "LSTM 게이트, 입력 뒤집기, 빔 서치, BLEU, 숫자열 뒤집기 seq2seq 만들기"))),
+    h("div", { class: "cards" }, ...COURSE.map(x => h("a", { class: "card", href: "#" + x.id }, h("small", {}, x.id.replace("day", "DAY ") + (DONE.has(x.id) ? " · 완료" : " · 30분")), h("b", {}, x.short), h("span", {}, x.link))), h("a", { class: "card", href: "#roadmap" }, h("small", {}, "DAY 11–20 · 개요"), h("b", {}, "3~4주차: 모델 해부와 미니 구현"), h("span", {}, "LSTM 게이트, 입력 뒤집기, 빔 서치, BLEU, 숫자열 뒤집기 seq2seq 만들기"))),
   );
   const rest = h("div", {}); rest.innerHTML = renderMD(p.md.replace(/^# .*\n/, "").replace(/## 3\. 전체 일정[\s\S]*?(?=## 4\.)/, ""));
   lessonEl.append(...rest.childNodes);
@@ -267,7 +270,7 @@ function route() {
   REDRAW.length = 0; stopSpeak(); leaveSteps(); document.querySelector(".nsheet-wrap")?.remove();
   closePop(); document.querySelector(".modal")?.remove();
   let id = location.hash.slice(1);
-  const prac = id.startsWith("practice-") && (id === "practice-mix" || (byId[id.slice(9)] && id.slice(9).startsWith("day")));
+  const prac = id.startsWith("practice-") && (id === "practice-mix" || (byId[id.slice(9)] && byId[id.slice(9)].lesson));
   document.querySelector(".page").hidden = !!prac; document.getElementById("practice").hidden = !prac; document.getElementById("fab").hidden = !!prac;
   document.body.classList.toggle("focus-practice", !!prac); drawTabs(id || "home");
   if (prac) { buildRail(id); rail.classList.remove("open"); window.scrollTo(0, 0); renderPractice(id.slice(9)); document.title = "연습 · AI 듀오링고"; return; }
