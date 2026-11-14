@@ -43,6 +43,7 @@ function levelBar(xp) {
       h("span", {}, L.max ? `최고 레벨 달성 · 누적 ${xp} XP` : `다음 레벨까지 ${L.next - xp} XP  (${L.into} / ${L.span})`)));
 }
 function updateChips() { drawStats(); }
+function buzz(p) { try { if (soundOn() && navigator.vibrate) navigator.vibrate(p); } catch (_) { } }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function bankFor(id) { return [...(QUICK[id] || []).map(q => ({ t: "mc", ...q })), ...(DRILL[id] || [])].map(q => ({ ...q, day: id })); }
 function parseNum(s) {
@@ -81,7 +82,8 @@ function renderPractice(id) {
   const exitHref = lessonId ? "#" + lessonId : "#home";
   root.innerHTML = "";
   const bar = h("i", {}); const hearts = h("span", { class: "hearts", "aria-label": "남은 하트" });
-  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: exitHref, "aria-label": "연습 그만하기" }, ico("close")), h("div", { class: "pr-bar" }, bar), hearts);
+  const combo = h("span", { class: "combo", "aria-live": "polite" });
+  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: exitHref, "aria-label": "연습 그만하기" }, ico("close")), h("div", { class: "pr-bar" }, bar, combo), hearts);
   const card = h("div", { class: "pr-card" });
   const foot = h("div", { class: "pr-foot" });
   root.append(head, card, foot);
@@ -89,9 +91,12 @@ function renderPractice(id) {
   function drawHead() {
     bar.style.width = (st.done.size / st.total * 100) + "%";
     hearts.innerHTML = ""; for (let i = 0; i < 3; i++) hearts.append(ico("heart", i < st.hearts ? "hf" : "he"));
+    combo.textContent = st.combo >= 2 ? st.combo + "연속!" : ""; combo.classList.toggle("on", st.combo >= 2);
   }
   function setFoot(state, title, msg, btnText, onBtn) {
     foot.className = "pr-foot " + state; foot.innerHTML = "";
+    const badge = state === "good" || state === "bad" ? h("span", { class: "pr-badge" }, ico(state === "good" ? "check" : "close")) : null;
+    if (badge) foot.append(badge);
     const left = h("div", { class: "pr-msg" }, title ? h("b", {}, title) : null, ...[].concat(msg || []).filter(Boolean).map(m => typeof m === "string" ? h("span", {}, m) : m));
     const b = h("button", { class: "pr-go", type: "button", id: "prgo" }, btnText);
     b.disabled = state === "idle" && answer == null;
@@ -109,7 +114,7 @@ function renderPractice(id) {
   function drawQ() {
     card.innerHTML = ""; card.classList.remove("pop-in"); void card.offsetWidth; card.classList.add("pop-in");
     const tag = h("div", { class: "pr-type" }, (st.missed.has(cur.key) ? "다시 도전 · " : "") + TYPE_LABEL[cur.t] + (id === "mix" ? "  ·  " + cur.day.replace("day", "Day ") : ""));
-    card.append(tag, h("p", { class: "pr-q" }, cur.q));
+    card.append(tag, h("div", { class: "pr-ask" }, mascot(st.combo >= 3 ? "cheer" : "happy", 72), h("p", { class: "pr-q" }, cur.q)));
     if (cur.t === "mc") {
       const box = h("div", { class: "pr-opts" });
       cur.o.forEach((o, i) => box.append(h("button", { class: "pr-opt", type: "button", "data-i": i, onclick: () => { if (checked) return; box.querySelectorAll(".pr-opt").forEach(b => b.classList.toggle("sel", +b.dataset.i === i)); ready(i); } }, h("kbd", {}, i + 1), o)));
@@ -162,17 +167,19 @@ function renderPractice(id) {
     if (cur.t === "ox") card.querySelectorAll(".pr-oxb").forEach(b => { const v = b.dataset.v === "O"; if (v === cur.a) b.classList.add("right"); else if (v === answer) b.classList.add("wrong"); });
     if (cur.t === "num") card.querySelector(".pr-num").classList.add(ok ? "right" : "wrong");
     if (cur.t === "order") card.querySelector(".pr-ans").classList.add(ok ? "right" : "wrong");
+    card.querySelector(".pr-ask .mascot")?.replaceWith(mascot(ok ? "cheer" : "sad", 72));
     if (ok) {
       const gain = st.missed.has(cur.key) ? 5 : st.hinted.has(cur.key) ? 7 : 10;
       st.xp += gain; st.combo++; st.bestCombo = Math.max(st.bestCombo, st.combo); st.done.add(cur.key);
-      sfx("ok");
+      sfx("ok"); buzz(12);
+      const pop = h("span", { class: "xp-pop", "aria-hidden": "true" }, "+" + gain + " XP"); card.append(pop); setTimeout(() => pop.remove(), 1000);
       let extra = st.combo >= 3 ? `  · ${st.combo}연속` : "";
       if (st.combo % 3 === 0 && st.hearts < 3) { st.hearts++; extra += "  · 하트 회복 ♥"; }
       else if (!st.cheered && st.done.size * 2 >= st.total && st.done.size < st.total) { st.cheered = true; extra += "  · 절반 넘었어요"; }
       drawHead();
       setFoot("good", praise[Math.floor(Math.random() * praise.length)] + `  +${gain} XP` + extra, [cur.w, refLine(cur.day)], "계속", next);
     } else {
-      sfx("bad");
+      sfx("bad"); buzz([30, 40, 30]);
       const again = st.missed.has(cur.key);
       if (!again) st.hearts--;   // 다시 나온 문제는 틀려도 하트를 깎지 않는다
       st.combo = 0; st.missed.add(cur.key);
@@ -213,10 +220,10 @@ function renderPractice(id) {
       h("h2", {}, lessonId ? `「${chapterOf(lessonId).ch.name}」 연습을 끝냈어요` : "전체 복습을 끝냈어요"),
       lessonId ? h("p", { class: "pr-stars" }, starText(acc >= 100 ? 3 : acc >= 80 ? 2 : 1)) : null,
       h("div", { class: "readout", style: "width:100%" },
-        h("div", { class: "ro big" }, h("small", {}, "얻은 XP"), h("b", {}, "+" + st.xp)),
-        h("div", { class: "ro big" }, h("small", {}, "한 번에 맞힌 비율"), h("b", {}, acc + "%")),
-        h("div", { class: "ro big" }, h("small", {}, "연속 학습"), h("b", {}, streak() + "일")),
-        h("div", { class: "ro big" }, h("small", {}, "최고 연속 정답"), h("b", {}, st.bestCombo))),
+        h("div", { class: "ro big t-sun" }, h("small", {}, "얻은 XP"), h("b", {}, ico("bolt"), "+" + st.xp)),
+        h("div", { class: "ro big t-good" }, h("small", {}, "한 번에 맞힘"), h("b", {}, ico("target"), acc + "%")),
+        h("div", { class: "ro big t-flame" }, h("small", {}, "연속 학습"), h("b", {}, ico("flame"), streak() + "일")),
+        h("div", { class: "ro big t-sky" }, h("small", {}, "최고 연속 정답"), h("b", {}, ico("star"), String(st.bestCombo)))),
       levelBar(STATS.xp),
       h("p", { class: "w-hint" }, acc < 70 ? "틀린 문제의 해설을 본문에서 다시 확인하고 한 번 더 풀면 기억에 오래 남아요." : "내일 같은 시간에 다음 레슨으로 연속 기록을 이어 가세요.")));
     setFoot("idle end", "", "", nextL && nextL.id !== "roadmap" ? "다음 챕터: " + chapterOf(nextL.id).ch.name : "학습 지도로", () => { location.hash = nextL && nextL.id !== "roadmap" ? nextL.id : "home"; });

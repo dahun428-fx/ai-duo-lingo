@@ -14,6 +14,8 @@ const ICONS = {
   close: '<path d="M6 6l12 12M18 6 6 18" stroke-width="2.6"/>',
   heart: '<path d="M12 20.500s-7.5-4.6-7.5-10.200A4.3 4.3 0 0 1 12 7.700a4.3 4.3 0 0 1 7.5 2.600c0 5.6-7.5 10.2-7.5 10.200z" fill="currentColor" stroke="none"/>',
   gear: '<circle cx="12" cy="12" r="3"/><path d="M12 3v2.500M12 18.500V21M3 12h2.500M18.5 12H21M5.6 5.600l1.8 1.800M16.6 16.600l1.8 1.800M5.6 18.400l1.8-1.800M16.6 7.400l1.8-1.8"/>',
+  trophy: '<path d="M7 4h10v5a5 5 0 0 1-10 0z" fill="currentColor"/><path d="M7 6H4.5a2.5 2.5 0 0 0 3 3.5M17 6h2.5a2.5 2.5 0 0 1-3 3.5M12 14v3.5M8.5 20.5h7M9.5 17.5h5v3h-5z"/>',
+  gift: '<rect x="3.5" y="9" width="17" height="11.5" rx="2" fill="currentColor" stroke="none"/><rect x="2.5" y="6.5" width="19" height="4" rx="1.5" fill="currentColor" stroke="none"/><path d="M12 6.5v14" stroke="var(--card)" stroke-width="2.4"/><path d="M12 6.5c-1.5-3.5-5.5-3.5-5-1 .3 1.3 3 1 5 1zm0 0c1.5-3.5 5.5-3.5 5-1-.3 1.3-3 1-5 1z"/>',
   cards: '<rect x="4" y="6" width="13" height="14" rx="2"/><path d="M8 3.500h10a2 2 0 0 1 2 2V17"/>'
 };
 function ico(name, cls) {
@@ -68,10 +70,12 @@ function confetti() {
 const DAILY_GOAL = 30;
 function todayXp() { const t = STATS.today; return t && t.d === ymd(new Date()) ? t.xp : 0; }
 function goalRing() {
-  const x = todayXp(), pct = Math.min(1, x / DAILY_GOAL), r = 26, c = 2 * Math.PI * r;
-  return h("div", { class: "goal" + (pct >= 1 ? " hit" : "") },
-    h("span", { class: "ring", html: `<svg viewBox="0 0 64 64" width="64" height="64" aria-hidden="true"><circle cx="32" cy="32" r="${r}" class="ring-bg"/><circle cx="32" cy="32" r="${r}" class="ring-fg" stroke-dasharray="${c}" stroke-dashoffset="${c * (1 - pct)}" transform="rotate(-90 32 32)"/></svg>` }, ),
-    h("div", {}, h("small", {}, "오늘의 목표"), h("b", {}, pct >= 1 ? "달성! " + x + " XP" : `${x} / ${DAILY_GOAL} XP`)));
+  const x = todayXp(), pct = Math.min(1, x / DAILY_GOAL), hit = pct >= 1;
+  return h("a", { class: "quest" + (hit ? " hit" : ""), href: "#practice-mix", "aria-label": `오늘의 목표 ${x} / ${DAILY_GOAL} XP` },
+    ico("bolt", "c-sun"),
+    h("div", { class: "quest-main" }, h("b", {}, hit ? "오늘 목표 달성!" : `오늘 ${DAILY_GOAL} XP 모으기`),
+      h("div", { class: "quest-bar" }, h("i", { style: `width:${pct * 100}%` }), h("span", {}, `${x} / ${DAILY_GOAL}`))),
+    ico("gift", hit ? "c-sun" : "c-off"));
 }
 /* 위쪽 스탯, 아래 탭 */
 function drawStats() {
@@ -115,11 +119,9 @@ function renderPath() {
   const all = n === LESSONS.length;
   const say = all ? "열 챕터를 모두 끝냈어요! 복습으로 별 세 개를 채워 볼까요?" : !n && !STATS.xp ? "안녕하세요, 저는 벡이예요. 첫 챕터부터 같이 가요!" : todayXp() >= DAILY_GOAL ? "오늘 목표 달성! 내일도 만나요." : s >= 2 ? `${s}일째 이어 가는 중이에요. 오늘도 한 챕터만!` : "오늘은 「" + chapterOf(nextL.id).ch.name + "」 차례예요.";
   lessonEl.append(
-    h("section", { class: "greet" }, mascot(all || todayXp() >= DAILY_GOAL ? "cheer" : "happy", 92),
+    h("section", { class: "greet" }, mascot(all || todayXp() >= DAILY_GOAL ? "cheer" : "happy", 80),
       h("div", { class: "say" }, h("p", {}, say), h("a", { class: "btn pri big", href: all ? "#practice-mix" : "#" + nextL.id }, ico("play"), all ? "전체 복습" : n ? "이어서 하기" : "시작하기"))),
-    h("section", { class: "today" }, goalRing(),
-      h("div", { class: "mini" }, ico("flame", s ? "c-flame" : "c-off"), h("div", {}, h("small", {}, "연속 학습"), h("b", {}, s + "일"))),
-      h("div", { class: "mini" }, ico("star", "c-sun"), h("div", {}, h("small", {}, "Lv." + L.level + " " + L.title), h("div", { class: "lvl-track" }, h("i", { style: `width:${L.pct}%` })), h("span", {}, L.max ? "최고 레벨" : `다음 레벨까지 ${L.next - STATS.xp} XP`)))));
+    goalRing());
   const zig = [0, 46, 72, 46, 0, -46, -72, -46];
   let gi = 0;
   SUBJECTS.forEach((sub, si) => {
@@ -130,11 +132,16 @@ function renderPath() {
       const state = !c.l ? "locked" : done ? "done" : isNext ? "next" : "open";
       const node = c.l
         ? h("button", { class: "node " + state, type: "button", "aria-label": `${c.name}${done ? " (완료)" : isNext ? " (다음 차례)" : ""}`, onclick: () => nodeSheet(c, state) },
-          isNext ? h("span", { class: "bubble" }, n ? "이어서" : "시작") : null, ico(done ? "check" : isNext ? "play" : "book"))
+          isNext ? h("span", { class: "bubble" }, n ? "이어서" : "시작") : null, ico(done ? "check" : isNext ? "play" : "star"))
         : h("span", { class: "node locked", "aria-label": c.soon + " (준비 중)" }, ico("lock"));
       path.append(h("li", { class: "pstep", style: `--x:${zig[gi++ % zig.length]}px` }, node,
         h("span", { class: "plabel" }, c.l ? c.name : c.soon), st ? h("span", { class: "pstars", "aria-label": `별 ${st}개` }, starText(st)) : !c.l ? h("span", { class: "psoon" }, "준비 중") : null));
+      // 길 옆에 벡이가 서서 응원한다 (과목마다 한 번, 길이 꺾이는 반대편)
+      if (k === 1) path.lastChild.append(h("span", { class: "pbuddy", style: `--bx:${zig[(gi - 1) % zig.length] > 0 ? -130 : 130}px`, "aria-hidden": "true" }, mascot(si % 2 ? "think" : "happy", 64)));
     });
+    const won = live.length && dn === live.length;
+    path.append(h("li", { class: "pstep", style: `--x:${zig[gi++ % zig.length]}px` },
+      h("span", { class: "node trophy" + (won ? " done" : " locked"), "aria-label": won ? sub.name + " 과목 완료 트로피" : sub.name + " 과목 트로피 (아직)" }, ico("trophy"))));
     lessonEl.append(h("section", { class: "unit " + UNIT_COLORS[si % 5] },
       h("div", { class: "unit-head" }, h("div", {}, h("small", {}, "과목 " + (si + 1)), h("h2", {}, sub.name), h("p", {}, sub.desc)),
         h("div", { class: "unit-prog", "aria-label": `${live.length}개 중 ${dn}개 완료` }, h("b", {}, dn + " / " + live.length), h("div", { class: "lvl-track" }, h("i", { style: `width:${live.length ? dn / live.length * 100 : 0}%` })))),

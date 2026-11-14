@@ -239,3 +239,90 @@ details{border-width:2px;border-radius:16px}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:8px}
 @media (max-width:520px){.today{grid-template-columns:1fr 1fr}.today>:first-child{grid-column:1/-1}}
 .setbox h2{margin-top:0}
+
+/* ---------- 더 쉽고 재밌게: 길이 주인공인 홈, 말하는 벡이, 통통 튀는 채점 ---------- */
+/* 홈 첫 화면은 인사 한 줄, 오늘 목표 한 줄, 그리고 바로 길 */
+.greet{margin-bottom:12px}
+.say{padding:14px 16px;gap:10px}
+.say p{font-size:16px;line-height:1.5}
+.quest{display:flex;align-items:center;gap:12px;padding:12px 16px;border:2px solid var(--line);border-bottom-width:4px;border-radius:18px;background:var(--card);color:var(--ink);text-decoration:none;-webkit-tap-highlight-color:transparent}
+.quest:active{transform:translateY(2px);border-bottom-width:2px;margin-bottom:2px}
+.quest .ico{width:30px;height:30px}
+.quest-main{flex:1;min-width:0;display:grid;gap:6px}
+.quest-main b{font-family:var(--f-display);font-weight:400;font-size:17px}
+.quest-bar{position:relative;height:20px;border-radius:10px;background:var(--line);overflow:hidden}
+.quest-bar i{position:absolute;inset:0 auto 0 0;border-radius:10px;background:var(--sun);transition:width .6s cubic-bezier(.2,.9,.3,1.2)}
+.quest-bar i::after{content:"";position:absolute;left:8px;right:8px;top:4px;height:4px;border-radius:2px;background:rgba(255,255,255,.45)}
+.quest-bar span{position:relative;display:block;text-align:center;font-family:var(--f-display);font-size:13px;line-height:20px;color:var(--ink)}
+.quest.hit .quest-bar i{background:var(--mint)}
+@media (hover:hover){.quest:hover{border-color:var(--sun-d)}}
+/* 과목 띠는 위에 붙어서 지금 어느 과목인지 늘 보인다 */
+.unit{margin-top:28px}
+.unit-head{position:sticky;top:calc(env(safe-area-inset-top,0px) + 58px);z-index:10;padding:12px 16px}
+.lesson .unit-head h2{font-size:22px}
+.unit-head p{font-size:13.5px}
+/* 길: 더 크고 통통한 단추, 다음 차례는 숨 쉬듯 커졌다 작아진다 */
+.path{gap:26px;padding-top:40px}
+.pstep{position:relative}
+.node{width:84px;height:78px}
+.node .ico{width:38px;height:38px}
+.node.next{box-shadow:0 0 0 8px color-mix(in srgb,var(--u) 22%,transparent)}
+.node.trophy{width:96px;height:88px;cursor:default}
+.node.trophy .ico{width:46px;height:46px}
+.node.trophy.done{background:var(--sun);border-bottom-color:var(--sun-d);color:#5a3d00}
+.pbuddy{position:absolute;top:0;left:50%;transform:translateX(calc(-50% + var(--bx)));pointer-events:none}
+@media (prefers-reduced-motion:no-preference){
+  .node.next{animation:breathe 2.2s ease-in-out infinite}
+  .bubble{animation:bob 1.6s ease-in-out infinite}
+  .pbuddy .mascot svg{animation:sway 3.6s ease-in-out infinite}
+  .quest-bar i,.pr-bar i{transition-duration:.7s}
+}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes bob{0%,100%{transform:translate(-50%,0)}50%{transform:translate(-50%,-4px)}}
+@media (max-width:420px){.pbuddy{display:none}.node{width:78px;height:72px}}
+/* 레슨 도입: 벡이가 오늘의 장면을 말해 준다 */
+.hook{grid-template-columns:auto 1fr;align-items:start;border:0;background:none;padding:0;gap:10px}
+.hook-say{position:relative;display:grid;gap:8px;padding:14px 16px;border:2px solid var(--line);border-radius:18px;background:var(--card)}
+.hook-say::before{content:"";position:absolute;left:-9px;top:24px;width:14px;height:14px;background:var(--card);border-left:2px solid var(--line);border-bottom:2px solid var(--line);transform:rotate(45deg)}
+.hook .tag{width:fit-content}
+.hook p{font-size:16px;line-height:1.6}
+@media (max-width:560px){.hook{grid-template-columns:auto 1fr}.hook .mascot svg{width:52px;height:52px}}
+/* 연습: 벡이가 말풍선으로 묻는다 */
+.pr-card{position:relative}
+.pr-ask{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:end}
+.pr-ask .pr-q{position:relative;margin:0;padding:14px 16px;border:2px solid var(--line);border-radius:18px;background:var(--card)}
+.pr-ask .pr-q::before{content:"";position:absolute;left:-9px;bottom:18px;width:14px;height:14px;background:var(--card);border-left:2px solid var(--line);border-bottom:2px solid var(--line);transform:rotate(45deg)}
+@media (max-width:480px){.pr-ask .mascot svg{width:56px;height:56px}.pr-ask .pr-q{font-size:19px}}
+.pr-opts{gap:12px}
+.pr-opt.sel,.pr-oxb.sel{border-bottom-width:4px}
+.pr-oxb{font-family:var(--f-display);font-weight:400;font-size:52px;min-height:120px}
+.pr-oxb[data-v="O"]{color:var(--good)}.pr-oxb[data-v="X"]{color:var(--bad)}
+.pr-oxb.sel[data-v="O"]{background:var(--good-soft);border-color:var(--good)}
+.pr-oxb.sel[data-v="X"]{background:var(--bad-soft);border-color:var(--bad)}
+.pr-bar{position:relative;overflow:visible}
+.combo{position:absolute;right:6px;top:-24px;font-family:var(--f-display);font-size:15px;color:var(--flame);opacity:0;transform:scale(.6);transition:opacity .15s,transform .2s cubic-bezier(.2,1.6,.4,1);pointer-events:none}
+.combo.on{opacity:1;transform:none}
+.xp-pop{position:absolute;right:16px;top:8px;font-family:var(--f-display);font-size:24px;color:var(--sun-d);pointer-events:none;opacity:0}
+@media (prefers-reduced-motion:no-preference){.xp-pop{animation:xpup 1s ease-out forwards}}
+@keyframes xpup{0%{opacity:0;transform:translateY(10px) scale(.7)}25%{opacity:1;transform:translateY(-6px) scale(1.15)}100%{opacity:0;transform:translateY(-34px)}}
+/* 채점 띠: 동그란 큰 아이콘 */
+.pr-badge{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;flex:none;background:var(--card)}
+.pr-badge .ico{width:30px;height:30px}
+.pr-foot.good .pr-badge{color:var(--good)}.pr-foot.bad .pr-badge{color:var(--bad)}
+@media (prefers-reduced-motion:no-preference){.pr-badge{animation:lvpop .4s cubic-bezier(.2,1.6,.4,1)}}
+/* 결과: 색깔 있는 숫자 칸 */
+.readout{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.ro.big{display:grid;gap:4px;padding:10px 12px;border:2px solid var(--t,var(--line));border-bottom-width:4px;border-radius:16px;background:var(--card);text-align:center}
+.ro.big small{font-family:var(--f-display);font-size:14px;color:var(--t-ink,var(--muted))}
+.ro.big b{display:inline-flex;align-items:center;justify-content:center;gap:6px;font-family:var(--f-display);font-weight:400;font-size:26px;color:var(--t-ink,var(--ink))}
+.ro.big b .ico{width:24px;height:24px}
+.t-sun{--t:var(--sun);--t-ink:var(--sun-d)}.t-good{--t:var(--mint);--t-ink:var(--good)}.t-flame{--t:var(--flame);--t-ink:var(--flame)}.t-sky{--t:var(--sky);--t-ink:#0b7fb8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .t-sun{--t-ink:var(--sun)}:root:not([data-theme="light"]) .t-sky{--t-ink:var(--sky)}}
+:root[data-theme="dark"] .t-sun{--t-ink:var(--sun)}:root[data-theme="dark"] .t-sky{--t-ink:var(--sky)}
+@media (min-width:560px){.readout{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pr-foot .pr-badge+.pr-msg{flex:1 1 200px}
+@media (max-width:480px){.pr-badge{width:44px;height:44px}.pr-badge .ico{width:26px;height:26px}.pr-foot .pr-go{flex-basis:100%;max-width:none}}
+.t-sun{--t-ink:#8a5f00}.pr-foot .btn{white-space:nowrap}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .t-sun{--t-ink:var(--sun)}}
+:root[data-theme="dark"] .t-sun{--t-ink:var(--sun)}
+body{word-break:keep-all;overflow-wrap:break-word}

@@ -174,7 +174,7 @@ function renderLesson(p) {
   const co = chapterOf(p.id);
   h1.before(h("div", { class: "eyebrow" }, `${co ? co.sub.name + " · 챕터 " + (co.k + 1) : wk} · Seq2Seq 코스 ${p.id.replace("day", "Day ")} · 30분`));
   const meta = h1.nextElementSibling; if (meta && meta.tagName === "P") meta.classList.add("meta");
-  if (HOOKS[p.id]) (meta || h1).after(h("div", { class: "hook" }, h("span", { class: "tag" }, "오늘의 장면"), h("p", {}, HOOKS[p.id])));
+  if (HOOKS[p.id]) (meta || h1).after(h("div", { class: "hook" }, mascot("think", 64), h("div", { class: "hook-say" }, h("span", { class: "tag" }, "오늘의 장면"), h("p", {}, HOOKS[p.id]))));
   lessonEl.querySelector(".hook")?.after(practiceCard(p.id));
   const quizH = [...lessonEl.querySelectorAll("h2")].find(x => x.textContent.includes("셀프 체크"));
   const qq = quickQuiz(p.id); if (qq && quizH) quizH.before(qq);
