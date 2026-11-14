@@ -353,3 +353,7 @@ a.node:active{transform:translateY(3px);border-bottom-width:4px}
 .spk-check input{width:18px;height:18px;accent-color:var(--accent)}
 .spk-body .btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 .setbox h2{border:0;padding-top:0}
+.syncstat{margin:8px 0;padding:8px 12px;border-radius:8px;background:var(--accent-soft);font-size:14px}
+.syncstat.ok{background:var(--good-soft);color:var(--good)}
+.syncstat.error{background:var(--bad-soft);color:var(--bad)}
+input.codebox{font-size:14px}

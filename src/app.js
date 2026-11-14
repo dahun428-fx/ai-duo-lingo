@@ -183,7 +183,7 @@ function renderLesson(p) {
   const i = ORDER.indexOf(p.id), prev = byId[ORDER[i - 1]], next = byId[ORDER[i + 1]];
   const db = h("button", { class: "donebtn", type: "button" });
   const sync = () => { const d = DONE.has(p.id); db.textContent = d ? "✓ 오늘 학습 완료 (다시 누르면 취소)" : "오늘 30분 학습 완료 체크"; db.classList.toggle("is-done", d); };
-  db.addEventListener("click", () => { DONE.has(p.id) ? DONE.delete(p.id) : DONE.add(p.id); saveDone(DONE); sync(); buildRail(p.id); });
+  db.addEventListener("click", () => { DONE.has(p.id) ? DONE.delete(p.id) : DONE.add(p.id); saveDone(DONE); sync(); buildRail(p.id); queueSync(); });
   sync();
   const rs = refSection(p.id); if (rs) lessonEl.append(rs);
   lessonEl.append(h("div", { class: "finish" }, practiceCard(p.id), speakCard(p.id), db, h("nav", { class: "pn", "aria-label": "이전 다음" },

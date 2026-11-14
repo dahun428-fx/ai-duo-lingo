@@ -3,6 +3,17 @@ const SKEY = "seq2seq30-stats";
 function loadStats() { try { return Object.assign({ xp: 0, days: [], best: {}, spoke: {} }, JSON.parse(localStorage.getItem(SKEY) || "{}")); } catch (e) { return { xp: 0, days: [], best: {} }; } }
 function saveStats(st) { try { localStorage.setItem(SKEY, JSON.stringify(st)); } catch (e) { } }
 let STATS = loadStats();
+// XP는 "기기마다 그 기기에서 번 XP"(xpBy)로 두고 총합을 쓴다. 두 기기가 따로 번 XP를 합칠 때 어느 쪽도 사라지지 않는다.
+const KEY_RE = /^[a-z0-9]{8,32}$/;
+function newDevKey() { const a = new Uint8Array(8); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(a) : a.forEach((_, i) => a[i] = Math.random() * 256); return [...a].map(x => x.toString(16).padStart(2, "0")).join(""); }
+function sumXp() { return Object.values(STATS.xpBy).reduce((a, b) => a + b, 0); }
+(function normStats() {
+  if (!KEY_RE.test(STATS.dev || "")) STATS.dev = newDevKey();
+  if (!STATS.xpBy || typeof STATS.xpBy !== "object") STATS.xpBy = { [STATS.dev]: Math.max(0, Math.floor(STATS.xp) || 0) };
+  STATS.spoke = STATS.spoke || {};
+  STATS.xp = sumXp();
+})();
+function addXp(n) { STATS.xpBy[STATS.dev] = (STATS.xpBy[STATS.dev] || 0) + n; STATS.xp = sumXp(); }
 function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function streak() {
   const set = new Set(STATS.days); const d = new Date();
@@ -176,7 +187,7 @@ function renderPractice(id) {
     if (st.saved) return; st.saved = true;
     const today = ymd(new Date());
     if (st.done.size && !STATS.days.includes(today)) STATS.days.push(today);
-    STATS.xp += st.xp; saveStats(STATS); updateChips();
+    addXp(st.xp); saveStats(STATS); updateChips(); queueSync();
   }
   function fail() {
     bank();
@@ -192,7 +203,7 @@ function renderPractice(id) {
     const before = levelInfo(STATS.xp);
     bank();
     const after = levelInfo(STATS.xp), leveled = after.level > before.level;
-    if (lessonId) { STATS.best[lessonId] = Math.max(STATS.best[lessonId] || 0, acc); DONE.add(lessonId); saveDone(DONE); }
+    if (lessonId) { STATS.best[lessonId] = Math.max(STATS.best[lessonId] || 0, acc); DONE.add(lessonId); saveDone(DONE); queueSync(); }
     saveStats(STATS); updateChips(); buildRail("practice-" + id);
     const nextL = lessonId ? byId[ORDER[ORDER.indexOf(lessonId) + 1]] : null;
     card.innerHTML = "";

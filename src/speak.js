@@ -126,9 +126,9 @@ function renderSpeak(id) {
       const n = boxes.filter(b => b[1].checked).length, first = !spokeCount(id);
       const gain = (first ? 15 : 5) + (n === boxes.length ? 5 : 0);
       const before = levelInfo(STATS.xp);
-      STATS.spoke = STATS.spoke || {}; STATS.spoke[id] = spokeCount(id) + 1; STATS.xp += gain;
+      STATS.spoke = STATS.spoke || {}; STATS.spoke[id] = spokeCount(id) + 1; addXp(gain);
       const today = ymd(new Date()); if (!STATS.days.includes(today)) STATS.days.push(today);
-      saveStats(STATS); updateChips();
+      saveStats(STATS); updateChips(); queueSync();
       const after = levelInfo(STATS.xp);
       done.disabled = true;
       msg.textContent = `+${gain} XP` + (after.level > before.level ? `  ·  레벨 업! Lv.${after.level} ${after.title}` : "") + (n < boxes.length ? "  ·  빠진 핵심어를 넣어 한 번 더 말해 보면 훨씬 매끄러워져요." : "  ·  핵심어를 모두 넣었어요.");
