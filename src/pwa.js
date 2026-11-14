@@ -142,7 +142,11 @@ function renderSettings() {
     h("button", { class: "btn", type: "button", onclick: async () => { try { await navigator.clipboard.writeText(out.value); msg.textContent = "복사했어요."; } catch (_) { out.select(); msg.textContent = "코드를 길게 눌러 복사하세요."; } } }, "코드 복사"),
     h("h3", {}, "다른 기기의 진도 가져오기"), inp,
     h("button", { class: "btn pri", type: "button", onclick: () => { try { importCode(inp.value); out.value = exportCode(); inp.value = ""; buildRail("settings"); msg.textContent = `가져왔어요. 지금 ${STATS.xp} XP, 완료 ${LESSONS.filter(x => DONE.has(x.id)).length}개입니다.`; } catch (e) { msg.textContent = e.message || "진도 코드를 읽을 수 없어요."; } } }, "가져오기"), msg);
-  lessonEl.append(h("div", { class: "eyebrow" }, "설정"), h("h1", {}, "앱 설치와 진도"), inst, syncBox(), sync, h("p", { class: "w-hint" }, "버전 " + APP_BUILD));
+  const sw = (label, get, set) => { const b = h("button", { class: "switch", type: "button", role: "switch", "aria-checked": String(get()), "aria-label": label }); b.addEventListener("click", () => { set(!get()); b.setAttribute("aria-checked", String(get())); }); return h("div", { class: "setrow" }, h("span", {}, label), b); };
+  const prefs = h("section", { class: "setbox" }, h("h2", {}, "화면과 소리"),
+    sw("효과음", soundOn, v => { try { localStorage.setItem("aiduo-sound", v ? "1" : "0"); } catch (_) { } if (v) sfx("ok"); }),
+    sw("레슨을 한 걸음씩 넘기며 보기", () => readMode() === "step", v => setReadMode(v ? "step" : "all")));
+  lessonEl.append(h("div", { class: "eyebrow" }, "설정"), h("h1", {}, "앱 설치와 진도"), levelBar(STATS.xp), prefs, inst, syncBox(), sync, h("p", { class: "w-hint" }, "버전 " + APP_BUILD));
   tocEl.innerHTML = "";
 }
 route();

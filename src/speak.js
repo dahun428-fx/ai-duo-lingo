@@ -10,7 +10,7 @@ function speakCard(id) {
   const n = spokeCount(id);
   return h("div", { class: "prcard spk" },
     h("div", {}, h("b", {}, "면접에서 말해보기"), h("span", {}, "“" + SPEAK[id].q + "”" + (n ? ` · ${n}번 말해 봤어요` : " · 스크립트를 읽고, 가리고, 소리 내어 답해 보세요"))),
-    h("a", { class: "btn", href: "#speak-" + id, style: "text-decoration:none;white-space:nowrap" }, n ? "다시 말하기" : "말해보기"));
+    h("a", { class: "btn", href: "#speak-" + id, style: "white-space:nowrap" }, ico("mic"), n ? "다시 말하기" : "말해보기"));
 }
 function renderSpeakList() {
   lessonEl.innerHTML = ""; tocEl.innerHTML = "";
@@ -131,6 +131,7 @@ function renderSpeak(id) {
       saveStats(STATS); updateChips(); queueSync();
       const after = levelInfo(STATS.xp);
       done.disabled = true;
+      sfx("done"); if (n === boxes.length) confetti();
       msg.textContent = `+${gain} XP` + (after.level > before.level ? `  ·  레벨 업! Lv.${after.level} ${after.title}` : "") + (n < boxes.length ? "  ·  빠진 핵심어를 넣어 한 번 더 말해 보면 훨씬 매끄러워져요." : "  ·  핵심어를 모두 넣었어요.");
     });
     body.append(h("p", {}, heard ? "받아쓴 내용에서 찾은 핵심어를 미리 표시했어요. 받아쓰기는 틀릴 수 있으니 직접 고쳐 주세요." : "방금 답변에 들어간 핵심어에 표시해 보세요. 녹음을 다시 들으며 확인하면 정확합니다."),

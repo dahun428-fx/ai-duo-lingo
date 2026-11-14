@@ -25,8 +25,8 @@ for f in sorted(glob.glob(f'{SRC}/week[12]/day*.md')):
     pages.append(dict(id=did,short=title,md=md,link='논문 연결: '+link))
 rm=open(f'{SRC}/week3-4_개요.md').read()
 pages.append(dict(id='roadmap',short='3~4주차 개요',md=clean(rm),link=''))
-css=open(f'{HERE}/style.css').read()
-js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/refs.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/speak-data.js').read()+'\n'+open(f'{HERE}/speak.js').read()+'\n'+open(f'{HERE}/app.js').read()+'\n'+open(f'{HERE}/pwa.js').read()
+css=open(f'{HERE}/style.css').read()+'\n'+open(f'{HERE}/play.css').read()
+js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/play.js').read()+'\n'+open(f'{HERE}/refs.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/speak-data.js').read()+'\n'+open(f'{HERE}/speak.js').read()+'\n'+open(f'{HERE}/app.js').read()+'\n'+open(f'{HERE}/pwa.js').read()
 html=f'''<!doctype html>
 <html lang="ko">
 <head>
@@ -45,7 +45,7 @@ html=f'''<!doctype html>
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Jua&display=swap">
 <style>
 body{{margin:0}}img{{max-width:100%}}[hidden]{{display:none!important}}
 {css}
@@ -53,16 +53,17 @@ body{{margin:0}}img{{max-width:100%}}[hidden]{{display:none!important}}
 </head>
 <body>
 <header class="top">
-  <button class="iconbtn menu-btn" id="menu" type="button" aria-label="목차 열기">목차</button>
-  <a class="brand" href="#home"><b>AI 듀오링고</b><span>하루 30분 · 문제로 익히는 AI 수학</span></a>
+  <a class="skip" href="#main">본문으로 건너뛰기</a>
+  <a class="brand" href="#home" aria-label="AI 듀오링고 홈"><span id="brandmark"></span><b>AI 듀오링고</b></a>
   <div class="grow"></div>
-  <span class="chip" id="lvl">Lv.1</span><span class="chip" id="streak">연속 0일</span><span class="chip" id="xp">0 XP</span>
+  <span class="stat" id="streak"></span><span class="stat" id="xp"></span><a class="stat" id="lvl" href="#settings" style="text-decoration:none"></a>
   <div class="prog"><span id="progtxt">완료 0/10</span><div class="bar"><i id="progbar" style="width:0"></i></div></div>
 </header>
 <div class="shell">
   <nav class="rail" id="rail" aria-label="교재 목차"></nav>
   <main id="main"><div class="page"><article class="lesson" id="lesson"></article><aside class="toc" id="toc"></aside></div><section class="practice" id="practice" hidden aria-label="연습 문제"></section></main>
 </div>
+<nav class="tabs" id="tabs" aria-label="주요 화면"></nav>
 <button class="fab" id="fab" type="button">용어 사전<kbd>?</kbd></button>
 <script src="vendor/marked.min.js"></script>
 <script src="vendor/katex.min.js"></script>

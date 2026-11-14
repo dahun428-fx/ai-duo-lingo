@@ -33,6 +33,8 @@ src/
   speak.js           면접에서 말해보기 화면
   refs.js            레슨별 근거 자료 (REFS)
   widgets.js         실습 위젯
+  play.js            듀오링고식 화면: 학습 길 홈, 아래 탭, 한 걸음씩 넘기는 레슨, 마스코트 벡이, 효과음
+  play.css           위 화면의 스타일 (색 토큰, 버튼, 길, 다크 모드)
   app.js             목차, 라우팅, 마크다운 렌더링, 진도 저장
   pwa.js             앱 설치, 서비스 워커 등록, 진도 코드
   sw.js              서비스 워커 원본 (build.py가 빌드 id를 넣어 public/sw.js로 만듦)

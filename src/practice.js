@@ -13,7 +13,10 @@ function sumXp() { return Object.values(STATS.xpBy).reduce((a, b) => a + b, 0); 
   STATS.spoke = STATS.spoke || {};
   STATS.xp = sumXp();
 })();
-function addXp(n) { STATS.xpBy[STATS.dev] = (STATS.xpBy[STATS.dev] || 0) + n; STATS.xp = sumXp(); }
+function addXp(n) {
+  STATS.xpBy[STATS.dev] = (STATS.xpBy[STATS.dev] || 0) + n; STATS.xp = sumXp();
+  const d = ymd(new Date()); STATS.today = STATS.today && STATS.today.d === d ? { d, xp: STATS.today.xp + n } : { d, xp: n };
+}
 function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
 function streak() {
   const set = new Set(STATS.days); const d = new Date();
@@ -39,13 +42,7 @@ function levelBar(xp) {
       h("div", { class: "lvl-track" }, h("i", { style: `width:${L.pct}%` })),
       h("span", {}, L.max ? `최고 레벨 달성 · 누적 ${xp} XP` : `다음 레벨까지 ${L.next - xp} XP  (${L.into} / ${L.span})`)));
 }
-function updateChips() {
-  const lEl = document.getElementById("lvl");
-  if (lEl) { const L = levelInfo(STATS.xp); lEl.textContent = "Lv." + L.level + " " + L.title; }
-  const sEl = document.getElementById("streak"), xEl = document.getElementById("xp");
-  if (sEl) sEl.textContent = "연속 " + streak() + "일";
-  if (xEl) xEl.textContent = STATS.xp + " XP";
-}
+function updateChips() { drawStats(); }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function bankFor(id) { return [...(QUICK[id] || []).map(q => ({ t: "mc", ...q })), ...(DRILL[id] || [])].map(q => ({ ...q, day: id })); }
 function parseNum(s) {
@@ -84,14 +81,14 @@ function renderPractice(id) {
   const exitHref = lessonId ? "#" + lessonId : "#home";
   root.innerHTML = "";
   const bar = h("i", {}); const hearts = h("span", { class: "hearts", "aria-label": "남은 하트" });
-  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: exitHref, "aria-label": "연습 그만하기" }, "✕"), h("div", { class: "pr-bar" }, bar), hearts);
+  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: exitHref, "aria-label": "연습 그만하기" }, ico("close")), h("div", { class: "pr-bar" }, bar), hearts);
   const card = h("div", { class: "pr-card" });
   const foot = h("div", { class: "pr-foot" });
   root.append(head, card, foot);
 
   function drawHead() {
     bar.style.width = (st.done.size / st.total * 100) + "%";
-    hearts.innerHTML = ""; for (let i = 0; i < 3; i++) hearts.append(h("span", { class: i < st.hearts ? "hf" : "he" }, "♥"));
+    hearts.innerHTML = ""; for (let i = 0; i < 3; i++) hearts.append(ico("heart", i < st.hearts ? "hf" : "he"));
   }
   function setFoot(state, title, msg, btnText, onBtn) {
     foot.className = "pr-foot " + state; foot.innerHTML = "";
@@ -168,12 +165,14 @@ function renderPractice(id) {
     if (ok) {
       const gain = st.missed.has(cur.key) ? 5 : st.hinted.has(cur.key) ? 7 : 10;
       st.xp += gain; st.combo++; st.bestCombo = Math.max(st.bestCombo, st.combo); st.done.add(cur.key);
+      sfx("ok");
       let extra = st.combo >= 3 ? `  · ${st.combo}연속` : "";
       if (st.combo % 3 === 0 && st.hearts < 3) { st.hearts++; extra += "  · 하트 회복 ♥"; }
       else if (!st.cheered && st.done.size * 2 >= st.total && st.done.size < st.total) { st.cheered = true; extra += "  · 절반 넘었어요"; }
       drawHead();
       setFoot("good", praise[Math.floor(Math.random() * praise.length)] + `  +${gain} XP` + extra, [cur.w, refLine(cur.day)], "계속", next);
     } else {
+      sfx("bad");
       const again = st.missed.has(cur.key);
       if (!again) st.hearts--;   // 다시 나온 문제는 틀려도 하트를 깎지 않는다
       st.combo = 0; st.missed.add(cur.key);
@@ -192,7 +191,7 @@ function renderPractice(id) {
   function fail() {
     bank();
     card.innerHTML = ""; drawHead();
-    card.append(h("div", { class: "pr-end" }, h("div", { class: "pr-big bad" }, "♥ 0"), h("h2", {}, "하트를 모두 썼어요"), h("p", {}, `${st.done.size} / ${st.total}문제까지 왔어요. 맞힌 만큼 +${st.xp} XP는 그대로 쌓였어요. 틀린 부분을 본문에서 한 번 더 보고 다시 도전해 보세요.`)));
+    card.append(h("div", { class: "pr-end" }, mascot("sad", 110), h("div", { class: "pr-big bad" }, "아쉬워요"), h("h2", {}, "하트를 모두 썼어요"), h("p", {}, `${st.done.size} / ${st.total}문제까지 왔어요. 맞힌 만큼 +${st.xp} XP는 그대로 쌓였어요. 틀린 부분을 본문에서 한 번 더 보고 다시 도전해 보세요.`)));
     setFoot("idle end", "", "", "다시 도전", () => renderPractice(id));
     foot.prepend(h("a", { class: "btn", href: exitHref, style: "text-decoration:none" }, lessonId ? "본문 다시 보기" : "처음으로"));
     document.getElementById("prgo").disabled = false;
@@ -207,7 +206,8 @@ function renderPractice(id) {
     saveStats(STATS); updateChips(); buildRail("practice-" + id);
     const nextL = lessonId ? byId[ORDER[ORDER.indexOf(lessonId) + 1]] : null;
     card.innerHTML = "";
-    card.append(h("div", { class: "pr-end" },
+    confetti(); sfx("done");
+    card.append(h("div", { class: "pr-end" }, mascot("cheer", 120),
       h("div", { class: "pr-big" + (leveled ? " lvup" : "") }, leveled ? "레벨 업!" : acc === 100 ? "완벽!" : "완료!"),
       leveled ? h("p", { class: "lvup-line" }, `Lv.${before.level} ${before.title}  →  `, h("b", {}, `Lv.${after.level} ${after.title}`)) : null,
       h("h2", {}, lessonId ? `「${chapterOf(lessonId).ch.name}」 연습을 끝냈어요` : "전체 복습을 끝냈어요"),
@@ -238,7 +238,7 @@ function practiceCard(id) {
   const best = STATS.best[id];
   return h("div", { class: "prcard" },
     h("div", {}, h("b", {}, "연습 문제 " + bankFor(id).length + "개로 실력 확인"), h("span", {}, "하트 3개 · 객관식, 계산, O/X, 순서 맞추기 · 틀린 문제는 다시 나와요" + (best != null ? ` · 최고 기록 ${best}%` : ""))),
-    h("a", { class: "btn pri", href: "#practice-" + id, style: "text-decoration:none;white-space:nowrap" }, best != null ? "다시 연습" : "연습 시작"));
+    h("a", { class: "btn pri", href: "#practice-" + id, style: "white-space:nowrap" }, ico("target"), best != null ? "다시 연습" : "연습 시작"));
 }
 
 // 채점 화면에 붙는 근거 한 줄: 그날의 첫 번째 참고 자료

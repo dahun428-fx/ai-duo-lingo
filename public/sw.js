@@ -1,4 +1,4 @@
-const BUILD_ID = "d7c199a0d6";
+const BUILD_ID = "bc3e0ada8f";
 // ^ 첫 줄은 그대로 둔다. build.py가 빌드 id로 바꿔서 public/sw.js를 만든다.
 // 앱 껍데기를 폰에 저장해 두어 인터넷이 없어도 레슨과 연습이 열리게 한다.
 // - 페이지 열기: 네트워크 먼저, 안 되면 저장본
