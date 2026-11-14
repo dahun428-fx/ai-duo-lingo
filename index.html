@@ -1,0 +1,1575 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="Seq2Seq 논문(2014)으로 선형대수·베이즈·엔트로피·중심극한정리·teacher forcing을 하루 30분씩 배우는 인터랙티브 교재">
+<title>손으로 푸는 Seq2Seq</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+body{margin:0}img{max-width:100%}[hidden]{display:none!important}
+/* Layout: graph-paper lab notebook. Sticky top bar, left syllabus rail, centered reading column, right "이 문서에서" on wide screens. */
+:root{
+  --paper:#f5f7fb; --card:#ffffff; --ink:#18202e; --muted:#5a6578; --line:#d8dfea; --grid:rgba(35,70,200,.055);
+  --accent:#2347d0; --accent-soft:#e6ecff; --mark:#ffe46b; --mark-ink:#18202e;
+  --good:#16865a; --good-soft:#e3f5ec; --bad:#c23d27; --bad-soft:#fbe8e4; --warn:#a86a00;
+  --code-bg:#0f1624; --code-fg:#dbe4f5; --code-kw:#8fb0ff; --code-str:#9fe0b0; --code-num:#ffc78a; --code-com:#7a879c;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --rail:264px; --col:720px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0f131b; --card:#161c28; --ink:#e5eaf3; --muted:#9aa5b8; --line:#273145; --grid:rgba(130,160,255,.05);
+  --accent:#86a0ff; --accent-soft:#1e2843; --mark:#e2c440; --mark-ink:#15130a;
+  --good:#4cc38a; --good-soft:#15291f; --bad:#ff7d66; --bad-soft:#2f1915; --warn:#e5b04a;
+  --code-bg:#0a0e16; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f131b; --card:#161c28; --ink:#e5eaf3; --muted:#9aa5b8; --line:#273145; --grid:rgba(130,160,255,.05);
+  --accent:#86a0ff; --accent-soft:#1e2843; --mark:#e2c440; --mark-ink:#15130a;
+  --good:#4cc38a; --good-soft:#15291f; --bad:#ff7d66; --bad-soft:#2f1915; --warn:#e5b04a;
+  --code-bg:#0a0e16; color-scheme:dark}
+
+*{box-sizing:border-box}
+html,body{background:var(--paper)}
+body{color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.75;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--card)}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+.skip{position:absolute;left:-999px}.skip:focus{left:16px;top:8px;z-index:99;background:var(--card);padding:4px 8px}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--card);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:12px;padding-block:10px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;flex-direction:column;line-height:1.2;text-decoration:none;color:var(--ink);min-width:0}
+.brand b{font-size:17px;letter-spacing:-.02em}
+.brand span{font-family:var(--f-mono);font-size:11px;color:var(--muted);letter-spacing:.04em}
+.top .grow{flex:1}
+.prog{display:flex;align-items:center;gap:8px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.prog .bar{width:120px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.prog .bar i{display:block;height:100%;background:var(--accent);transition:width .4s}
+.iconbtn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 10px;font:inherit;font-size:13px;cursor:pointer}
+.iconbtn:hover{border-color:var(--accent)}
+.menu-btn{display:none}
+
+/* shell */
+.shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);min-height:calc(100vh - 60px)}
+.rail{position:sticky;top:calc(61px + env(safe-area-inset-top,0px));align-self:start;height:calc(100vh - 61px);overflow:auto;
+  border-right:1px solid var(--line);background:color-mix(in srgb,var(--card) 82%,transparent);padding:18px 14px 40px}
+.rail h4{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:18px 8px 6px;font-weight:600}
+.rail a{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:14px;line-height:1.4}
+.rail a:hover{background:var(--accent-soft)}
+.rail a.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.rail .dn{font-family:var(--f-mono);font-size:11px;color:var(--muted);min-width:22px;padding-top:2px}
+.rail .ck{margin-left:auto;width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);flex:none;margin-top:2px}
+.rail .ck.done{background:var(--good);border-color:var(--good);box-shadow:inset 0 0 0 3px var(--card)}
+.rail a.soon{color:var(--muted)}
+
+main{min-width:0;padding-block:32px 80px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.page{display:grid;grid-template-columns:minmax(0,var(--col)) 200px;gap:48px;justify-content:center}
+.toc{position:sticky;top:90px;align-self:start;font-size:13px;border-left:1px solid var(--line);padding-left:14px}
+.toc b{display:block;font-size:11px;letter-spacing:.12em;color:var(--muted);margin-bottom:6px}
+.toc a{display:block;color:var(--muted);text-decoration:none;padding:3px 0;line-height:1.4}
+.toc a:hover{color:var(--accent)}
+
+/* lesson typography */
+.lesson{min-width:0}
+.lesson h1{font-size:clamp(28px,4.4vw,40px);line-height:1.2;letter-spacing:-.03em;margin:4px 0 10px;text-wrap:balance}
+.lesson h2{font-size:23px;letter-spacing:-.02em;margin:52px 0 12px;padding-top:14px;border-top:1px solid var(--line);text-wrap:balance}
+.lesson h3{font-size:18px;margin:30px 0 8px}
+.lesson p,.lesson li{max-width:68ch}
+.lesson strong{font-weight:700}
+.lesson hr{border:0;border-top:1px dashed var(--line);margin:36px 0}
+.lesson blockquote{margin:18px 0;padding:12px 16px;border-radius:10px;background:var(--accent-soft);color:var(--ink);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent)}
+.lesson blockquote p{margin:4px 0}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+.meta{font-size:14px;color:var(--muted);border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 12px;display:inline-block}
+.tablewrap{overflow-x:auto;margin:14px 0}
+table{border-collapse:collapse;font-size:14.5px;min-width:100%}
+th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+th{font-size:13px;color:var(--muted);font-weight:600;background:color-mix(in srgb,var(--card) 60%,transparent)}
+td{font-variant-numeric:tabular-nums}
+code{font-family:var(--f-mono);font-size:.88em;background:var(--accent-soft);padding:1px 5px;border-radius:5px}
+pre{position:relative;background:var(--code-bg);color:var(--code-fg);border-radius:12px;padding:16px 16px 14px;overflow-x:auto;font-size:13.5px;line-height:1.6;margin:14px 0}
+pre code{background:none;padding:0;font-size:inherit;color:inherit}
+pre .kw{color:var(--code-kw)}pre .st{color:var(--code-str)}pre .nu{color:var(--code-num)}pre .co{color:var(--code-com);font-style:italic}
+pre .copy{position:absolute;top:8px;right:8px;font:12px var(--f-mono);background:rgba(255,255,255,.08);color:var(--code-fg);border:1px solid rgba(255,255,255,.15);border-radius:6px;padding:3px 8px;cursor:pointer}
+pre .lang{position:absolute;top:10px;right:72px;font:11px var(--f-mono);color:var(--code-com)}
+math{font-size:1.06em}
+math[display="block"]{display:block;overflow-x:auto;padding:10px 0;margin:6px 0}
+
+details{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:4px 16px;margin:20px 0}
+details summary{cursor:pointer;font-weight:600;padding:10px 0;color:var(--accent)}
+details[open]{padding-bottom:12px}
+
+/* hook + quick quiz + done */
+.hook{display:grid;grid-template-columns:auto 1fr;gap:14px;margin:22px 0 6px;padding:16px 18px;border-radius:14px;background:var(--card);border:1px solid var(--line)}
+.hook .tag{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--card);background:var(--ink);border-radius:6px;padding:3px 8px;height:fit-content}
+.hook p{margin:0}
+.quick{margin:28px 0;padding:18px;border-radius:14px;border:1px solid var(--line);background:var(--card)}
+.quick h3{margin:0 0 4px;font-size:17px}
+.quick .sub{font-size:13px;color:var(--muted);margin:0 0 12px}
+.q{padding:12px 0;border-top:1px dashed var(--line)}
+.q p{margin:0 0 8px;font-weight:600}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 12px;border-radius:999px;cursor:pointer;text-align:left}
+.opt:hover{border-color:var(--accent)}
+.opt.right{background:var(--good-soft);border-color:var(--good);color:var(--good);font-weight:600}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.why{font-size:14px;color:var(--muted);margin-top:8px}
+.score{font-family:var(--f-mono);font-size:13px;margin-top:10px;color:var(--accent)}
+.finish{margin:48px 0 0;display:flex;flex-direction:column;gap:16px}
+.donebtn{font:inherit;font-weight:700;font-size:16px;padding:14px 18px;border-radius:12px;border:2px solid var(--accent);background:var(--accent);color:var(--card);cursor:pointer}
+.donebtn.is-done{background:var(--good-soft);color:var(--good);border-color:var(--good)}
+.pn{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pn a{display:block;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 14px;text-decoration:none;color:var(--ink);min-width:0}
+.pn a small{display:block;font-size:12px;color:var(--muted)}
+.pn a.next{text-align:right}
+.pn a:hover{border-color:var(--accent)}
+
+/* glossary terms */
+.term{font:inherit;color:inherit;background:none;border:0;padding:0;border-bottom:1.5px dashed var(--accent);cursor:help}
+.pop{position:absolute;z-index:40;max-width:300px;background:var(--ink);color:var(--paper);font-size:13.5px;line-height:1.55;padding:10px 12px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.pop b{display:block;margin-bottom:2px}
+.fab{position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:25;
+  font:600 14px var(--f-body);background:var(--ink);color:var(--paper);border:0;border-radius:999px;padding:10px 16px;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.fab kbd{font-family:var(--f-mono);font-size:11px;opacity:.7;margin-left:6px}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(10,14,22,.45);display:flex;align-items:flex-start;justify-content:center;padding:max(60px,env(safe-area-inset-top,0px)) 16px 16px}
+.sheet{background:var(--card);color:var(--ink);width:min(640px,100%);max-height:80vh;overflow:auto;border-radius:16px;padding:18px 20px;border:1px solid var(--line)}
+.sheet input{width:100%;font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.gl{display:grid;gap:2px;margin-top:12px}
+.gl div{padding:10px 0;border-bottom:1px solid var(--line)}
+.gl b{display:block}.gl span{font-size:14px;color:var(--muted)}
+.gl a{font-size:12px;font-family:var(--f-mono)}
+
+/* widgets */
+.widget{margin:30px 0;border:1px solid var(--line);background:var(--card);border-radius:16px;overflow:hidden}
+.w-head{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--accent-soft) 55%,var(--card))}
+.w-head .lab{font-family:var(--f-mono);font-size:11px;letter-spacing:.1em;color:var(--accent);font-weight:600}
+.w-head b{font-size:15px}
+.w-body{padding:16px;display:grid;gap:14px}
+.w-body p{margin:0}
+.w-hint{font-size:13.5px;color:var(--muted)}
+.svgwrap{overflow-x:auto}
+.svgwrap svg{display:block;max-width:none}
+.ctrls{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 18px}
+.sl{display:grid;gap:2px;font-size:13.5px}
+.sl .row{display:flex;justify-content:space-between;gap:8px}
+.sl output{font-family:var(--f-mono);color:var(--accent);font-variant-numeric:tabular-nums}
+input[type=range]{width:100%;accent-color:var(--accent)}
+.btns{display:flex;flex-wrap:wrap;gap:8px}
+.btn{font:inherit;font-size:13.5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.pri{background:var(--accent);color:var(--card);border-color:var(--accent)}
+.btn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.readout{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}
+.ro{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--paper)}
+.ro small{display:block;font-size:11.5px;color:var(--muted)}
+.ro b{font-family:var(--f-mono);font-size:18px;font-variant-numeric:tabular-nums}
+.ro.big b{font-size:26px;color:var(--accent)}
+.calc{font-family:var(--f-mono);font-size:13px;background:var(--paper);border:1px dashed var(--line);border-radius:10px;padding:10px 12px;overflow-x:auto;white-space:pre;line-height:1.7}
+.badge{display:inline-block;font-size:12px;font-weight:600;border-radius:999px;padding:2px 10px}
+.badge.good{background:var(--good-soft);color:var(--good)}.badge.bad{background:var(--bad-soft);color:var(--bad)}
+.numin{width:58px;font:13px var(--f-mono);padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);text-align:right}
+.mat{display:inline-grid;gap:4px;padding:6px 8px;border-left:2px solid var(--ink);border-right:2px solid var(--ink);border-radius:6px;vertical-align:middle}
+.matrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.hl{background:var(--mark)!important;color:var(--mark-ink)!important}
+canvas{display:block;max-width:100%}
+svg text{font-family:var(--f-body)}
+.s-ink{fill:var(--ink)}.s-muted{fill:var(--muted)}.s-acc{fill:var(--accent)}.s-card{fill:var(--card)}.s-paper{fill:var(--paper)}.s-good{fill:var(--good)}.s-bad{fill:var(--bad)}.s-mark{fill:var(--mark)}
+.k-line{stroke:var(--line)}.k-ink{stroke:var(--ink)}.k-acc{stroke:var(--accent)}.k-muted{stroke:var(--muted)}.k-bad{stroke:var(--bad)}.k-good{stroke:var(--good)}
+
+/* home */
+.hero{display:grid;gap:14px;margin-bottom:26px}
+.hero h1{margin:0;font-size:clamp(32px,5.6vw,52px);line-height:1.1;letter-spacing:-.04em}
+.hero h1 em{font-style:normal;background:linear-gradient(transparent 62%,var(--mark) 62%);color:inherit}
+.hero p{font-size:17px;color:var(--muted);max-width:60ch;margin:0}
+.routine{display:flex;border-radius:10px;overflow:hidden;border:1px solid var(--line);font-size:12.5px;min-width:560px}
+.routine div{padding:8px 8px;border-right:1px solid var(--line);background:var(--card);line-height:1.3}
+.routine div:last-child{border-right:0}
+.routine b{display:block;font-family:var(--f-mono);font-size:11px;color:var(--accent)}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin:16px 0}
+.card{border:1px solid var(--line);background:var(--card);border-radius:14px;padding:14px;text-decoration:none;color:var(--ink);display:flex;flex-direction:column;gap:4px}
+.card:hover{border-color:var(--accent)}
+.card small{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.card b{font-size:15px}
+.card span{font-size:13.5px;color:var(--muted);line-height:1.5}
+
+@media (max-width:1180px){.page{grid-template-columns:minmax(0,var(--col))}.toc{display:none}}
+@media (max-width:860px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .rail{position:fixed;top:0;left:0;bottom:0;height:auto;width:min(300px,86vw);z-index:45;transform:translateX(-102%);transition:transform .25s;background:var(--card);padding-top:calc(18px + env(safe-area-inset-top,0px))}
+  .rail.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.3)}
+  .menu-btn{display:inline-block}
+  .prog .bar{width:60px}
+  .pn{grid-template-columns:1fr}
+}
+@media (max-width:480px){.prog span{display:none}.brand span{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* chips + stats */
+.chip{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border-radius:999px;padding:3px 10px;background:var(--paper);white-space:nowrap}
+#streak{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.stats{display:flex;flex-wrap:wrap;gap:10px}
+.stats div{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:8px 14px;min-width:110px}
+.stats small{display:block;font-size:12px;color:var(--muted)}
+.stats b{font-family:var(--f-mono);font-size:20px}
+.prcard{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:14px 0;padding:14px 16px;border-radius:14px;border:2px solid var(--accent);background:var(--accent-soft)}
+.prcard div{display:grid;gap:2px;min-width:0;flex:1 1 260px}
+.prcard b{font-size:16px}.prcard span{font-size:13px;color:var(--muted)}
+
+/* practice */
+.practice{max-width:680px;margin:0 auto;display:grid;gap:18px}
+.pr-head{display:flex;align-items:center;gap:14px}
+.pr-x{font-size:20px;color:var(--muted);text-decoration:none;padding:4px 8px;border-radius:8px}
+.pr-x:hover{background:var(--accent-soft)}
+.pr-bar{flex:1;height:16px;border-radius:8px;background:var(--line);overflow:hidden}
+.pr-bar i{display:block;height:100%;width:0;background:var(--good);border-radius:8px;transition:width .45s cubic-bezier(.2,.9,.3,1.3)}
+.hearts{font-size:20px;letter-spacing:2px;white-space:nowrap}
+.hearts .hf{color:var(--bad)}.hearts .he{color:var(--line)}
+.pr-card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px 20px;display:grid;gap:16px;min-height:300px;align-content:start}
+.pr-card.pop-in{animation:popin .28s ease-out}
+@keyframes popin{from{transform:translateY(8px);opacity:.4}to{transform:none;opacity:1}}
+.pr-type{font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;color:var(--accent)}
+.pr-q{font-size:21px;font-weight:700;line-height:1.5;margin:0;letter-spacing:-.01em}
+.pr-opts{display:grid;gap:10px}
+.pr-opt{display:flex;gap:12px;align-items:center;text-align:left;font:inherit;font-size:16px;padding:14px 16px;border-radius:14px;border:2px solid var(--line);border-bottom-width:4px;background:var(--card);color:var(--ink);cursor:pointer}
+.pr-opt kbd{font-family:var(--f-mono);font-size:12px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--muted)}
+.pr-opt:hover,.pr-oxb:hover,.pr-tok:hover{border-color:var(--accent)}
+.pr-opt.sel,.pr-oxb.sel{border-color:var(--accent);background:var(--accent-soft)}
+.pr-opt.right,.pr-oxb.right{border-color:var(--good);background:var(--good-soft);color:var(--good)}
+.pr-opt.wrong,.pr-oxb.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--bad)}
+.pr-ox{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pr-oxb{font:700 40px var(--f-body);padding:22px 0;border-radius:16px;border:2px solid var(--line);border-bottom-width:5px;background:var(--card);color:var(--ink);cursor:pointer}
+.pr-num{font:600 22px var(--f-mono);padding:14px 16px;border-radius:14px;border:2px solid var(--line);background:var(--paper);color:var(--ink);width:100%}
+.pr-num:focus{border-color:var(--accent);outline:none}
+.pr-num.right{border-color:var(--good);background:var(--good-soft)}.pr-num.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.pr-ans{min-height:64px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0;border-bottom:2px solid var(--line)}
+.pr-ans.right{border-color:var(--good)}.pr-ans.wrong{border-color:var(--bad)}
+.pr-bank{display:flex;flex-wrap:wrap;gap:8px}
+.pr-tok{font:inherit;font-size:15px;padding:9px 14px;border-radius:12px;border:2px solid var(--line);border-bottom-width:4px;background:var(--card);color:var(--ink);cursor:pointer}
+.pr-tok.used{opacity:.25;cursor:default}
+.pr-foot{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 18px;border-radius:16px;border:1px solid var(--line);background:var(--card)}
+.pr-foot.good{background:var(--good-soft);border-color:var(--good)}
+.pr-foot.bad{background:var(--bad-soft);border-color:var(--bad)}
+.pr-msg{display:grid;gap:2px;flex:1 1 260px;min-width:0}
+.pr-foot.good .pr-msg b{color:var(--good);font-size:18px}.pr-foot.bad .pr-msg b{color:var(--bad);font-size:17px}
+.pr-msg span{font-size:14px;color:var(--ink)}
+.pr-go{font:700 16px var(--f-body);padding:12px 26px;border-radius:14px;border:0;border-bottom:4px solid color-mix(in srgb,var(--accent) 60%,#000);background:var(--accent);color:var(--card);cursor:pointer}
+.pr-foot.good .pr-go{background:var(--good);border-bottom-color:color-mix(in srgb,var(--good) 60%,#000)}
+.pr-foot.bad .pr-go{background:var(--bad);border-bottom-color:color-mix(in srgb,var(--bad) 60%,#000)}
+.pr-go:disabled{background:var(--line);color:var(--muted);border-bottom-color:var(--line);cursor:not-allowed}
+.pr-foot.end{justify-content:flex-end}
+.pr-end{display:grid;justify-items:center;text-align:center;gap:10px;padding:10px 0}
+.pr-end h2{margin:0;font-size:22px}
+.pr-end p{margin:0;max-width:44ch}
+.pr-big{font:700 44px var(--f-body);color:var(--good);letter-spacing:-.03em}
+.pr-big.bad{color:var(--bad)}
+@media (max-width:480px){.pr-q{font-size:18px}.chip{font-size:11px;padding:2px 7px}}
+.menu-btn{white-space:nowrap}
+.brand b{white-space:nowrap}
+@media (max-width:560px){.prog{display:none}.brand b{font-size:15px}.hook{grid-template-columns:1fr;gap:8px}.hook .tag{width:fit-content}}
+
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="iconbtn menu-btn" id="menu" type="button" aria-label="목차 열기">목차</button>
+  <a class="brand" href="#home"><b>손으로 푸는 Seq2Seq</b><span>하루 30분 · AI 논문 학습 교재</span></a>
+  <div class="grow"></div>
+  <span class="chip" id="streak">연속 0일</span><span class="chip" id="xp">0 XP</span>
+  <div class="prog"><span id="progtxt">완료 0/10</span><div class="bar"><i id="progbar" style="width:0"></i></div></div>
+</header>
+<div class="shell">
+  <nav class="rail" id="rail" aria-label="교재 목차"></nav>
+  <main id="main"><div class="page"><article class="lesson" id="lesson"></article><aside class="toc" id="toc"></aside></div><section class="practice" id="practice" hidden aria-label="연습 문제"></section></main>
+</div>
+<button class="fab" id="fab" type="button">용어 사전<kbd>?</kbd></button>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script>
+const PAGES = [{"id": "home", "short": "교재 소개", "md": "# 하루 30분, 논문 한 편으로 배우는 AI 수학\n\n> 교재 대상: 파이썬은 조금 다룰 줄 알지만, 선형대수·확률·정보이론은 \"들어는 봤다\" 수준인 학습자\n> 진행 방식: 하루 30분, 주 5일, 4주 (총 20회)\n> 선생님 역할: Claude\n\n---\n\n## 1. 왜 이 논문인가\n\n**선정 논문:** Ilya Sutskever, Oriol Vinyals, Quoc V. Le,\n*\"Sequence to Sequence Learning with Neural Networks\"*, NIPS 2014\n(arXiv: https://arxiv.org/abs/1409.3215, 본문 9쪽 정도)\n\n이 논문을 고른 이유는 세 가지입니다.\n\n1. **짧고 아이디어가 하나다.** \"문장을 벡터 하나로 압축(인코더)했다가, 그 벡터에서 다른 문장을 한 단어씩 만들어 낸다(디코더).\" 이게 전부입니다. 수식도 사실상 두 개뿐입니다.\n2. **배우고 싶은 주제가 모두 자연스럽게 등장한다.**\n   | 배우고 싶은 주제 | 논문에서 등장하는 곳 |\n   |---|---|\n   | 선형대수 (벡터, 행렬곱) | 단어 임베딩(1000차원), LSTM의 모든 계산 `Wx + b` |\n   | 베이즈 정리·조건부확률 | 식 (1): 번역 확률을 단어별 조건부확률의 곱으로 분해 |\n   | 엔트로피·크로스엔트로피 | 학습 목표: 정답 번역의 로그 확률 평균을 최대화, 보고된 perplexity |\n   | Teacher forcing | 학습할 때 디코더에 \"정답 이전 단어\"를 넣어 주는 방식 |\n   | 중심극한정리 | 파라미터 초기화(균등분포 ±0.08), 미니배치(128개) 평균 그래디언트 |\n3. **현재 AI(GPT, Claude 같은 LLM)의 직계 조상이다.** \"앞 단어들이 주어졌을 때 다음 단어의 확률\"을 학습한다는 핵심이 지금도 그대로입니다. 이 논문을 이해하면 Transformer 논문으로 넘어가기가 훨씬 쉽습니다.\n\n> **용어 메모:** 요청하신 \"앤트로픽 관련 사항\"은 **엔트로피(entropy)** 와 **크로스엔트로피(cross-entropy)** 를 뜻하는 것으로 이해하고 교재를 구성했습니다. (Anthropic은 회사 이름이고, 이름의 어원은 \"인간의/인류의(anthropic)\"입니다. 정보이론의 entropy와는 다른 단어예요.)\n\n---\n\n## 2. 하루 30분 루틴\n\n매일 같은 순서로 진행합니다. 시간은 대략적인 기준이에요.\n\n| 단계 | 시간 | 하는 일 |\n|---|---|---|\n| ① 목표 확인 | 1분 | 오늘 끝나면 무엇을 할 수 있어야 하는지 읽기 |\n| ② 개념 + 직관 | 8분 | 설명을 읽으며 **손으로 그림 그리기** |\n| ③ 예제 따라하기 | 6분 | 계산 예제를 종이에 직접 다시 풀기 (답 보지 말고) |\n| ④ 능동 연습 | 10분 | 손계산 문제 + 짧은 numpy 코드 실행·수정 |\n| ⑤ 셀프 체크 | 4분 | 퀴즈 풀고 맨 아래 정답 확인 |\n| ⑥ 한 줄 정리 | 1분 | \"오늘 배운 것을 논문의 어느 부분에서 쓰는가\"를 학습노트에 한 줄 |\n\n**규칙 세 가지**\n- 정답은 항상 파일 맨 아래 `<details>` 안에 숨어 있습니다. **먼저 풀고 열어 보세요.**\n- 코드는 복사-붙여넣기보다 **직접 타이핑**하세요. 숫자를 바꿔 보는 것이 진짜 공부입니다.\n- 막히면 10분 넘게 붙잡지 말고 표시해 두고 넘어가세요. 다음 날 처음 5분에 다시 봅니다.\n\n**준비물:** 노트, 펜, Python 3 + numpy (`pip install numpy`). Google Colab을 써도 됩니다.\n\n---\n\n## 3. 전체 일정 (4주, 20회)\n\n### 1주차: 논문을 읽기 위한 언어 (선형대수 + 확률)\n| 일차 | 주제 | 논문 연결 |\n|---|---|---|\n| [Day 01](#day01) | 논문 지도 그리기 + 벡터와 내적 | 단어 임베딩 (2장) |\n| [Day 02](#day02) | 행렬곱 = 신경망의 층, shape 읽기 | LSTM 계산, 160,000×1000 임베딩 (3.4절) |\n| [Day 03](#day03) | 확률, 조건부확률, 연쇄법칙 | 식 (1) (2장) |\n| [Day 04](#day04) | 베이즈 정리 | 번역을 확률로 보는 관점, argmax 디코딩 (3.2절) |\n| [Day 05](#day05) | 소프트맥스와 로그 | 출력층: 80,000개 단어 위 확률분포 (2장) |\n\n### 2주차: 모델은 어떻게 배우는가 (정보이론 + 학습)\n| 일차 | 주제 | 논문 연결 |\n|---|---|---|\n| [Day 06](#day06) | 정보량과 엔트로피 | \"불확실성\"의 수치화 |\n| [Day 07](#day07) | 크로스엔트로피, KL 발산 | 학습 목표: 로그 확률 최대화 (3.2절) |\n| [Day 08](#day08) | Perplexity, 경사하강 | 역순 입력으로 perplexity 5.8→4.7 (3.3절) |\n| [Day 09](#day09) | 중심극한정리 | ±0.08 초기화, 배치 128 (3.4절) |\n| [Day 10](#day10) | RNN 한 스텝 손계산 + teacher forcing | 디코더 학습 방식 (2장, 3.4절) |\n\n### 3주차: 논문의 모델 해부 (개요 → [week3-4_개요.md](#roadmap))\n| 일차 | 주제 |\n|---|---|\n| Day 11 | Teacher forcing 심화: exposure bias, scheduled sampling |\n| Day 12 | 기울기 소실과 LSTM의 게이트 (시그모이드, 원소별 곱) |\n| Day 13 | 인코더-디코더와 고정 길이 벡터 v |\n| Day 14 | 입력 문장 뒤집기 트릭은 왜 통했나 |\n| Day 15 | 빔 서치 (beam search) 손으로 해보기 |\n\n### 4주차: 논문 정독과 미니 구현\n| 일차 | 주제 |\n|---|---|\n| Day 16 | Gradient clipping (노름 5) + 벡터 노름 복습 |\n| Day 17 | BLEU 점수 계산해 보기 |\n| Day 18 | 논문 1~3장 정독 (지금까지 배운 것으로 읽기) |\n| Day 19 | 미니 프로젝트: \"숫자열 뒤집기\" seq2seq 만들기 |\n| Day 20 | 논문 4~5장 + 회고, 다음 논문(Attention) 예고 |\n\n---\n\n## 4. 논문 핵심 사실 카드 (계속 참조하세요)\n\n- 과제: WMT'14 영어 → 프랑스어 번역\n- 모델: 4층 LSTM, 층마다 1000개 셀, 단어 임베딩 1000차원\n- 어휘: 입력 160,000단어, 출력 80,000단어 (나머지는 `UNK`)\n- 초기화: 모든 파라미터를 균등분포 U(−0.08, 0.08)에서 뽑음\n- 학습: 모멘텀 없는 SGD, 학습률 0.7, 배치 128, 그래디언트 노름이 5를 넘으면 잘라냄\n- 핵심 트릭: **입력 문장의 단어 순서를 뒤집어서** 넣으면 성능이 크게 오름\n- 결과: LSTM 5개 앙상블 + 빔 서치로 BLEU 34.8 (통계 기반 기계번역 기준선 33.3)\n\n(각 수치는 해당 날짜에 논문 원문과 함께 다시 확인합니다.)\n\n---\n\n## 5. 학습 노트 양식 (매일 복사해서 쓰세요)\n\n```\n[Day __] 날짜: ____\n오늘의 핵심 한 문장:\n논문의 어디에 쓰이나:\n헷갈렸던 것 / 내일 다시 볼 것:\n스스로 매긴 이해도 (1~5):\n```\n", "link": ""}, {"id": "day01", "short": "논문 지도 그리기 + 벡터와 내적", "md": "# Day 01. 논문 지도 그리기 + 벡터와 내적\n\n30분 · 논문 연결: **2장 The model** (단어를 벡터로 바꾸는 부분), 초록(Abstract)\n\n---\n\n## 오늘의 목표\n1. 이 논문이 \"무엇을 입력받아 무엇을 출력하는지\" 그림 한 장으로 그릴 수 있다.\n2. 벡터를 \"숫자들의 목록\"이자 \"공간 속의 화살표\"로 이해한다.\n3. 내적(dot product)을 손으로 계산하고, 그것이 **두 벡터가 얼마나 비슷한지**를 나타낸다는 걸 설명할 수 있다.\n\n---\n\n## 1. 논문 지도 (5분)\n\n논문의 아이디어를 한 장 그림으로 먼저 봅니다. **노트에 그대로 따라 그리세요.**\n\n<div class=\"widget\" data-w=\"papermap\"><\/div>\n\n- **인코더**: 입력 문장을 한 단어씩 읽어서, 마지막에 문장 전체의 의미를 담은 벡터 `v` 하나를 만든다.\n- **디코더**: `v`에서 출발해 출력 문장을 한 단어씩 만든다. 방금 만든 단어를 다음 칸의 입력으로 다시 넣는다.\n\n여기서 질문: 컴퓨터는 \"cat\"이라는 글자를 어떻게 계산에 넣을까요? → **벡터로 바꿉니다.** 그게 오늘의 주제입니다.\n\n---\n\n## 2. 개념: 벡터 (8분)\n\n### 2-1. 벡터는 숫자 목록이다\n```\nv = [2, 1]          ← 2차원 벡터\nw = [0.3, -1.2, 0.8, ...] (1000개)  ← 논문의 단어 벡터는 1000차원\n```\n\n### 2-2. 벡터는 화살표이기도 하다\n2차원 벡터 `[2, 1]`은 원점에서 오른쪽으로 2, 위로 1 가는 화살표입니다.\n**중요한 직관:** 화살표의 *방향*이 비슷하면 비슷한 것.\n\n### 2-3. 단어 임베딩 (word embedding)\n단어마다 벡터 하나를 정해 두는 것을 **임베딩**이라고 합니다. 잘 학습되면 의미가 비슷한 단어는 비슷한 방향을 가리킵니다.\n\n```\n\"고양이\" → [0.9, 0.8]\n\"강아지\" → [0.8, 0.9]\n\"자동차\" → [-0.7, 0.2]\n```\n고양이와 강아지는 거의 같은 방향, 자동차는 딴 방향입니다.\n\n### 2-4. 내적: \"얼마나 같은 방향인가\"\n두 벡터의 같은 자리 숫자끼리 곱해서 모두 더합니다.\n\n$$\\mathbf{a}\\cdot\\mathbf{b} = a_1b_1 + a_2b_2 + \\dots + a_nb_n$$\n\n- 같은 방향 → 큰 양수\n- 직각 → 0\n- 반대 방향 → 음수\n\n길이의 영향을 없애면 **코사인 유사도**가 됩니다.\n\n$$\\cos\\theta = \\frac{\\mathbf{a}\\cdot\\mathbf{b}}{\\|\\mathbf{a}\\|\\,\\|\\mathbf{b}\\|},\\qquad \\|\\mathbf{a}\\| = \\sqrt{a_1^2 + \\dots + a_n^2}$$\n\n값은 −1(정반대) ~ 1(같은 방향) 사이입니다.\n\n> **왜 중요한가:** 신경망 안의 거의 모든 계산은 \"입력 벡터와 가중치 벡터의 내적\"입니다. 내적은 \"이 입력이 내가 찾는 패턴과 얼마나 닮았나?\"를 묻는 질문이에요.\n\n---\n\n## 3. 예제 따라하기 (6분)\n\n`a = [0.9, 0.8]` (고양이), `b = [0.8, 0.9]` (강아지), `c = [-0.7, 0.2]` (자동차)\n\n**① a·b** = 0.9×0.8 + 0.8×0.9 = 0.72 + 0.72 = **1.44**\n\n**② a·c** = 0.9×(−0.7) + 0.8×0.2 = −0.63 + 0.16 = **−0.47**\n\n**③ 코사인 유사도 cos(a, b)**\n- ‖a‖ = √(0.81 + 0.64) = √1.45 ≈ 1.204\n- ‖b‖ = √(0.64 + 0.81) = √1.45 ≈ 1.204\n- cos = 1.44 / (1.204 × 1.204) = 1.44 / 1.45 ≈ **0.993** → 거의 같은 방향!\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"dot\"><\/div>\n\n## 4. 능동 연습 (10분)\n\n### 손계산\n1. `p = [1, 2, 3]`, `q = [4, -5, 6]`일 때 `p·q`를 구하세요.\n2. `[3, 4]`의 길이(노름)는?\n3. `[1, 0]`과 `[0, 1]`의 내적은? 이 결과가 그림에서 의미하는 것은?\n4. `[1, 2]`와 같은 방향이면서 길이가 정확히 1인 벡터를 구하세요. (힌트: 길이로 나누기)\n\n### 코드 (직접 타이핑하고 실행)\n```python\nimport numpy as np\n\nwords = {\n    \"고양이\": np.array([0.9, 0.8]),\n    \"강아지\": np.array([0.8, 0.9]),\n    \"자동차\": np.array([-0.7, 0.2]),\n}\n\ndef cosine(a, b):\n    return a @ b / (np.linalg.norm(a) * np.linalg.norm(b))   # @ 는 내적\n\nfor w1 in words:\n    for w2 in words:\n        if w1 < w2:\n            print(f\"{w1} vs {w2}: {cosine(words[w1], words[w2]):.3f}\")\n```\n\n**도전 과제**\n- (a) `\"트럭\"` 벡터를 직접 만들어 넣으세요. 자동차와는 코사인 0.9 이상, 고양이와는 0 이하가 되도록 숫자를 골라 보세요.\n- (b) `words[\"고양이\"] * 10`처럼 벡터 길이만 키우면 코사인 유사도는 변할까요? 먼저 예측하고 실행해서 확인하세요.\n\n---\n\n## 5. 셀프 체크 퀴즈 (4분)\n\n1. 논문에서 입력 문장 전체의 의미를 담는 벡터는 무엇이 만드나요? (인코더 / 디코더)\n2. 두 벡터의 내적이 0이라는 것은 기하학적으로 무엇을 뜻하나요?\n3. 내적과 코사인 유사도의 차이는 무엇인가요?\n4. O/X: 벡터에 양수를 곱해 길이를 바꿔도 방향은 그대로다.\n5. 논문의 단어 벡터는 몇 차원인가요? (논문 3.4절에서 확인)\n\n---\n\n## 한 줄 정리 (학습노트에)\n> \"단어는 1000차원 벡터가 되고, 신경망은 그 벡터들의 내적으로 '닮음'을 잰다.\"\n\n---\n\n<details>\n<summary>정답 보기 (먼저 풀고 열기!)<\/summary>\n\n**손계산**\n1. 1×4 + 2×(−5) + 3×6 = 4 − 10 + 18 = **12**\n2. √(9+16) = **5**\n3. **0**. 두 화살표가 직각 → 서로 아무 관련이 없는 방향.\n4. 길이 √5 ≈ 2.236 → **[1/√5, 2/√5] ≈ [0.447, 0.894]**\n\n**코드 도전**\n- (a) 예: `\"트럭\": np.array([-0.8, 0.1])` → 자동차와 약 0.99, 고양이와 음수.\n- (b) **변하지 않습니다.** 코사인은 길이로 나누기 때문에 방향만 봅니다. (내적 값 자체는 10배가 됩니다.)\n\n**퀴즈**\n1. 인코더\n2. 두 벡터가 직각(서로 무관한 방향)\n3. 내적은 길이의 영향을 받고, 코사인 유사도는 길이로 나눠서 방향만 비교한다.\n4. O\n5. 1000차원 (\"1000 dimensional word embeddings\")\n<\/details>\n", "link": "논문 연결: 2장 The model (단어를 벡터로 바꾸는 부분), 초록(Abstract)"}, {"id": "day02", "short": "행렬곱은 신경망의 \"층\"이다", "md": "# Day 02. 행렬곱은 신경망의 \"층\"이다\n\n30분 · 논문 연결: **2장** LSTM 수식 안의 모든 `W·x`, **3.4절** \"1000 cells\", \"1000 dimensional word embeddings\", \"160,000 input vocabulary\"\n\n---\n\n## 오늘의 목표\n1. 행렬 × 벡터를 \"내적 여러 개를 한꺼번에 하는 것\"으로 이해한다.\n2. `y = Wx + b`의 각 기호가 무엇이고 shape(크기)가 어떻게 맞물리는지 설명할 수 있다.\n3. 단어 임베딩 조회가 사실은 \"원-핫 벡터 × 행렬\"이라는 걸 확인한다.\n\n**복습 (1분):** 어제 배운 내적 `[1,2]·[3,4]` = ? (답: 11)\n\n---\n\n## 1. 개념 (8분)\n\n### 1-1. 행렬 = 벡터를 여러 줄 쌓은 것\n```\nW = [[1, 0, 2],     ← 1행: 패턴 탐지기 1\n     [0, 3, 1]]     ← 2행: 패턴 탐지기 2\n```\n이 행렬의 shape은 **(2, 3)** = 2행 3열.\n\n### 1-2. 행렬 × 벡터 = 행마다 내적\n`x = [1, 2, 3]`일 때\n```\nWx = [ 1·1 + 0·2 + 2·3 ,     = [7,\n       0·1 + 3·2 + 1·3 ]        9]\n```\n**직관:** W의 각 행은 \"나는 이런 패턴을 찾는다\"는 탐지기입니다. 입력 x와 각 탐지기의 내적(닮음 정도)을 계산해 결과 벡터에 줄줄이 적습니다.\n\n### 1-3. shape 규칙 (가장 중요!)\n```\n W   ×   x   =   y\n(m,n)  (n,)    (m,)\n   └─ 같아야 함 ─┘\n```\n- 안쪽 숫자(n)가 같아야 곱할 수 있다.\n- 결과는 바깥 숫자(m) 크기가 된다.\n- 즉 **행렬은 n차원 벡터를 m차원 벡터로 바꾸는 기계**.\n\n### 1-4. 신경망의 한 층\n$$\\mathbf{y} = f(W\\mathbf{x} + \\mathbf{b})$$\n- `W`: 가중치 행렬 (학습되는 값)\n- `b`: 편향 벡터 (학습되는 값, 결과를 살짝 밀어줌)\n- `f`: 비선형 함수 (예: tanh, sigmoid). 이게 없으면 층을 아무리 쌓아도 행렬 하나와 같아집니다.\n\n파라미터 개수 = `m×n` (W) + `m` (b)\n\n### 1-5. 임베딩 조회 = 원-핫 × 행렬\n어휘가 `[나, 너, 밥]` 3개, 임베딩이 2차원이라면 임베딩 행렬 E는 (2, 3):\n```\nE = [[0.1, 0.5, -0.3],\n     [0.7, -0.2, 0.4]]\n       나    너    밥\n```\n\"너\"는 원-핫 벡터 `[0, 1, 0]`. 그러면 `E @ [0,1,0]` = E의 2번째 **열** = `[0.5, -0.2]`.\n→ 실제로는 곱셈 대신 그 열을 \"꺼내기\"만 합니다. 그래서 160,000단어 어휘도 빠르게 처리할 수 있어요.\n\n---\n\n## 2. 예제 따라하기 (6분)\n\n**문제:** 입력 3차원, 출력 2차원인 층. `W = [[1, -1, 0], [2, 0, 1]]`, `b = [0.5, -1]`, `x = [3, 1, 2]`. `f = ReLU` (음수면 0, 양수면 그대로).\n\n1. `Wx` = [1·3 + (−1)·1 + 0·2, 2·3 + 0·1 + 1·2] = [2, 8]\n2. `Wx + b` = [2.5, 7]\n3. `ReLU` → **[2.5, 7]** (둘 다 양수라 그대로)\n4. 파라미터 수 = 2×3 + 2 = **8개**\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"matvec\"><\/div>\n\n## 3. 능동 연습 (10분)\n\n### 손계산\n1. `A = [[2, 1], [0, -1], [1, 1]]`, `x = [3, 4]`일 때 `Ax`를 구하세요. 결과 shape은?\n2. (5, 7) 행렬 × (7,) 벡터의 결과 shape은? (5, 7) × (5,)는 가능한가요?\n3. 논문 규모 계산: 입력 어휘 160,000개, 임베딩 1000차원. 입력 임베딩 행렬의 파라미터는 몇 개? (단위: 백만)\n4. 1000차원 입력을 받아 1000차원을 내는 층 하나(W와 b)의 파라미터 수는?\n\n### 코드\n```python\nimport numpy as np\n\nW = np.array([[1, -1, 0],\n              [2,  0, 1]])\nb = np.array([0.5, -1])\nx = np.array([3, 1, 2])\n\ndef relu(z):\n    return np.maximum(0, z)\n\ny = relu(W @ x + b)\nprint(\"W shape:\", W.shape, \" x shape:\", x.shape, \" y:\", y, \" y shape:\", y.shape)\n\n# 임베딩 조회 = 원-핫 곱셈\nE = np.array([[0.1, 0.5, -0.3],\n              [0.7, -0.2, 0.4]])\nvocab = [\"나\", \"너\", \"밥\"]\nonehot = np.zeros(3); onehot[vocab.index(\"너\")] = 1\nprint(\"원-핫 곱:\", E @ onehot, \"  열 꺼내기:\", E[:, 1])\n```\n\n**도전 과제**\n- (a) `x`를 `np.array([3, 1])`로 바꾸면 어떤 에러가 나나요? 에러 메시지에서 shape 숫자를 찾아 읽어 보세요.\n- (b) 2층 신경망 만들기: `W2` (shape (1, 2))를 직접 정해서 `relu(W2 @ y)`를 계산하세요. 전체 흐름의 shape을 `(3,) → (2,) → (1,)`로 적어 보세요.\n- (c) 비선형 함수 없이 두 층을 쌓으면 `W2 @ (W @ x)` = `(W2 @ W) @ x`임을 코드로 확인하세요. 왜 비선형 함수가 꼭 필요한지 한 문장으로 적어 보세요.\n\n---\n\n## 4. 셀프 체크 퀴즈 (4분)\n\n1. (m, n) 행렬은 몇 차원 벡터를 몇 차원 벡터로 바꾸나요?\n2. 행렬 × 벡터의 결과 한 칸은 무엇과 무엇의 내적인가요?\n3. 임베딩 조회가 원-핫 벡터 곱셈과 같은 이유는?\n4. 비선형 함수 f가 없으면 어떤 문제가 생기나요?\n5. 논문에서 LSTM은 몇 층이고, 층마다 셀이 몇 개인가요? (3.4절)\n\n---\n\n## 한 줄 정리\n> \"LSTM의 모든 계산은 `Wx + b`이고, shape만 맞춰 읽으면 논문의 수식이 두렵지 않다.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. [2·3+1·4, 0·3+(−1)·4, 1·3+1·4] = **[10, −4, 7]**, shape (3,)\n2. **(5,)**. (5,7)×(5,)는 **불가능** (안쪽 숫자 7 ≠ 5)\n3. 160,000 × 1000 = **1억 6천만 개 (160M)**. 모델 전체 파라미터(논문: 384M)의 상당 부분이 임베딩입니다.\n4. 1000×1000 + 1000 = **1,001,000개**\n\n**코드 도전**\n- (a) `ValueError: matmul: Input operand 1 has a mismatch in its core dimension 0 ... (size 2 is different from 3)` 같은 메시지. 안쪽 숫자가 맞지 않는다는 뜻.\n- (b) 예: `W2 = np.array([[1, -0.5]])` → `relu(2.5 − 3.5) = relu(−1) = [0]`\n- (c) 선형 층을 몇 개 쌓아도 행렬 하나(W2@W)로 합쳐지므로, 비선형 함수가 없으면 깊게 쌓는 의미가 사라진다.\n\n**퀴즈**\n1. n차원 → m차원\n2. W의 해당 행과 입력 벡터 x\n3. 원-핫 벡터는 한 자리만 1이라, 곱하면 그 자리에 해당하는 열만 남는다.\n4. 여러 층이 결국 하나의 선형 변환으로 합쳐져서 복잡한 패턴을 배울 수 없다.\n5. 4층, 층마다 1000개 셀\n<\/details>\n", "link": "논문 연결: 2장 LSTM 수식 안의 모든 `W·x`, 3.4절"}, {"id": "day03", "short": "확률, 조건부확률, 그리고 연쇄법칙", "md": "# Day 03. 확률, 조건부확률, 그리고 연쇄법칙\n\n30분 · 논문 연결: **2장 식 (1)** — 논문 전체에서 가장 중요한 수식\n\n---\n\n## 오늘의 목표\n1. 결합확률 P(A, B)와 조건부확률 P(B | A)의 차이를 말로 설명할 수 있다.\n2. 연쇄법칙(chain rule)으로 \"문장의 확률\"을 \"단어별 확률의 곱\"으로 쪼갤 수 있다.\n3. 논문의 식 (1)을 읽고 각 기호의 뜻을 말할 수 있다.\n\n**복습 (1분):** (4, 1000) 행렬 × (1000,) 벡터의 결과 shape은? (답: (4,))\n\n---\n\n## 1. 개념 (8분)\n\n### 1-1. 확률의 기본\n- P(A): 사건 A가 일어날 확률, 0 ~ 1 사이\n- 가능한 모든 경우의 확률을 더하면 1\n\n### 1-2. 결합확률 vs 조건부확률\n반 학생 100명을 조사했습니다.\n\n|  | 안경 O | 안경 X | 합계 |\n|---|---|---|---|\n| 코딩 좋아함 | 30 | 10 | 40 |\n| 코딩 안 좋아함 | 20 | 40 | 60 |\n| 합계 | 50 | 50 | 100 |\n\n- **결합확률** P(코딩, 안경) = 30/100 = 0.3 → \"전체 중에서 둘 다인 사람\"\n- **조건부확률** P(안경 | 코딩) = 30/40 = 0.75 → \"코딩 좋아하는 사람 *중에서* 안경 쓴 사람\"\n\n`|` 기호는 \"~가 주어졌을 때\", \"~라는 걸 이미 알 때\"라고 읽습니다. **분모(관심 범위)가 좁아지는 것**이 핵심 직관입니다.\n\n$$P(B\\mid A) = \\frac{P(A, B)}{P(A)}$$\n\n### 1-3. 곱셈 규칙과 연쇄법칙\n위 식을 뒤집으면: $P(A, B) = P(A)\\,P(B\\mid A)$\n\n사건이 3개, 4개로 늘어나도 계속 쪼갤 수 있습니다:\n$$P(A, B, C) = P(A)\\,P(B\\mid A)\\,P(C\\mid A, B)$$\n\n이것이 **연쇄법칙**입니다. 근사가 아니라 **항상 정확히 성립하는 등식**이에요.\n\n### 1-4. 문장에 적용하기\n\"나는 밥을 먹었다\"의 확률:\n$$P(\\text{나는, 밥을, 먹었다}) = P(\\text{나는})\\cdot P(\\text{밥을}\\mid\\text{나는})\\cdot P(\\text{먹었다}\\mid\\text{나는, 밥을})$$\n\n→ \"다음 단어 맞히기\"를 반복하면 문장 전체의 확률이 나옵니다. **오늘날의 LLM도 정확히 이 구조**입니다.\n\n### 1-5. 논문의 식 (1)\n$$p(y_1,\\dots,y_{T'}\\mid x_1,\\dots,x_T) = \\prod_{t=1}^{T'} p(y_t\\mid v, y_1,\\dots,y_{t-1})$$\n\n| 기호 | 뜻 |\n|---|---|\n| $x_1..x_T$ | 입력 문장 (영어) 단어들, 길이 T |\n| $y_1..y_{T'}$ | 출력 문장 (프랑스어) 단어들, 길이 T' (T와 달라도 됨!) |\n| $v$ | 인코더가 입력 문장을 압축한 벡터 |\n| $\\prod$ | 전부 곱하라 (Σ의 곱셈 버전) |\n| $p(y_t\\mid v, y_1..y_{t-1})$ | 입력 의미 v와 지금까지 쓴 단어들이 주어졌을 때, t번째 단어의 확률 |\n\n말로 읽으면: **\"번역문 전체의 확률 = 각 단어를, (원문 의미 + 앞에 쓴 단어들)을 보고 맞힐 확률들의 곱.\"**\n\n---\n\n## 2. 예제 따라하기 (6분)\n\n입력: \"I am hungry\" → 출력 후보: \"배 고파 <EOS>\"\n\n모델이 이렇게 예측했다고 합시다.\n- p(배 | v) = 0.6\n- p(고파 | v, 배) = 0.9\n- p(<EOS> | v, 배, 고파) = 0.8\n\n**문장 확률** = 0.6 × 0.9 × 0.8 = **0.432**\n\n`<EOS>`(End Of Sentence)도 하나의 \"단어\"로 예측합니다. 그래야 모델이 **언제 멈출지**도 배울 수 있어요. 논문 2장에도 \"각 문장 끝에 <EOS>를 붙인다\"고 나옵니다.\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"condprob\"><\/div>\n\n## 3. 능동 연습 (10분)\n\n### 손계산\n1. 위 표에서 P(코딩 | 안경)을 구하세요. P(안경 | 코딩)과 같나요?\n2. P(A) = 0.5, P(B | A) = 0.4일 때 P(A, B)는?\n3. 출력 \"Je t'aime <EOS>\"에 대해 모델이 각 단계에서 정답 단어에 0.5, 0.7, 0.9, 0.95를 주었습니다. 문장 확률은?\n4. 확률을 곱하면 문장이 길어질수록 값이 어떻게 되나요? 단어 50개, 각 0.5면? (계산기 사용) 이것이 왜 컴퓨터에 문제가 될까요?\n\n### 코드: 표에서 확률 계산 + 연쇄법칙 확인\n```python\nimport numpy as np\n\n# 행: 코딩(좋아함, 안좋아함) / 열: 안경(O, X)\ncounts = np.array([[30, 10],\n                   [20, 40]])\nP = counts / counts.sum()          # 결합확률표\nP_coding = P.sum(axis=1)           # 행 합 = P(코딩)\nP_glasses = P.sum(axis=0)          # 열 합 = P(안경)\n\np_glasses_given_coding = P[0, 0] / P_coding[0]\nprint(\"P(안경|코딩) =\", p_glasses_given_coding)\n\n# 곱셈 규칙 확인: P(코딩, 안경) == P(코딩) * P(안경|코딩)\nprint(P[0, 0], \"==\", P_coding[0] * p_glasses_given_coding)\n\n# 문장 확률\nstep_probs = [0.6, 0.9, 0.8]\nprint(\"문장 확률:\", np.prod(step_probs))\n```\n\n**도전 과제**\n- (a) `P(코딩 | 안경)`을 계산하는 줄을 직접 추가하세요.\n- (b) `step_probs = [0.5] * 50`으로 바꿔 `np.prod`를 출력해 보세요. 그리고 `[0.5] * 2000`으로도 해 보세요. 무슨 일이 생기나요? (→ Day 05의 \"로그\"가 이걸 해결합니다.)\n\n---\n\n## 4. 셀프 체크 퀴즈 (4분)\n\n1. P(B | A)에서 `|` 뒤에 오는 A는 어떤 역할인가요?\n2. O/X: 연쇄법칙은 근사식이다.\n3. 식 (1)에서 T와 T'가 다를 수 있다는 것이 번역에서 왜 중요한가요?\n4. 논문이 문장 끝에 `<EOS>`를 붙이는 이유는?\n5. 식 (1)에서 t번째 단어를 예측할 때 모델이 참고하는 두 가지 정보는?\n\n---\n\n## 한 줄 정리\n> \"문장의 확률은 '다음 단어 확률'의 곱이다 — 식 (1)은 연쇄법칙을 번역에 적용한 것뿐이다.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. 30/50 = **0.6**. P(안경|코딩)=0.75와 **다릅니다.** 조건과 대상을 바꾸면 값이 달라집니다. (내일 베이즈 정리의 출발점!)\n2. 0.5 × 0.4 = **0.2**\n3. 0.5 × 0.7 × 0.9 × 0.95 ≈ **0.299**\n4. 0.5⁵⁰ ≈ 8.9 × 10⁻¹⁶. 점점 0에 가까워집니다. 매우 길면 컴퓨터가 표현할 수 있는 가장 작은 수보다 작아져 **0으로 뭉개집니다(underflow)**.\n\n**코드 도전**\n- (a) `P[0, 0] / P_glasses[0]` → 0.6\n- (b) 50개: 약 8.88e-16. 2000개: **0.0** (underflow)\n\n**퀴즈**\n1. \"이미 알고 있는 정보\", 즉 관심 범위를 A인 경우로 좁히는 조건.\n2. X (항상 정확히 성립)\n3. 언어마다 같은 뜻을 표현하는 단어 수가 다르기 때문. 입력·출력 길이를 따로 둘 수 있는 게 이 논문의 핵심 장점.\n4. 모델이 문장을 언제 끝낼지도 확률로 예측하도록 하기 위해. 덕분에 다양한 길이의 출력이 가능.\n5. 입력 문장의 요약 벡터 v, 그리고 지금까지 생성한 단어들 $y_1..y_{t-1}$\n<\/details>\n", "link": "논문 연결: 2장 식 (1) — 논문 전체에서 가장 중요한 수식"}, {"id": "day04", "short": "베이즈 정리: 조건을 뒤집는 법", "md": "# Day 04. 베이즈 정리: 조건을 뒤집는 법\n\n30분 · 논문 연결: **3.2절** 번역 결과 고르기 $\\hat T = \\arg\\max_T p(T\\mid S)$, **1장** 기존 통계 번역(SMT)과의 비교\n\n---\n\n## 오늘의 목표\n1. 베이즈 정리를 유도하고, 사전확률·가능도·사후확률이라는 이름을 붙일 수 있다.\n2. \"검사 양성인데 실제로 병일 확률\" 같은 직관에 반하는 문제를 풀 수 있다.\n3. argmax를 할 때 분모 P(B)를 무시해도 되는 이유를 설명할 수 있다.\n4. 옛날 번역기(SMT)와 이 논문이 확률을 다루는 방식의 차이를 한 문장으로 말할 수 있다.\n\n**복습 (1분):** 어제 표에서 P(안경|코딩)=0.75, P(코딩|안경)=0.6이었죠. 왜 다를까요? 오늘 그 둘을 잇는 다리를 놓습니다.\n\n---\n\n## 1. 개념 (8분)\n\n### 1-1. 유도 (외우지 말고 만들어 내기)\n곱셈 규칙은 두 방향으로 쓸 수 있습니다.\n$$P(A, B) = P(A)\\,P(B\\mid A) = P(B)\\,P(A\\mid B)$$\n오른쪽 두 개가 같으니 P(B)로 나누면:\n\n$$\\boxed{P(A\\mid B) = \\frac{P(B\\mid A)\\,P(A)}{P(B)}}$$\n\n### 1-2. 이름 붙이기\n\"A = 가설(원인), B = 관찰한 증거\"라고 생각하세요.\n\n| 항 | 이름 | 뜻 |\n|---|---|---|\n| P(A) | **사전확률 (prior)** | 증거를 보기 *전* 가설에 대한 믿음 |\n| P(B \\| A) | **가능도 (likelihood)** | 가설이 맞다면 이 증거가 나올 확률 |\n| P(A \\| B) | **사후확률 (posterior)** | 증거를 본 *후* 업데이트된 믿음 |\n| P(B) | **증거 (evidence)** | 증거 자체가 나올 전체 확률 (정규화 상수) |\n\n한 줄로: **사후 ∝ 가능도 × 사전** (∝는 \"비례한다\")\n\n### 1-3. P(B) 구하기: 전체 확률의 법칙\n$$P(B) = P(B\\mid A)P(A) + P(B\\mid \\text{not }A)P(\\text{not }A)$$\n\"B가 일어나는 모든 경로를 더한다.\"\n\n### 1-4. argmax에서는 분모가 필요 없다\n여러 가설 A₁, A₂, ... 중 가장 그럴듯한 것을 고를 때, 분모 P(B)는 모두에게 똑같습니다. 그래서\n$$\\arg\\max_A P(A\\mid B) = \\arg\\max_A P(B\\mid A)\\,P(A)$$\n`argmax`는 \"값이 가장 큰 *것*(값 자체가 아니라 그 후보)\"을 돌려준다는 뜻입니다.\n\n### 1-5. 번역 이야기: 옛날 방식 vs 이 논문\n- **옛날 통계 번역(SMT):** 영어 S를 프랑스어 T로 바꿀 때 베이즈 정리로 뒤집어서\n  $\\arg\\max_T P(T\\mid S) = \\arg\\max_T P(S\\mid T)\\cdot P(T)$\n  \"번역 모델 P(S|T)\"와 \"프랑스어다움을 재는 언어 모델 P(T)\"를 따로 만들어 곱했습니다.\n- **Seq2Seq (이 논문):** 뒤집지 않고 **P(T | S)를 신경망 하나로 직접** 학습합니다 (식 (1)). 그리고 3.2절에서 그대로 $\\hat T = \\arg\\max_T p(T\\mid S)$를 찾습니다.\n\n베이즈 정리를 알면 \"왜 이 논문이 새로웠는지\"가 보입니다.\n\n---\n\n## 2. 예제 따라하기 (6분): 검사의 함정\n\n- 어떤 병의 유병률: 1% → P(병) = 0.01\n- 병이 있으면 양성 나올 확률: 90% → P(양성 | 병) = 0.9\n- 병이 없어도 양성 나올 확률: 5% → P(양성 | 건강) = 0.05\n\n**질문:** 양성이 나왔을 때 실제로 병일 확률은? (먼저 감으로 답을 적어 보세요!)\n\n1. P(양성) = 0.9×0.01 + 0.05×0.99 = 0.009 + 0.0495 = 0.0585\n2. P(병 | 양성) = 0.009 / 0.0585 ≈ **0.154 (약 15%)**\n\n90%짜리 검사인데 15%밖에 안 됩니다! 이유: 사전확률(1%)이 너무 작아서, 건강한 99%에서 나오는 오탐이 진짜 양성보다 훨씬 많기 때문.\n\n**그림으로 확인 (10,000명):** 병 100명 중 양성 90명 / 건강 9,900명 중 양성 495명 → 양성 585명 중 진짜 병은 90명 = 15.4%.\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"bayes\"><\/div>\n\n## 3. 능동 연습 (10분)\n\n### 손계산\n1. 위 문제에서 유병률을 10%로 바꾸면 P(병 | 양성)은?\n2. 같은 사람이 **두 번째 검사도 양성**이 나왔습니다 (두 검사는 독립). 첫 검사 후 사후확률 0.154를 새 사전확률로 삼아 다시 계산하세요.\n3. 번역 후보가 두 개 있습니다. 어느 쪽을 고르나요? (P(S)는 모름)\n   - T₁: P(S|T₁) = 0.02, P(T₁) = 0.3\n   - T₂: P(S|T₂) = 0.05, P(T₂) = 0.1\n\n### 코드: 시뮬레이션으로 베이즈 정리 검증\n```python\nimport numpy as np\nrng = np.random.default_rng(0)\n\nN = 1_000_000\nsick = rng.random(N) < 0.01                       # 1%가 병\npos = np.where(sick,\n               rng.random(N) < 0.90,              # 병이면 90% 양성\n               rng.random(N) < 0.05)              # 건강하면 5% 양성\n\nprint(\"시뮬레이션 P(병|양성):\", sick[pos].mean())\n\ndef bayes(prior, p_pos_given_sick, p_pos_given_healthy):\n    evidence = p_pos_given_sick * prior + p_pos_given_healthy * (1 - prior)\n    return p_pos_given_sick * prior / evidence\n\nprint(\"공식 P(병|양성):    \", bayes(0.01, 0.9, 0.05))\n```\n\n**도전 과제**\n- (a) 검사를 연속 3번 양성 받을 때 사후확률이 어떻게 변하는지 `for` 문으로 출력하세요. (매번 결과를 다음 prior로)\n- (b) 오탐률 0.05를 0.01로 줄이면 첫 검사 후 사후확률은? 유병률과 오탐률 중 무엇이 결과를 더 크게 흔드는지 몇 가지 값으로 실험해 보세요.\n\n---\n\n## 4. 셀프 체크 퀴즈 (4분)\n\n1. 베이즈 정리를 기억 없이 유도하려면 어떤 식에서 출발하나요?\n2. 사전확률, 가능도, 사후확률 중 \"증거를 본 뒤의 믿음\"은?\n3. argmax로 최선의 후보를 고를 때 분모 P(B)를 무시해도 되는 이유는?\n4. 옛날 SMT와 Seq2Seq는 P(T|S)를 어떻게 다르게 다루나요?\n5. O/X: 정확도 90% 검사에서 양성이면 병일 확률은 항상 90%다.\n\n---\n\n## 한 줄 정리\n> \"베이즈 정리는 조건을 뒤집는 도구이고, Seq2Seq는 뒤집지 않고 P(번역|원문)을 직접 배운다.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. P(양성) = 0.9×0.1 + 0.05×0.9 = 0.09 + 0.045 = 0.135 → 0.09/0.135 ≈ **0.667 (67%)**\n2. 0.9×0.154 / (0.9×0.154 + 0.05×0.846) = 0.1386 / (0.1386 + 0.0423) ≈ **0.766 (약 77%)**\n3. T₁: 0.02×0.3 = 0.006, T₂: 0.05×0.1 = 0.005 → **T₁** 선택. (가능도는 T₂가 크지만 사전확률이 결과를 뒤집음)\n\n**코드 도전**\n- (a) 0.154 → 0.766 → 약 0.983\n  ```python\n  p = 0.01\n  for i in range(3):\n      p = bayes(p, 0.9, 0.05); print(i + 1, round(p, 3))\n  ```\n- (b) 오탐률 0.01 → 0.009/(0.009+0.0099) ≈ 0.476. 사전확률이 작을 때는 오탐률이 결과를 크게 좌우한다.\n\n**퀴즈**\n1. 곱셈 규칙 P(A,B) = P(A)P(B|A) = P(B)P(A|B)\n2. 사후확률\n3. 모든 후보에 똑같이 들어가는 상수라서 크기 순서를 바꾸지 않기 때문\n4. SMT는 베이즈로 뒤집어 P(S|T)·P(T)로 계산, Seq2Seq는 P(T|S)를 신경망 하나로 직접 모델링\n5. X (사전확률에 따라 크게 달라짐)\n<\/details>\n", "link": "논문 연결: 3.2절 번역 결과 고르기 , 1장 기존 통계 번역(SMT)과의 비교"}, {"id": "day05", "short": "소프트맥스와 로그: 점수를 확률로, 곱을 합으로", "md": "# Day 05. 소프트맥스와 로그: 점수를 확률로, 곱을 합으로\n\n30분 · 논문 연결: **2장** \"each p(y_t | v, y_1..y_{t-1}) distribution is represented with a softmax over all the words in the vocabulary\", **3.2절** 학습 목표의 `log`\n\n---\n\n## 오늘의 목표\n1. 소프트맥스가 아무 실수 점수(logit)를 확률분포로 바꾸는 과정을 손으로 계산할 수 있다.\n2. 로그의 핵심 성질 \"곱 → 합\"을 이용해 Day 03의 underflow 문제를 해결할 수 있다.\n3. 논문의 출력층이 \"80,000개 단어에 대한 소프트맥스\"라는 걸 shape으로 설명할 수 있다.\n\n**복습 (1분):** Day 03 도전 과제에서 0.5를 2000번 곱하면 무슨 일이 생겼나요? (답: 0.0이 됨)\n\n---\n\n## 1. 개념 (8분)\n\n### 1-1. 왜 소프트맥스가 필요한가\n디코더의 마지막 층은 `z = W h + b`로 단어마다 점수 하나를 냅니다 (Day 02). 이 점수(**logit**)는 음수일 수도, 10일 수도 있어요. 확률로 쓰려면 두 조건을 맞춰야 합니다:\n- 모두 0 이상\n- 합이 1\n\n### 1-2. 소프트맥스 공식\n$$\\text{softmax}(\\mathbf z)_i = \\frac{e^{z_i}}{\\sum_j e^{z_j}}$$\n1. `e^z`로 모두 양수로 만들고 (지수함수는 항상 양수)\n2. 전체 합으로 나눠 합을 1로 만든다.\n\n**직관:** 점수 차이를 \"배율\"로 바꿉니다. 점수가 1 크면 확률은 e ≈ 2.718배. 가장 큰 점수가 \"부드럽게(soft)\" 최대(max)를 차지해서 softmax.\n\n### 1-3. 논문 규모로 보기\n디코더 맨 위 은닉 벡터 h: (1000,) → W: (80000, 1000) → z: (80000,) → softmax → 80,000개 단어의 확률.\n매 단어 위치마다 이걸 계산합니다. (그래서 논문은 계산을 GPU 여러 개에 나눴어요. 3.5절)\n\n### 1-4. 로그 복습\n$\\log$는 \"e를 몇 번 곱해야 이 수가 되나\" (자연로그, ln). 핵심 성질:\n\n| 성질 | 식 |\n|---|---|\n| 곱 → 합 | $\\log(ab) = \\log a + \\log b$ |\n| 나눗셈 → 뺄셈 | $\\log(a/b) = \\log a - \\log b$ |\n| 거듭제곱 → 곱 | $\\log(a^k) = k\\log a$ |\n| 단조증가 | a > b 이면 log a > log b |\n| 특수값 | log 1 = 0, 0<p<1 이면 log p < 0 |\n\n### 1-5. 로그 확률로 underflow 해결\n$$\\log\\prod_t p_t = \\sum_t \\log p_t$$\n0.5를 2000번 곱하는 대신 log 0.5 ≈ −0.693을 2000번 더하면 −1386.3. 컴퓨터가 아주 편하게 다루는 숫자입니다.\n그리고 log는 **단조증가**라 argmax 결과도 바뀌지 않아요. 그래서 논문의 학습 목표도 확률 대신 **로그 확률의 합** $\\sum \\log p(T\\mid S)$로 씁니다.\n\n### 1-6. 실전 팁: 최댓값 빼기\n$e^{1000}$은 컴퓨터에서 무한대(overflow)가 됩니다. 모든 z에서 같은 값(보통 max)을 빼도 소프트맥스 결과는 같습니다 (분자·분모에 같은 $e^{-c}$가 곱해져 약분). 그래서 실제 구현은 `z - z.max()`부터 합니다.\n\n---\n\n## 2. 예제 따라하기 (6분)\n\n어휘 3개 [고양이, 개, 차], logit `z = [2, 1, 0]`\n\n1. e^z = [e², e¹, e⁰] ≈ [7.389, 2.718, 1.000]\n2. 합 ≈ 11.107\n3. softmax ≈ [7.389/11.107, 2.718/11.107, 1/11.107] ≈ **[0.665, 0.245, 0.090]**\n\n확인: 합 = 1.000 ✓, 점수 순서 그대로 ✓\n\n**최댓값 빼기 확인:** z − 2 = [0, −1, −2] → e^ = [1, 0.368, 0.135], 합 1.503 → [0.665, 0.245, 0.090]. 같습니다!\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"softmax\"><\/div>\n\n## 3. 능동 연습 (10분)\n\n### 손계산 (e ≈ 2.718, e² ≈ 7.389 사용)\n1. z = [0, 0, 0]의 소프트맥스는? 이 결과의 의미는?\n2. z = [1, 1, 3]의 소프트맥스를 구하세요. (힌트: 최댓값 빼면 [−2, −2, 0])\n3. log(0.5) ≈ −0.693일 때, log(0.25)와 log(0.125)를 계산 없이 구하세요.\n4. 단어 확률 0.6, 0.9, 0.8 (Day 03 예제)의 로그 확률 합을 구하세요. (log 0.6 ≈ −0.511, log 0.9 ≈ −0.105, log 0.8 ≈ −0.223) 그리고 e^(합)이 0.432인지 확인하세요.\n\n### 코드\n```python\nimport numpy as np\n\ndef softmax(z):\n    z = z - z.max()                # 최댓값 빼기 (안정성)\n    e = np.exp(z)\n    return e / e.sum()\n\nz = np.array([2.0, 1.0, 0.0])\np = softmax(z)\nprint(\"softmax:\", p.round(3), \" 합:\", p.sum())\n\n# overflow 실험\nbig = np.array([1000.0, 999.0, 998.0])\nprint(\"안전한 softmax:\", softmax(big).round(3))\nprint(\"순진한 방법:\", np.exp(big) / np.exp(big).sum())   # 경고와 nan이 나옵니다\n\n# 로그로 underflow 피하기\nprobs = np.full(2000, 0.5)\nprint(\"곱:\", np.prod(probs), \"  로그 합:\", np.log(probs).sum())\n```\n\n**도전 과제**\n- (a) **온도(temperature)**: `softmax(z / T)`를 T = 0.5, 1, 2, 10으로 계산해 보세요. T가 커지면/작아지면 분포가 어떻게 바뀌나요? (ChatGPT·Claude 같은 챗봇의 \"temperature\" 설정이 바로 이것)\n- (b) 논문 규모 흉내: `h = np.random.randn(1000)`, `W = np.random.randn(80000, 1000) * 0.01`로 `softmax(W @ h)`를 만들고 shape, 합, 가장 확률이 큰 단어 번호(`argmax`)를 출력하세요.\n\n---\n\n## 4. 셀프 체크 퀴즈 (4분)\n\n1. 소프트맥스의 두 단계는?\n2. logit이 [5, 5, 5, 5]이면 각 확률은?\n3. 소프트맥스 전에 최댓값을 빼도 결과가 같은 이유는?\n4. 확률의 곱 대신 로그 확률의 합을 쓰는 이유 두 가지는?\n5. 논문 디코더의 소프트맥스는 몇 개 단어에 대해 계산되나요?\n\n---\n\n## 1주차 마무리 (시간 남으면)\n이번 주에 배운 것을 이어서 논문 식 (1)을 다시 읽어 보세요.\n- 단어 → 벡터 (Day 01) → `Wx+b` 층 (Day 02) → 점수 → **소프트맥스** (Day 05) → $p(y_t\\mid\\dots)$ → **연쇄법칙**으로 곱 (Day 03) → **argmax**로 번역 선택 (Day 04)\n\n이 흐름을 노트에 화살표로 그려 두세요. 2주차는 \"이 모델을 어떻게 학습시키나\"입니다.\n\n---\n\n## 한 줄 정리\n> \"소프트맥스는 점수를 확률로, 로그는 곱을 합으로 — 논문의 출력층과 학습 목표가 이 두 개로 만들어진다.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. **[1/3, 1/3, 1/3]**. 모델이 아무 선호도 없음 (완전히 모름).\n2. e^[−2, −2, 0] ≈ [0.135, 0.135, 1], 합 1.271 → **[0.106, 0.106, 0.787]**\n3. log 0.25 = log(0.5²) = 2×(−0.693) = **−1.386**, log 0.125 = 3×(−0.693) = **−2.079**\n4. −0.511 − 0.105 − 0.223 = **−0.839**, e^−0.839 ≈ 0.432 ✓\n\n**코드 도전**\n- (a) T가 작을수록 가장 큰 값에 확률이 몰리고 (T→0이면 argmax와 같음), T가 클수록 균등분포에 가까워짐.\n- (b) shape (80000,), 합 1.0 (부동소수 오차 정도), argmax는 무작위 정수.\n  ```python\n  rng = np.random.default_rng(0)\n  h = rng.standard_normal(1000); W = rng.standard_normal((80000, 1000)) * 0.01\n  p = softmax(W @ h); print(p.shape, p.sum(), p.argmax())\n  ```\n\n**퀴즈**\n1. 지수함수로 양수화 → 합으로 나눠 정규화\n2. 각각 0.25\n3. 분자와 분모에 똑같이 e^(−max)가 곱해져서 약분되기 때문\n4. (1) 긴 문장에서 곱이 0으로 뭉개지는 underflow 방지, (2) 곱보다 합이 계산·미분이 쉬움. (+ log가 단조증가라 argmax가 그대로)\n5. 80,000개 (출력 어휘 크기)\n<\/details>\n", "link": "논문 연결: 2장 , 3.2절 학습 목표의 `log`"}, {"id": "day06", "short": "정보량과 엔트로피: \"놀람\"을 숫자로", "md": "# Day 06. 정보량과 엔트로피: \"놀람\"을 숫자로\n\n30분 · 논문 연결: 다음 날 배울 학습 목표(크로스엔트로피)와 **3.3절** perplexity의 기초\n\n---\n\n## 오늘의 목표\n1. 정보량 $-\\log p$가 \"얼마나 놀라운가\"를 뜻한다는 걸 직관적으로 설명할 수 있다.\n2. 엔트로피를 \"평균 놀람\"으로 계산할 수 있다 (손계산 + numpy).\n3. 엔트로피가 언제 최대·최소가 되는지 말할 수 있다.\n\n**복습 (1분):** log(ab) = ? / 0 < p < 1이면 log p의 부호는? (답: log a + log b / 음수)\n\n---\n\n## 1. 개념 (8분)\n\n### 1-1. 정보량 = 놀람의 크기\n- \"내일 해가 뜬다\" (p ≈ 1) → 하나도 안 놀람 → 정보 거의 0\n- \"내일 서울에 눈이 1미터 온다\" (p 아주 작음) → 엄청 놀람 → 정보 많음\n\n이걸 식으로:\n$$I(x) = -\\log_2 p(x) \\quad \\text{(단위: 비트, bit)}$$\n\n| p | −log₂ p | 해석 |\n|---|---|---|\n| 1 | 0 | 확실한 일, 정보 없음 |\n| 1/2 | 1 | 동전 앞뒤 하나 = 1비트 |\n| 1/4 | 2 | |\n| 1/8 | 3 | 예/아니오 질문 3번 분량 |\n\n**왜 로그?** 독립인 두 사건의 정보량이 **더해지게** 하려고. p(A,B) = p(A)p(B) → −log p(A,B) = −log p(A) − log p(B). (Day 05의 \"곱 → 합\")\n\n### 1-2. 엔트로피 = 평균 놀람\n$$H(p) = -\\sum_x p(x)\\log_2 p(x)$$\n가능한 결과마다 \"놀람 × 그 결과가 나올 확률\"을 더한 것, 즉 **놀람의 기댓값**입니다.\n\n### 1-3. 언제 크고 언제 작은가\n- **최소 (0):** 한 결과의 확률이 1 → 결과를 이미 앎\n- **최대:** 모든 결과가 똑같이 그럴듯함 (균등분포). 결과가 n개면 $\\log_2 n$\n- **직관:** 엔트로피 = **불확실성**. \"다음에 뭐가 나올지 얼마나 모르는가\"\n\n### 1-4. 언어 모델과 연결\n모델이 다음 단어로 80,000개 단어에 균등하게 확률을 주면 엔트로피는 $\\log_2 80000 ≈ 16.3$비트. 학습된 모델은 \"the 다음엔 명사가 오겠지\" 같은 지식으로 불확실성을 확 줄입니다. 학습 = 엔트로피(정확히는 내일 배울 크로스엔트로피)를 줄이는 과정!\n\n> 자연로그(ln)를 쓰면 단위가 \"nat\"이 됩니다. 딥러닝 코드는 대부분 자연로그를 씁니다. 비트와 nat은 상수배 차이일 뿐 (1 nat ≈ 1.443 bit).\n\n---\n\n## 2. 예제 따라하기 (6분)\n\n**① 공정한 동전** p = [0.5, 0.5]\nH = −(0.5×log₂0.5 + 0.5×log₂0.5) = −(0.5×(−1) + 0.5×(−1)) = **1비트**\n\n**② 찌그러진 동전** p = [0.9, 0.1] (log₂0.9 ≈ −0.152, log₂0.1 ≈ −3.322)\nH = −(0.9×(−0.152) + 0.1×(−3.322)) = 0.137 + 0.332 = **0.469비트**\n→ 결과가 거의 예측되니 불확실성이 절반 이하로.\n\n**③ 주사위** p = [1/6]×6\nH = log₂6 ≈ **2.585비트**\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"entropy\"><\/div>\n\n## 3. 능동 연습 (10분)\n\n### 손계산\n1. 확률 1/16인 사건이 일어났을 때 정보량은 몇 비트?\n2. p = [0.25, 0.25, 0.25, 0.25]의 엔트로피는?\n3. p = [0.5, 0.25, 0.25]의 엔트로피는? (log₂ 값은 −1, −2, −2)\n4. p = [1, 0, 0]의 엔트로피는? (약속: 0 × log 0 = 0)\n5. 다음 두 모델 중 \"the cat sat on the ___\" 다음 단어에 대해 엔트로피가 더 낮은 쪽은? 그게 꼭 좋은 걸까요?\n   - A: [mat 0.7, floor 0.2, 기타 0.1]\n   - B: [mat 0.34, floor 0.33, 기타 0.33]\n\n### 코드\n```python\nimport numpy as np\n\ndef entropy(p, base=2):\n    p = np.asarray(p, dtype=float)\n    p = p[p > 0]                          # 0 * log 0 = 0 처리\n    return -(p * np.log(p)).sum() / np.log(base) + 0.0   # +0.0: -0.0 표시 방지\n\nfor name, p in [(\"공정 동전\", [0.5, 0.5]),\n                (\"찌그러진 동전\", [0.9, 0.1]),\n                (\"주사위\", [1/6] * 6),\n                (\"확실\", [1, 0, 0])]:\n    print(f\"{name:8s} H = {entropy(p):.3f} bit\")\n\n# 동전 앞면 확률 q를 0~1로 바꾸며 엔트로피 관찰\nfor q in [0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99]:\n    print(q, round(entropy([q, 1 - q]), 3))\n```\n\n**도전 과제**\n- (a) 위 결과를 보고 \"동전 엔트로피 곡선\"을 노트에 손으로 그려 보세요 (가로 q, 세로 H). 어디서 최대인가요?\n- (b) 한국어 문장 하나(예: \"가나다라가나가가\")의 글자 빈도로 확률분포를 만들고 엔트로피를 구해 보세요. (힌트: `from collections import Counter`)\n- (c) `entropy([1/80000] * 80000)`이 `np.log2(80000)`과 같은지 확인하세요.\n\n---\n\n## 4. 셀프 체크 퀴즈 (4분)\n\n1. 정보량을 −log p로 정의하면 좋은 점은?\n2. 엔트로피를 한 단어로 표현하면?\n3. 결과가 n가지일 때 엔트로피의 최댓값은?\n4. O/X: 엔트로피가 0이면 결과를 확실히 안다는 뜻이다.\n5. 언어 모델이 학습할수록 다음 단어 예측의 불확실성은 어떻게 되어야 하나요?\n\n---\n\n## 한 줄 정리\n> \"엔트로피 = 평균 놀람 = 불확실성. 좋은 언어 모델은 다음 단어에 대한 놀람을 줄인다.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. −log₂(1/16) = **4비트**\n2. log₂4 = **2비트**\n3. −(0.5×(−1) + 0.25×(−2) + 0.25×(−2)) = 0.5 + 0.5 + 0.5 = **1.5비트**\n4. **0**\n5. **A**가 더 낮음. 하지만 낮은 엔트로피 자체가 좋은 건 아님. 정답이 실제로 \"floor\"인데 A가 엉뚱하게 확신하면 나쁨. **\"확신이 맞는지\"를 재려면 정답 분포와 비교해야** → 내일의 크로스엔트로피.\n\n**코드 도전**\n- (a) q=0.5에서 최대(1비트), 양 끝에서 0. 뒤집힌 U자 곡선.\n- (b) 예:\n  ```python\n  from collections import Counter\n  s = \"가나다라가나가가\"\n  c = Counter(s); p = np.array(list(c.values())) / len(s)\n  print(entropy(p))   # 가 4, 나 2, 다 1, 라 1 → 1.75비트\n  ```\n- (c) 둘 다 약 16.288\n\n**퀴즈**\n1. 독립 사건의 정보량이 더해지고, 드문 사건일수록 값이 커져 \"놀람\"과 맞아떨어짐.\n2. 불확실성 (평균 놀람)\n3. log₂ n (균등분포일 때)\n4. O\n5. 줄어들어야 함\n<\/details>\n", "link": "논문 연결: 다음 날 배울 학습 목표(크로스엔트로피)와 3.3절 perplexity의 기초"}, {"id": "day07", "short": "크로스엔트로피와 KL 발산: 모델의 \"틀림\"을 재는 자", "md": "# Day 07. 크로스엔트로피와 KL 발산: 모델의 \"틀림\"을 재는 자\n\n30분 · 논문 연결: **3.2절** 학습 목표\n$$\\frac{1}{|S|}\\sum_{(T,S)\\in S}\\log p(T\\mid S)$$\n\"를 최대화한다\" = 크로스엔트로피를 최소화한다.\n\n---\n\n## 오늘의 목표\n1. 크로스엔트로피 H(p, q)를 \"정답 분포 p 기준으로, 모델 q가 느끼는 평균 놀람\"으로 설명할 수 있다.\n2. 정답이 원-핫일 때 크로스엔트로피가 $-\\log q(\\text{정답})$ 하나로 줄어든다는 걸 보일 수 있다.\n3. KL 발산 = 크로스엔트로피 − 엔트로피 관계를 이해한다.\n4. 논문의 학습 목표를 \"토큰별 크로스엔트로피의 합\"으로 다시 쓸 수 있다.\n\n**복습 (1분):** p = [0.5, 0.5]의 엔트로피는? (답: 1비트) 어제 퀴즈 5번: \"확신이 맞는지 재려면?\" → 오늘 답합니다.\n\n---\n\n## 1. 개념 (8분)\n\n> 오늘부터는 딥러닝 관례대로 **자연로그(ln)** 를 씁니다 (단위 nat).\n\n### 1-1. 두 분포 비교하기\n- **p**: 진짜 분포 (정답)\n- **q**: 모델이 예측한 분포\n\n$$H(p, q) = -\\sum_x p(x)\\log q(x)$$\n\n엔트로피 식에서 log 안만 q로 바뀌었습니다. 뜻: \"**실제로는 p를 따라 일이 벌어지는데, 나는 q라고 믿고 있을 때** 느끼는 평균 놀람.\"\n\n### 1-2. 핵심 성질\n$$H(p, q) \\ge H(p), \\qquad \\text{등호는 } q = p \\text{ 일 때만}$$\n모델이 진짜 분포와 정확히 같아질 때 크로스엔트로피가 가장 작습니다. → **크로스엔트로피를 줄이면 모델이 진짜에 가까워진다.** 이것이 학습의 원리!\n\n### 1-3. KL 발산 = \"추가로 놀란 양\"\n$$D_{KL}(p\\,\\|\\,q) = H(p, q) - H(p) = \\sum_x p(x)\\log\\frac{p(x)}{q(x)} \\ \\ge 0$$\n진짜 분포를 몰라서 생기는 **낭비(추가 놀람)**. p가 고정이면 H(p)는 상수라서, **크로스엔트로피 최소화 = KL 최소화**입니다.\n주의: KL은 거리처럼 쓰지만 대칭이 아닙니다. $D_{KL}(p\\|q) \\ne D_{KL}(q\\|p)$.\n\n### 1-4. 정답이 원-핫일 때 (분류·언어모델의 실제 상황)\n학습 데이터에서 다음 단어 정답은 하나, 예를 들어 \"mat\". 그러면 p = [0, ..., 1(mat), ..., 0].\n$$H(p, q) = -\\big(0 + \\dots + 1\\cdot\\log q(\\text{mat}) + \\dots + 0\\big) = -\\log q(\\text{mat})$$\n→ **\"정답 단어에 준 확률의 음의 로그.\"** 정답에 1을 주면 손실 0, 0에 가깝게 주면 손실 → ∞.\n\n### 1-5. 논문의 학습 목표 다시 쓰기\nDay 03 식 (1) + Day 05 로그:\n$$\\log p(T\\mid S) = \\sum_{t=1}^{T'} \\log p(y_t\\mid v, y_{<t})$$\n그러니까\n$$-\\log p(T\\mid S) = \\sum_t \\underbrace{-\\log p(y_t\\mid v, y_{<t})}_{t\\text{번째 단어의 크로스엔트로피}}$$\n논문이 말하는 \"로그 확률을 최대화\"는 **\"모든 위치의 크로스엔트로피 합을 최소화\"** 와 같은 말입니다. $\\frac{1}{|S|}$는 데이터셋 문장 수로 나눠 평균을 낸 것.\n\n이 이름이 **음의 로그 가능도 (NLL, negative log-likelihood)** 이고, PyTorch의 `CrossEntropyLoss`가 정확히 이것을 계산합니다.\n\n---\n\n## 2. 예제 따라하기 (6분)\n\n어휘 [mat, floor, dog], 정답 \"mat\" → p = [1, 0, 0]\n\n| 모델 | q | 크로스엔트로피 = −ln q(mat) |\n|---|---|---|\n| 좋은 모델 | [0.7, 0.2, 0.1] | −ln 0.7 ≈ **0.357** |\n| 애매한 모델 | [0.34, 0.33, 0.33] | −ln 0.34 ≈ **1.079** |\n| 틀린 확신 | [0.05, 0.05, 0.9] | −ln 0.05 ≈ **2.996** |\n\n\"틀린 확신\"이 가장 크게 벌받습니다. 어제의 질문 \"낮은 엔트로피가 좋은가?\"에 대한 답: **확신 자체가 아니라, 정답에 확신해야 좋다.**\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"crossent\"><\/div>\n\n## 3. 능동 연습 (10분)\n\n### 손계산 (ln 0.5 ≈ −0.693, ln 0.9 ≈ −0.105, ln 0.1 ≈ −2.303, ln 0.25 ≈ −1.386)\n1. 정답 원-핫 [0, 1], 예측 q = [0.5, 0.5]일 때 크로스엔트로피는?\n2. 같은 정답, 예측 q = [0.1, 0.9]일 때는? q = [0.9, 0.1]일 때는?\n3. 번역 \"Je t'aime <EOS>\"(3토큰)의 각 정답 확률이 0.5, 0.9, 0.25였다면 문장의 −log p(T|S)는?\n4. p = [0.5, 0.5], q = [0.9, 0.1]일 때 H(p, q)와 D_KL(p‖q)를 구하세요. (H(p) = ln 2 ≈ 0.693)\n\n### 코드\n```python\nimport numpy as np\n\ndef cross_entropy(p, q):\n    p, q = np.asarray(p, float), np.asarray(q, float)\n    return -(p * np.log(q)).sum()\n\ndef entropy(p):\n    p = np.asarray(p, float); p = p[p > 0]\n    return -(p * np.log(p)).sum()\n\ndef kl(p, q):\n    return cross_entropy(p, q) - entropy(p)\n\ntarget = [1, 0, 0]\nfor q in [[0.7, 0.2, 0.1], [0.34, 0.33, 0.33], [0.05, 0.05, 0.9]]:\n    print(q, \"CE =\", round(cross_entropy(target, q), 3))\n\n# H(p,q) >= H(p) 확인: q를 무작위로 많이 뽑아 보기\nrng = np.random.default_rng(0)\np = np.array([0.6, 0.3, 0.1])\nqs = rng.dirichlet([1, 1, 1], size=10000)      # 무작위 확률분포 1만 개\nces = np.array([cross_entropy(p, q) for q in qs])\nprint(\"H(p) =\", round(entropy(p), 4), \"  최소 CE =\", round(ces.min(), 4),\n      \"  그때의 q =\", qs[ces.argmin()].round(2))\n```\n\n**도전 과제**\n- (a) `kl(p, q)`와 `kl(q, p)`를 몇 쌍 계산해서 대칭이 아님을 확인하세요.\n- (b) 문장 손실 함수 만들기: 각 위치의 예측분포 리스트 `Q`와 정답 인덱스 리스트 `y`를 받아 $-\\sum_t \\log Q[t][y_t]$를 돌려주는 `sentence_nll(Q, y)`를 작성하세요. 3번 문제로 검증!\n- (c) q(정답)을 0.001 ~ 1로 바꾸며 −ln q를 출력해 보고, 손실 곡선을 노트에 그리세요.\n\n---\n\n## 4. 셀프 체크 퀴즈 (4분)\n\n1. 크로스엔트로피 H(p, q)에서 p와 q는 각각 무엇인가요?\n2. 정답이 원-핫일 때 크로스엔트로피는 어떤 간단한 식이 되나요?\n3. 크로스엔트로피 최소화가 KL 최소화와 같은 이유는?\n4. 논문의 \"log p(T|S)를 최대화\"를 크로스엔트로피 언어로 바꾸면?\n5. O/X: KL 발산은 대칭이다.\n\n---\n\n## 한 줄 정리\n> \"논문의 학습 = 번역문 각 단어 위치에서 '정답 단어 확률의 −log'를 합한 값(크로스엔트로피)을 줄이는 것.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. −ln 0.5 ≈ **0.693**\n2. [0.1, 0.9] → −ln 0.9 ≈ **0.105** / [0.9, 0.1] → −ln 0.1 ≈ **2.303**\n3. −(ln 0.5 + ln 0.9 + ln 0.25) = 0.693 + 0.105 + 1.386 = **2.184**\n4. H(p,q) = −(0.5 ln 0.9 + 0.5 ln 0.1) = 0.5×0.105 + 0.5×2.303 ≈ **1.204**, KL = 1.204 − 0.693 ≈ **0.511**\n\n**코드 도전**\n- (a) 예: p=[0.5,0.5], q=[0.9,0.1] → kl(p,q) ≈ 0.511, kl(q,p) ≈ 0.368\n- (b)\n  ```python\n  def sentence_nll(Q, y):\n      return -sum(np.log(Q[t][y[t]]) for t in range(len(y)))\n  Q = [[0.5, 0.3, 0.2], [0.05, 0.9, 0.05], [0.25, 0.25, 0.5]]\n  print(sentence_nll(Q, [0, 1, 0]))   # ≈ 2.184\n  ```\n- (c) q→1이면 0, q→0이면 급격히 커짐 (무한대로)\n\n**퀴즈**\n1. p = 진짜(정답) 분포, q = 모델의 예측 분포\n2. −log q(정답)\n3. KL = H(p,q) − H(p)이고 H(p)는 모델과 무관한 상수라서\n4. 모든 단어 위치의 크로스엔트로피(= −log 정답확률) 합을 최소화\n5. X\n<\/details>\n", "link": "논문 연결: 3.2절 학습 목표"}, {"id": "day08", "short": "Perplexity와 경사하강: 성적표와 공부법", "md": "# Day 08. Perplexity와 경사하강: 성적표와 공부법\n\n30분 · 논문 연결: **3.3절** \"the LSTM's test perplexity dropped from 5.8 to 4.7\", **3.4절** \"SGD without momentum, with a fixed learning rate of 0.7\"\n\n---\n\n## 오늘의 목표\n1. Perplexity = $e^{\\text{평균 크로스엔트로피}}$를 계산하고 \"몇 개 중에 고민하는가\"로 해석할 수 있다.\n2. 경사하강법이 \"기울기 반대로 조금씩 내려가기\"라는 걸 손으로 2~3스텝 계산할 수 있다.\n3. 소프트맥스 + 크로스엔트로피의 기울기가 `q − 정답원핫`이라는 결과를 코드로 확인한다.\n\n**복습 (1분):** 정답 확률이 0.5일 때 크로스엔트로피는? (답: −ln 0.5 ≈ 0.693)\n\n---\n\n## 1. 개념 A: Perplexity (4분)\n\n크로스엔트로피(nat)는 해석이 어렵습니다. 그래서 지수를 씌워 원래 \"개수\" 단위로 돌려놓습니다.\n$$\\text{PPL} = \\exp\\Big(\\frac{1}{N}\\sum_{t=1}^{N} -\\log q(y_t)\\Big)$$\n(N = 전체 토큰 수)\n\n**해석:** \"모델이 매 단어마다 평균적으로 **PPL개의 후보 중에서 똑같이 고민하는** 것과 같다.\"\n- 균등분포 n개 → PPL = n\n- 모든 정답에 확률 1 → PPL = 1 (완벽)\n\n논문에서 입력을 뒤집었더니 PPL이 **5.8 → 4.7**: 다음 프랑스어 단어를 고를 때 약 6개 중 고민하던 게 약 5개 중 고민하는 수준으로 줄었다는 뜻입니다. (80,000개 어휘인 걸 생각하면 둘 다 굉장히 잘 하는 거죠!)\n\n## 2. 개념 B: 경사하강법 (5분)\n\n### 2-1. 비유\n안개 낀 산에서 가장 낮은 곳(손실 최소)을 찾는 중. 앞이 안 보이니 **발밑의 기울기**만 느끼고, 내려가는 방향으로 한 걸음.\n$$w \\leftarrow w - \\eta\\,\\frac{\\partial L}{\\partial w}$$\n- $\\frac{\\partial L}{\\partial w}$: 기울기 (w를 조금 늘리면 손실이 얼마나 느나)\n- $\\eta$ (에타): **학습률**, 걸음 크기. 논문은 0.7.\n\n### 2-2. 확률적 경사하강 (SGD)\n데이터 전체로 기울기를 구하면 너무 느립니다. 그래서 **미니배치**(논문은 문장 128개)로 기울기를 *추정*해서 걸음을 뗍니다. 이 추정이 왜 믿을 만한지는 내일 **중심극한정리**에서!\n\n### 2-3. 소프트맥스 + 크로스엔트로피의 기울기 (결과만 기억)\nlogit z → q = softmax(z) → L = −log q(정답)일 때\n$$\\frac{\\partial L}{\\partial z} = q - y_{\\text{원핫}}$$\n**직관:** 정답 칸은 q−1 (음수) → 경사하강으로 빼면 정답 점수가 **올라감**. 오답 칸은 q (양수) → 점수가 **내려감**. 많이 틀릴수록 크게 고침. 아름답게 단순하죠.\n\n---\n\n## 3. 예제 따라하기 (6분)\n\n**① Perplexity:** 3토큰 문장, 정답 확률 0.5, 0.9, 0.25 (어제 3번 문제)\n- 합 CE = 2.184 → 평균 = 0.728 → PPL = e^0.728 ≈ **2.07**\n\n**② 경사하강 1차원:** L(w) = (w − 3)², 기울기 = 2(w − 3), η = 0.1, 시작 w = 0\n| 스텝 | w | 기울기 | 새 w |\n|---|---|---|---|\n| 1 | 0 | −6 | 0 − 0.1×(−6) = 0.6 |\n| 2 | 0.6 | −4.8 | 1.08 |\n| 3 | 1.08 | −3.84 | 1.464 |\n3을 향해 다가가고, 가까워질수록 걸음이 작아집니다.\n\n**③ 소프트맥스 기울기:** z = [2, 1, 0] → q = [0.665, 0.245, 0.090], 정답 = 0번\n∂L/∂z = [0.665−1, 0.245, 0.090] = **[−0.335, 0.245, 0.090]**\nη = 1로 한 걸음: z ← z − grad = [2.335, 0.755, −0.090] → 정답 점수 ↑, 오답 ↓ ✓\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"gd\"><\/div>\n\n## 4. 능동 연습 (10분)\n\n### 손계산\n1. 모든 토큰의 정답 확률이 0.25인 모델의 perplexity는?\n2. 평균 크로스엔트로피가 ln 5.8 ≈ 1.758이면 PPL은? 논문의 4.7이 되려면 평균 CE는 얼마? (ln 4.7 ≈ 1.548)\n3. L(w) = (w − 3)², η = 1.1, 시작 w = 0으로 두 스텝 진행하세요. 무슨 일이 생기나요?\n4. z = [0, 0], 정답 1번일 때 ∂L/∂z는?\n\n### 코드: 손실을 줄이며 확률을 학습시키기\n```python\nimport numpy as np\n\ndef softmax(z):\n    e = np.exp(z - z.max()); return e / e.sum()\n\n# 데이터: \"the cat sat on the ___\" 다음 단어 정답들 (0=mat, 1=floor, 2=dog)\ndata = np.array([0, 0, 0, 1, 0, 0, 1, 0, 0, 0])   # mat 8번, floor 2번\nz = np.zeros(3)          # 처음엔 아무것도 모름 → 균등분포\nlr = 0.5\n\nfor step in range(51):\n    q = softmax(z)\n    losses = -np.log(q[data])\n    if step % 10 == 0:\n        print(f\"step {step:2d}  q={q.round(3)}  평균CE={losses.mean():.3f}  PPL={np.exp(losses.mean()):.3f}\")\n    grad = np.zeros(3)\n    for y in data:                         # 배치 평균 기울기\n        onehot = np.eye(3)[y]\n        grad += (q - onehot) / len(data)\n    z -= lr * grad\n```\n\n**관찰 질문:** q는 결국 어떤 값에 가까워지나요? 데이터의 빈도(mat 0.8, floor 0.2, dog 0)와 비교해 보세요.\n\n**도전 과제**\n- (a) `lr`을 0.05, 5, 50으로 바꿔 보세요. 너무 작을 때/클 때 각각 어떤가요?\n- (b) 데이터 분포의 엔트로피(Day 06 함수, 자연로그)를 계산하고, 학습 후 평균 CE와 비교하세요. 왜 CE가 그 값 밑으로는 안 내려갈까요? (Day 07 핵심 성질)\n- (c) 기울기 검증: `z[0]`을 1e-5만큼 바꿨을 때 손실 변화량 / 1e-5가 `grad[0]`과 같은지 확인하세요 (수치 미분).\n\n---\n\n## 5. 셀프 체크 퀴즈 (4분)\n\n1. Perplexity 4.7을 쉬운 말로 해석하면?\n2. 경사하강에서 기울기를 \"빼는\" 이유는?\n3. 학습률이 너무 크면 어떤 일이 생기나요?\n4. 소프트맥스+크로스엔트로피 기울기 q − y에서 정답 칸의 값은 항상 음수/양수 중 무엇인가요?\n5. 논문은 어떤 옵티마이저와 학습률을 썼나요?\n\n---\n\n## 한 줄 정리\n> \"Perplexity는 크로스엔트로피의 성적표, 경사하강은 그 점수를 올리는 공부법 — 논문은 SGD(학습률 0.7)로 공부했다.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. 평균 CE = −ln 0.25 = ln 4 → PPL = **4**\n2. e^1.758 ≈ **5.8** / 평균 CE ≈ **1.548**로 약 0.21 nat 줄어야 함\n3. w: 0 → 0 − 1.1×(−6) = 6.6 → 6.6 − 1.1×(7.2) = −1.32 → … 3을 넘어 반대편으로 점점 더 크게 튀며 **발산**. 학습률이 너무 크면 학습이 망가짐.\n4. q = [0.5, 0.5] → [0.5, −0.5]\n\n**코드**\n- 관찰: q → 대략 [0.8, 0.2, 0.0x]. **데이터 빈도에 수렴**. (크로스엔트로피 최소화 = 데이터 분포 따라하기)\n- (a) 0.05: 너무 느림 / 5: 빠르게 수렴 / 50: 진동하거나 불안정할 수 있음\n- (b) H([0.8,0.2]) ≈ 0.500 nat. CE는 H(p) 아래로 못 내려감 (H(p,q) ≥ H(p)). 학습이 길어질수록 0.500에 접근.\n- (c)\n  ```python\n  def loss(z): return -np.log(softmax(z)[data]).mean()\n  eps = 1e-5; z2 = z.copy(); z2[0] += eps\n  print((loss(z2) - loss(z)) / eps)   # 같은 z에서 구한 grad[0]과 거의 같아야 함\n  ```\n\n**퀴즈**\n1. 매 단어마다 평균 4.7개 후보 중에서 고민하는 정도의 불확실성\n2. 기울기는 손실이 *증가*하는 방향이라, 반대로 가야 손실이 줄기 때문\n3. 최솟값을 지나쳐 진동하거나 발산\n4. 음수 (q−1, q<1이므로)\n5. 모멘텀 없는 SGD, 학습률 0.7 (5에폭 후부터 반 에폭마다 절반으로 줄임)\n<\/details>\n", "link": "논문 연결: 3.3절 , 3.4절"}, {"id": "day09", "short": "중심극한정리: 무작위를 많이 더하면 종 모양이 된다", "md": "# Day 09. 중심극한정리: 무작위를 많이 더하면 종 모양이 된다\n\n30분 · 논문 연결: **3.4절** \"We initialized all of the LSTM's parameters with the uniform distribution between −0.08 and 0.08\", \"batches of 128 sequences\", \"divided it by 128\"\n\n---\n\n## 오늘의 목표\n1. 기댓값(평균)과 분산을 계산하고, 표본평균의 분산이 $\\sigma^2/n$으로 줄어든다는 걸 설명할 수 있다.\n2. 중심극한정리(CLT)를 한 문장으로 말하고 시뮬레이션으로 확인한다.\n3. 논문의 (a) 균등분포 초기화와 (b) 배치 128 평균 기울기가 CLT와 어떻게 연결되는지 설명할 수 있다.\n\n**복습 (1분):** SGD는 왜 전체 데이터 대신 미니배치로 기울기를 구하나요? (답: 빠르니까. 그런데 \"추정\"이 믿을 만한가? → 오늘의 질문)\n\n---\n\n## 1. 개념 (8분)\n\n### 1-1. 기댓값과 분산\n- **기댓값** $E[X]$: 무한히 반복했을 때의 평균\n- **분산** $\\text{Var}(X) = E[(X - E[X])^2]$: 평균에서 얼마나 흩어지나\n- **표준편차** $\\sigma = \\sqrt{\\text{Var}}$: 원래 단위로 본 흩어짐\n\n주사위: E = 3.5, Var = 35/12 ≈ 2.917, σ ≈ 1.708\n\n### 1-2. 더하고 평균 내면 생기는 일 (독립일 때)\n- 합: $\\text{Var}(X_1 + \\dots + X_n) = n\\,\\sigma^2$\n- 평균: $\\text{Var}(\\bar X) = \\sigma^2 / n$ → 표준편차는 $\\sigma/\\sqrt n$\n\n**n개를 평균내면 흔들림이 √n분의 1로 줄어듭니다.** (4배 모으면 흔들림 절반)\n\n### 1-3. 중심극한정리 (CLT)\n> 독립이고 같은 분포를 따르는 무작위 값들을 충분히 많이 더하면(또는 평균 내면), **원래 분포 모양과 상관없이** 그 합은 **정규분포(종 모양)** 에 가까워진다.\n\n$$\\bar X \\approx \\mathcal N\\Big(\\mu,\\ \\frac{\\sigma^2}{n}\\Big)$$\n\n주사위 하나는 평평한(균등) 분포인데, 주사위 30개의 평균은 3.5 근처에 몰린 종 모양이 됩니다.\n\n### 1-4. 논문 연결 ① 초기화\n모든 파라미터를 $U(-0.08, 0.08)$에서 뽑습니다. 균등분포 $U(-a, a)$의 분산은 $a^2/3$.\n뉴런 하나의 입력은 $z = \\sum_{i=1}^{1000} w_i x_i$, 즉 **무작위 값 1000개의 합** → CLT에 의해 z는 대략 정규분포!\n분산 = 1000 × Var(w) × Var(x). 이 값이 너무 크면 tanh·sigmoid가 포화(평평한 끝)되어 학습이 안 되고, 너무 작으면 신호가 사라집니다. **초기화 범위(0.08)를 고르는 건 결국 \"합의 분산\"을 조절하는 일**이에요.\n\n### 1-5. 논문 연결 ② 미니배치 기울기\n배치 128개 문장의 기울기를 더한 뒤 128로 나눕니다 (3.4절). 128개 기울기의 **평균** → CLT에 의해 \"진짜 기울기\" 주위의 정규분포를 따르고, 흔들림은 $1/\\sqrt{128} ≈ 1/11.3$로 줄어듭니다. 그래서 일부 데이터만 봐도 꽤 믿을 만한 방향을 얻습니다.\n\n---\n\n## 2. 예제 따라하기 (6분)\n\n**① 표본평균의 흔들림:** 주사위 σ ≈ 1.708\n- 주사위 4개 평균의 σ = 1.708/√4 ≈ **0.854**\n- 주사위 100개 평균의 σ = 1.708/10 ≈ **0.171** → 평균이 대략 3.5 ± 0.34(2σ) 안에 95% 확률로 들어옴\n\n**② 논문 초기화의 분산:** a = 0.08\n- Var(w) = 0.08²/3 = 0.0064/3 ≈ **0.00213**, σ_w ≈ 0.046\n- 입력 x들이 분산 1이라고 하면, z = Σ₁₀₀₀ wᵢxᵢ의 분산 ≈ 1000 × 0.00213 = **2.13**, σ_z ≈ **1.46**\n- → z는 대략 N(0, 1.46²). tanh가 포화되지 않는 적당한 범위 (−3 ~ 3 정도)에 대부분 들어옴.\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"clt\"><\/div>\n\n## 3. 능동 연습 (10분)\n\n### 손계산\n1. 동전(앞=1, 뒤=0)의 기댓값과 분산은?\n2. 동전 100번 던진 앞면 개수의 기댓값과 표준편차는? CLT로 보면 앞면이 60개 이상 나올 일은 흔한가요? (힌트: 평균에서 몇 σ 떨어졌나)\n3. 배치 크기를 128에서 512로 늘리면 기울기 추정의 표준편차는 몇 배가 되나요?\n4. 입력이 1000개가 아니라 4000개인 층에서 z의 분산을 1000개일 때와 같게 하려면 균등분포 범위 a를 몇 배로 해야 하나요?\n\n### 코드: CLT를 눈으로 보기\n```python\nimport numpy as np\nrng = np.random.default_rng(0)\n\ndef text_hist(x, bins=15, width=40):\n    counts, edges = np.histogram(x, bins=bins)\n    for c, e in zip(counts, edges):\n        print(f\"{e:7.2f} | \" + \"#\" * int(width * c / counts.max()))\n\n# 1) 주사위 1개 vs 주사위 30개의 평균\none = rng.integers(1, 7, size=100_000)\nmean30 = rng.integers(1, 7, size=(100_000, 30)).mean(axis=1)\nprint(\"주사위 1개\"); text_hist(one, bins=6)\nprint(\"\\n주사위 30개 평균\"); text_hist(mean30)\nprint(\"예측 σ:\", 1.708 / np.sqrt(30), \" 실제 σ:\", mean30.std())\n\n# 2) 논문 초기화: z = Σ w_i x_i\nW = rng.uniform(-0.08, 0.08, size=(5000, 1000))   # 뉴런 5000개\nx = rng.standard_normal(1000)\nz = W @ x\nprint(\"\\n초기화 후 z 분포 (σ 예측 ≈ 1.46):\", z.std().round(3)); text_hist(z)\n```\n\n**도전 과제**\n- (a) 주사위 대신 **아주 비대칭인 분포**(예: `rng.exponential(1, size=(100_000, n))`)로 n = 1, 5, 50의 평균 히스토그램을 그려 보세요. n이 커질수록 어떻게 변하나요?\n- (b) 초기화 범위를 0.08 → 0.5로 바꾸고 `np.tanh(z)`의 히스토그램을 그려 보세요. 값이 ±1에 몰리는 \"포화\"가 보이나요? 이게 왜 학습에 나쁠까요? (힌트: tanh 그래프 끝부분의 기울기)\n- (c) 미니배치 실험: 평균 2, 표준편차 5인 \"기울기 샘플\"을 만들고, 배치 크기 1, 16, 128로 평균을 1000번씩 구해 표준편차를 비교하세요.\n\n---\n\n## 4. 셀프 체크 퀴즈 (4분)\n\n1. CLT를 한 문장으로 말하면?\n2. n개 평균의 표준편차는 원래 표준편차의 몇 배?\n3. O/X: CLT는 원래 분포가 정규분포일 때만 성립한다.\n4. 논문의 초기화에서 CLT가 적용되는 \"많은 무작위 값의 합\"은 무엇인가요?\n5. 미니배치 크기를 키우면 얻는 것과 잃는 것은?\n\n---\n\n## 한 줄 정리\n> \"무작위를 많이 더하면 종 모양이 되고 흔들림은 √n분의 1로 준다 — 초기화 범위와 배치 128은 이 원리 위에 서 있다.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. E = 0.5, Var = E[X²] − E[X]² = 0.5 − 0.25 = **0.25**\n2. 기댓값 50, 분산 100×0.25 = 25 → σ = **5**. 60개는 평균보다 2σ 위 → 정규분포에서 약 2.3% 정도로 **드문 편**.\n3. √(128/512) = **1/2배**\n4. 분산 = n × a²/3를 같게 → a² 을 1/4로 → a를 **1/2배** (0.04). (이것이 Xavier/He 초기화의 아이디어: 범위를 1/√n에 비례하게)\n\n**코드 도전**\n- (a) n=1은 한쪽으로 긴 꼬리, n=5는 조금 덜 비대칭, n=50은 거의 대칭 종 모양.\n- (b) 대부분 ±1 근처로 몰림. 그 영역에선 tanh 기울기가 거의 0 → 기울기가 전달되지 않아 학습이 멈춤 (Day 12 \"기울기 소실\"과 연결).\n- (c)\n  ```python\n  for B in [1, 16, 128]:\n      means = rng.normal(2, 5, size=(1000, B)).mean(axis=1)\n      print(B, means.std().round(3))   # ≈ 5, 1.25, 0.44\n  ```\n\n**퀴즈**\n1. 독립·동일분포 무작위 값을 많이 더하면(평균 내면) 원래 분포와 무관하게 정규분포에 가까워진다.\n2. 1/√n\n3. X\n4. 뉴런 입력 z = Σ wᵢxᵢ (1000개 항의 합)\n5. 얻는 것: 기울기 추정이 덜 흔들림. 잃는 것: 스텝당 계산·메모리 증가 (같은 계산량으로 걸음 수가 줄어듦)\n<\/details>\n", "link": "논문 연결: 3.4절"}, {"id": "day10", "short": "RNN 한 스텝 손계산 + Teacher Forcing", "md": "# Day 10. RNN 한 스텝 손계산 + Teacher Forcing\n\n30분 · 논문 연결: **2장** 디코더가 $y_1, \\dots, y_{t-1}$을 보고 $y_t$를 예측하는 구조, **3.2절** 학습 목표 $\\log p(T\\mid S)$ (정답 문장 T를 그대로 조건으로 씀)\n\n---\n\n## 오늘의 목표\n1. 순환신경망(RNN)의 한 스텝 $h_t = \\tanh(W_h h_{t-1} + W_x x_t + b)$를 손으로 계산할 수 있다.\n2. **Teacher forcing**이 무엇인지, 왜 학습할 때 쓰는지 설명할 수 있다.\n3. Teacher forcing의 약점(**exposure bias**, 학습-추론 불일치)을 코드로 직접 본다.\n\n**복습 (1분):** 논문 식 (1)에서 $y_t$를 예측할 때 조건으로 쓰는 두 가지는? (답: v, 그리고 앞 단어 $y_1..y_{t-1}$)\n\n---\n\n## 1. 개념 A: RNN 한 스텝 (4분)\n\n문장은 길이가 제각각이라, **같은 계산을 단어마다 반복**하면서 \"기억(은닉 상태) h\"를 갱신합니다.\n$$h_t = \\tanh(W_h\\,h_{t-1} + W_x\\,x_t + b)$$\n- $x_t$: t번째 단어 벡터 (Day 01)\n- $h_{t-1}$: 지금까지 읽은 내용의 요약 (기억)\n- $W_h, W_x, b$: **모든 스텝이 공유**하는 파라미터 (Day 02의 `Wx+b`가 두 개 더해진 것)\n- tanh: 값을 −1 ~ 1로 눌러 주는 비선형 함수\n\n인코더는 이걸 입력 문장 끝까지 반복하고, 마지막 h가 **v**가 됩니다. 디코더는 v에서 시작해 같은 방식으로 h를 갱신하며, 각 h에서 소프트맥스로 다음 단어를 예측합니다.\n\n> 논문은 단순 RNN 대신 **LSTM**을 씁니다. 긴 문장에서 기억이 사라지는 문제를 막기 위해 \"게이트\"를 더한 RNN이에요 (Day 12). 오늘의 손계산 원리는 똑같습니다.\n\n## 2. 개념 B: Teacher Forcing (5분)\n\n디코더는 \"앞 단어를 보고 다음 단어\"를 예측합니다. 그럼 **학습할 때 앞 단어로 무엇을 넣을까요?**\n\n| 방식 | 디코더 입력으로 넣는 앞 단어 | 언제 |\n|---|---|---|\n| **Teacher forcing** | **정답** 문장의 앞 단어 $y_{t-1}$ | 학습 |\n| Free running (자기회귀) | **모델이 방금 만든** 단어 $\\hat y_{t-1}$ | 추론(실제 번역) |\n\n비유: 받아쓰기 연습에서 학생이 한 글자 틀려도 **선생님이 정답 글자를 알려주고** 다음 글자를 쓰게 하는 것. 그래서 \"teacher forcing\".\n\n**장점**\n1. 앞에서 틀린 게 뒤로 번지지 않아 학습이 안정적이고 빠르다.\n2. 모든 위치의 입력을 미리 알기 때문에 위치별 손실을 한 번에 계산할 수 있다.\n3. 수학적으로 정확하다: 식 (1)의 $p(y_t\\mid v, y_{<t})$는 *정답* 앞 단어를 조건으로 하므로, $\\log p(T\\mid S)$를 계산하는 것 자체가 teacher forcing이다.\n\n> 논문 본문에 \"teacher forcing\"이라는 단어가 직접 나오지는 않습니다. 하지만 3.2절의 학습 목표(정답 번역 T의 로그 확률 최대화)를 계산하는 표준 방법이 바로 teacher forcing입니다. (용어는 Williams & Zipser, 1989에서 유래)\n\n**약점: Exposure bias (노출 편향)**\n학습 때는 항상 정답 앞 단어만 봤는데, 실제 번역할 때는 자기가 만든 (틀릴 수도 있는) 단어를 봅니다. 한 번 틀리면 **처음 보는 상황**에 빠져 오류가 연쇄적으로 번질 수 있어요. 논문은 이를 완화하려고 추론 때 **빔 서치**(3.2절, Day 15)를 씁니다.\n\n---\n\n## 3. 예제 따라하기 (6분): RNN 두 스텝\n\n은닉 2차원, 입력은 숫자 하나(1차원). b = 0.\n```\nW_x = [[ 1],      W_h = [[0.5, 0  ],      h_0 = [0, 0]\n       [-1]]             [0,   0.5]]\n```\n입력 x₁ = 1, x₂ = 2\n\n**스텝 1:** W_h h₀ = [0, 0], W_x x₁ = [1, −1]\nh₁ = tanh([1, −1]) ≈ **[0.762, −0.762]**\n\n**스텝 2:** W_h h₁ = [0.381, −0.381], W_x x₂ = [2, −2]\n합 = [2.381, −2.381] → h₂ = tanh(...) ≈ **[0.983, −0.983]**\n\nh₂에는 x₁과 x₂의 정보가 함께 섞여 있습니다. 이게 \"기억\"입니다.\n\n---\n\n## 직접 만져보기\n\n<div class=\"widget\" data-w=\"rnn\"><\/div>\n\n<div class=\"widget\" data-w=\"tf\"><\/div>\n\n## 4. 능동 연습 (10분)\n\n### 손계산\n1. 위 예제에서 x₃ = −1일 때 h₃를 구하세요. (tanh(−0.508) ≈ −0.469)\n2. 정답 번역이 \"나는 밥을 먹었다 <EOS>\"입니다. Teacher forcing으로 학습할 때 디코더의 각 스텝 **입력**과 **예측 목표**를 표로 쓰세요. (첫 입력은 시작 기호 `<BOS>`)\n3. 위 2번에서 모델이 첫 스텝에 \"나는\" 대신 \"너는\"을 예측했다고 합시다. Teacher forcing이면 두 번째 스텝 입력은? Free running이면?\n\n### 코드 ① RNN 스텝\n```python\nimport numpy as np\n\nW_x = np.array([[1.0], [-1.0]])\nW_h = np.array([[0.5, 0.0], [0.0, 0.5]])\nh = np.zeros(2)\nfor t, x in enumerate([1.0, 2.0, -1.0], start=1):\n    h = np.tanh(W_h @ h + W_x @ np.array([x]))\n    print(f\"h_{t} =\", h.round(3))\n```\n\n### 코드 ② Teacher forcing vs Free running\n간단한 \"디코더\"를 표 하나로 흉내 냅니다: 앞 단어 → 다음 단어 확률. 이 모델은 **\"나는\" 다음을 살짝 틀리게** 배웠습니다.\n```python\nimport numpy as np\n\nV = [\"<BOS>\", \"나는\", \"밥을\", \"빵을\", \"먹었다\", \"<EOS>\"]\n#        <BOS>  나는  밥을  빵을  먹었다 <EOS>\nP = {\"<BOS>\":  [0.00, 0.90, 0.04, 0.03, 0.02, 0.01],\n     \"나는\":   [0.00, 0.00, 0.45, 0.50, 0.04, 0.01],   # 실수: 빵을 > 밥을\n     \"밥을\":   [0.00, 0.02, 0.03, 0.03, 0.90, 0.02],\n     \"빵을\":   [0.00, 0.02, 0.03, 0.55, 0.38, 0.02],   # 빵을 다음에 또 빵을...\n     \"먹었다\": [0.00, 0.03, 0.02, 0.02, 0.03, 0.90]}\n\ntarget = [\"나는\", \"밥을\", \"먹었다\", \"<EOS>\"]\n\n# (1) Teacher forcing: 입력은 항상 정답 앞 단어\nprev, loss = \"<BOS>\", 0.0\nfor y in target:\n    q = P[prev][V.index(y)]\n    loss += -np.log(q)\n    print(f\"입력 {prev:6s} → 정답 {y:6s}  q={q:.2f}  -log q={-np.log(q):.3f}\")\n    prev = y                                   # ← 정답을 다음 입력으로!\nprint(\"teacher forcing 문장 손실:\", round(loss, 3))\n\n# (2) Free running: 입력은 모델이 직접 고른 단어 (greedy = 매번 argmax)\nprev, out = \"<BOS>\", []\nfor _ in range(8):\n    nxt = V[int(np.argmax(P[prev]))]\n    out.append(nxt)\n    if nxt == \"<EOS>\":\n        break\n    prev = nxt                                 # ← 내 예측을 다음 입력으로!\nprint(\"free running 결과:\", \" \".join(out))\n```\n\n**관찰 질문**\n- Teacher forcing 손실 계산에서는 \"나는\" 다음 실수가 손실을 조금 키울 뿐, 뒤 단어들은 정상적으로 평가됩니다. \n- Free running에서는 무슨 일이 생겼나요? 한 번의 실수가 어떻게 번졌는지 설명해 보세요. 이것이 **exposure bias**입니다.\n\n**도전 과제**\n- (a) `P[\"나는\"]`의 0.45와 0.50을 바꿔(밥을 0.50, 빵을 0.45) 다시 실행하세요. free running 결과는?\n- (b) 학습이 teacher forcing 손실을 줄인다면 `P[\"나는\"]`의 \"밥을\" 확률은 올라갈까요 내려갈까요? Day 08의 기울기 q − y로 설명해 보세요.\n- (c) **Greedy 대신 상위 2개 후보를 계속 들고 가면** 어떨까요? 노트에 \"나는 밥을…\"과 \"나는 빵을…\" 두 갈래를 그리고 각 경로의 확률 곱을 비교해 보세요. (→ Day 15 빔 서치 예습)\n\n---\n\n## 5. 셀프 체크 퀴즈 (4분)\n\n1. RNN에서 모든 스텝이 같은 $W_h, W_x$를 쓰는 것의 장점은?\n2. Teacher forcing에서 디코더 입력으로 넣는 것은?\n3. Teacher forcing이 학습을 안정적으로 만드는 이유는?\n4. Exposure bias를 한 문장으로 설명하면?\n5. 논문은 추론할 때 어떤 방법으로 더 좋은 번역을 찾나요? (3.2절)\n\n---\n\n## 2주차 마무리\n이제 논문 **2장 전체와 3.2~3.4절**을 읽을 수 있는 재료가 다 모였습니다. 시간이 남으면 3.2절(Decoding and Rescoring)을 소리 내어 읽고, 수식마다 \"이건 Day 몇에서 배운 거다\"를 옆에 적어 보세요.\n\n3주차는 논문의 모델을 직접 해부합니다: LSTM, 인코더-디코더, 입력 뒤집기 트릭, 빔 서치.\n\n---\n\n## 한 줄 정리\n> \"학습 땐 정답을 앞 단어로 넣어 주고(teacher forcing), 번역 땐 내 예측을 넣는다 — 이 차이가 exposure bias를 만든다.\"\n\n---\n\n<details>\n<summary>정답 보기<\/summary>\n\n**손계산**\n1. W_h h₂ = [0.4915, −0.4915], W_x x₃ = [−1, 1] → 합 [−0.508, 0.508] → h₃ ≈ **[−0.469, 0.469]**\n2. | 스텝 | 입력 | 예측 목표 |\n   |---|---|---|\n   | 1 | `<BOS>` | 나는 |\n   | 2 | 나는 | 밥을 |\n   | 3 | 밥을 | 먹었다 |\n   | 4 | 먹었다 | `<EOS>` |\n3. Teacher forcing: **\"나는\"** (정답). Free running: **\"너는\"** (모델 예측).\n\n**코드**\n- 코드 ① 출력: h_1 ≈ [0.762, −0.762], h_2 ≈ [0.983, −0.983], h_3 ≈ [−0.469, 0.469]\n- 코드 ② teacher forcing 손실 ≈ 0.105 + 0.799 + 0.105 + 0.105 ≈ **1.115**\n- Free running: `나는 빵을 빵을 빵을 ...` 처럼 \"빵을\"이 반복되다가 길이 제한에 걸림. 한 번 \"빵을\"로 빠지자 학습 때 거의 못 본 상황이 되어 오류가 계속 이어짐 = exposure bias.\n- (a) `나는 밥을 먹었다 <EOS>` (정답)\n- (b) 올라감. 정답 \"밥을\" 칸의 기울기는 q − 1 < 0이라 경사하강으로 빼면 점수가 증가.\n- (c) 나는(0.9)→밥을(0.45)→먹었다(0.9)→<EOS>(0.9) = 0.328 / 나는→빵을(0.5)→빵을(0.55)… 경로는 점점 작아짐. 후보를 여러 개 들고 가면 \"밥을\" 경로가 결국 이김.\n\n**퀴즈**\n1. 길이에 상관없이 같은 파라미터로 처리할 수 있고, 파라미터 수가 문장 길이에 따라 늘지 않음.\n2. 정답 문장의 이전 단어\n3. 앞의 예측 실수가 뒤로 번지지 않고, 모든 위치를 정확한 조건에서 학습할 수 있어서\n4. 학습 때는 정답 앞 단어만 보다가, 추론 때는 자기 예측(오류 포함)을 보게 되어 생기는 불일치와 오류 누적\n5. 빔 서치 (left-to-right beam search decoder). 빔 크기 1~2로도 효과가 크다고 보고.\n<\/details>\n", "link": "논문 연결: 2장 디코더가 을 보고 를 예측하는 구조, 3.2절 학습 목표 (정답 문장 T를 그대로 조건으로 씀)"}, {"id": "roadmap", "short": "3~4주차 개요", "md": "# 3~4주차 개요 (Day 11 ~ 20)\n\n1~2주차를 마치면 이 개요를 바탕으로 같은 형식(목표 → 개념 → 예제 → 능동 연습 → 퀴즈)의 전체 교재를 이어서 작성합니다. 각 날짜에 \"준비된 질문\"을 미리 적어 두었으니, 시간이 남는 날 미리 생각해 봐도 좋습니다.\n\n---\n\n## 3주차: 논문의 모델 해부\n\n### Day 11. Teacher forcing 심화\n- **목표:** exposure bias를 정량적으로 측정하고, 해결 아이디어를 비교한다.\n- **내용:** 학습/추론 입력 분포 차이 · scheduled sampling(학습 중 일정 확률로 모델 예측을 입력으로 쓰기, Bengio et al. 2015) · 왜 Transformer 시대에도 teacher forcing이 기본인가\n- **연습:** Day 10의 표 모델로 \"정답 입력 비율\"을 100% → 50%로 바꾸며 free running 성공률 시뮬레이션\n- **논문 연결:** 3.2절 학습 목표, 3.7절 긴 문장 성능\n- **준비된 질문:** 학습 때 모델 예측을 섞어 넣으면 손실 계산이 왜 더 어려워질까?\n\n### Day 12. 기울기 소실과 LSTM 게이트\n- **목표:** 단순 RNN이 긴 문장을 못 외우는 이유와 LSTM이 그걸 고치는 방식을 설명한다.\n- **내용:** 연쇄 미분(chain rule, 미분 버전) · 작은 수를 계속 곱하면 0 (Day 03 underflow와 같은 구조) · sigmoid 게이트(0~1 \"밸브\") · 원소별 곱 ⊙ · 셀 상태의 \"덧셈 고속도로\"\n- **연습:** 0.9를 50번 곱하기 vs 1.0 근처 유지 · numpy로 LSTM 한 스텝 손계산 (입력/망각/출력 게이트)\n- **논문 연결:** 2장 \"the LSTM's ability to learn long range temporal dependencies\"\n- **준비된 질문:** 망각 게이트가 항상 1이면 어떤 일이 생길까?\n\n### Day 13. 인코더-디코더와 고정 길이 벡터 v\n- **목표:** 길이가 다른 입력/출력을 \"벡터 하나\"로 잇는 구조를 설명하고 그 한계를 말한다.\n- **내용:** 인코더 마지막 은닉 상태 = v · 4층 LSTM 쌓기 · 병목(bottleneck) 문제 · 논문 3.8절의 문장 벡터 시각화(PCA, 능동/수동태에 둔감, 어순에 민감)\n- **연습:** 2차원으로 줄인 문장 벡터 그림 해석 · 코사인 유사도로 비슷한 문장 찾기 (Day 01 재활용)\n- **논문 연결:** 2장, 3.8절 Model Analysis, 그림 2\n- **준비된 질문:** 100단어짜리 문장도 1000차원 벡터 하나에 다 담을 수 있을까?\n\n### Day 14. 입력 문장 뒤집기 트릭\n- **목표:** 입력 순서를 뒤집는 것만으로 성능이 오른 이유를 \"거리\" 관점에서 설명한다.\n- **내용:** 원문 첫 단어와 번역 첫 단어 사이의 시간 거리 · \"minimal time lag\" · 평균 거리는 같지만 짧은 의존성이 생김 · 결과: perplexity 5.8→4.7, BLEU 25.9→30.6\n- **연습:** 길이 5 문장에서 대응 단어쌍 사이 거리를 정순/역순으로 표 만들기\n- **논문 연결:** 3.3절 Reversing the Source Sentences\n- **준비된 질문:** 그럼 출력도 뒤집으면 더 좋아질까?\n\n### Day 15. 빔 서치 손으로 해보기\n- **목표:** greedy 디코딩과 빔 서치를 비교하고, 빔 크기 2로 손계산한다.\n- **내용:** argmax over 모든 문장은 불가능(80,000^길이) · 후보 B개만 유지 · 로그 확률 합으로 점수 (Day 05) · 길이에 따른 점수 편향 · 논문: 빔 크기 1도 잘 되고 2면 대부분의 이득\n- **연습:** Day 10 표 모델로 빔 크기 1, 2, 3 비교 · 빔 서치 함수 직접 구현\n- **논문 연결:** 3.2절 Decoding and Rescoring, 표 1\n- **준비된 질문:** 빔을 무한히 키우면 항상 더 좋은 번역이 나올까?\n\n---\n\n## 4주차: 논문 정독과 미니 구현\n\n### Day 16. Gradient clipping과 벡터 노름\n- **목표:** 기울기 폭발을 막는 \"노름 자르기\"를 계산할 수 있다.\n- **내용:** L2 노름 복습 (Day 01) · 규칙: $s = \\|g\\|_2$, s > 5이면 $g \\leftarrow 5g/s$ · 방향은 유지, 크기만 제한 · 배치 128로 나누기 (Day 09)\n- **연습:** 기울기 [6, 8]을 노름 5로 자르기 손계산 · numpy 함수 작성\n- **논문 연결:** 3.4절 \"hard constraint on the norm of the gradient\"\n\n### Day 17. BLEU 점수 계산\n- **목표:** 기계번역 품질 지표 BLEU를 작은 예제로 손계산한다.\n- **내용:** n-gram 정밀도 · 기하평균(로그 평균, Day 05) · 짧은 번역 벌점(brevity penalty) · BLEU의 한계\n- **연습:** 참조 번역 1개 vs 후보 2개의 1~2-gram BLEU 계산 · 간단한 BLEU 함수\n- **논문 연결:** 3.6절 결과 표, BLEU 34.8 vs SMT 33.3\n\n### Day 18. 논문 1~3장 정독\n- **목표:** 지금까지 배운 것으로 논문 본문을 처음부터 읽는다.\n- **방법:** 문단마다 \"아는 개념(Day 번호) / 모르는 부분\"을 표시하는 정독 시트 제공 · 핵심 문장 10개 한국어로 요약\n- **확인 질문:** 3.1절 데이터셋 크기(1200만 문장쌍), 3.5절 병렬화(GPU 8개) 등 수치가 왜 중요했는지\n\n### Day 19. 미니 프로젝트: \"숫자열 뒤집기\" Seq2Seq\n- **목표:** PyTorch(또는 numpy)로 작은 seq2seq를 학습시켜 `[3, 1, 4] → [4, 1, 3]`을 배우게 한다.\n- **내용:** 임베딩 → LSTM 인코더 → LSTM 디코더 → 소프트맥스 → 크로스엔트로피, teacher forcing으로 학습, greedy·빔으로 추론 · 입력 뒤집기 on/off 비교 실험\n- **연결:** 1~3주차 전부\n\n### Day 20. 논문 4~5장 + 회고\n- **목표:** 관련 연구와 결론을 읽고, 이 논문의 한계가 다음 논문(Attention)으로 어떻게 이어졌는지 이해한다.\n- **내용:** 고정 길이 벡터 v의 병목 → Bahdanau et al. 2014 \"Neural Machine Translation by Jointly Learning to Align and Translate\" (어텐션) → Transformer(2017) 예고\n- **회고:** 20일 학습노트 다시 보기, 자기 평가, 다음 4주 계획 선택\n\n---\n\n## 다음 논문 후보 (5주차 이후)\n1. **Bahdanau et al. 2014** (어텐션): Seq2Seq의 병목을 직접 해결. 가장 자연스러운 다음 단계.\n2. **Vaswani et al. 2017 \"Attention Is All You Need\"**: RNN을 없앤 Transformer. 현재 LLM의 기반.\n3. **Kingma & Welling 2013 \"Auto-Encoding Variational Bayes\"**: 베이즈 정리·KL 발산을 더 깊게 쓰고 싶다면.\n", "link": ""}];
+const HOOKS = {
+  day01: "2014년, 구글의 세 연구자가 영어 문장을 프랑스어로 바꾸는 신경망을 만들었습니다. 그런데 신경망은 숫자밖에 모릅니다. 'cat'이라는 글자를 어떻게 계산에 넣었을까요? 오늘은 단어가 화살표(벡터)가 되는 순간을 봅니다.",
+  day02: "논문의 모델에는 파라미터가 3억 8천4백만 개 있습니다. 숫자가 많아 보이지만, 그 계산은 전부 한 가지 동작의 반복입니다. 행렬 × 벡터. 오늘 이 동작 하나를 손에 익히면 LSTM 수식이 '모양 맞추기'로 보이기 시작합니다.",
+  day03: "번역기가 \"배 고파\"를 내놓기 전에, 사실은 '배'일 확률, '배' 다음에 '고파'일 확률, 그다음 문장이 끝날 확률을 하나씩 계산합니다. 오늘은 논문에서 가장 중요한 식 (1)을 직접 손으로 쪼개 봅니다.",
+  day04: "건강검진 결과지에 '양성'이 찍혔습니다. 검사 정확도는 90%. 그럼 내가 병에 걸렸을 확률도 90%일까요? 많은 의사도 틀리는 이 문제를 풀고 나면, 옛날 번역기와 이 논문이 확률을 다루는 방식의 차이가 보입니다.",
+  day05: "디코더는 매 단어마다 80,000개 단어 각각에 점수를 매깁니다. -3점, 7점, 0.5점... 이 점수들을 '합이 1인 확률'로 바꾸는 장치가 소프트맥스입니다. 챗봇 설정에서 보던 'temperature'의 정체도 오늘 밝혀집니다.",
+  day06: "\"내일 해가 뜬다\"와 \"내일 서울에 눈이 1미터 온다\". 둘 중 어느 쪽이 더 많은 정보를 담고 있을까요? 놀라움을 숫자로 바꾸면 '엔트로피'가 됩니다. 언어 모델이 공부한다는 건 결국 이 숫자를 줄이는 일입니다.",
+  day07: "모델이 \"the cat sat on the ___\"에 'dog'이라고 90% 확신했는데 정답은 'mat'이었습니다. 이 모델은 얼마나 벌을 받아야 할까요? 오늘 배우는 크로스엔트로피가 바로 그 벌점표이고, 논문의 학습 목표 그 자체입니다.",
+  day08: "논문 3.3절에는 이상한 문장이 있습니다. 입력 문장을 '거꾸로' 넣었더니 perplexity가 5.8에서 4.7로 떨어졌다는 것. 이 숫자가 무슨 뜻인지, 그리고 모델이 그 숫자를 줄이려고 산을 내려가듯 학습하는 방법을 오늘 배웁니다.",
+  day09: "주사위 하나는 1부터 6까지 공평하게 나옵니다. 그런데 주사위 30개를 던져 평균을 내면 이상하게도 3.5 근처에 종 모양으로 몰립니다. 이 마법 같은 법칙이 논문의 '±0.08 초기화'와 '배치 128'을 떠받치고 있습니다.",
+  day10: "받아쓰기 연습에서 학생이 한 글자 틀리면, 선생님은 정답 글자를 알려주고 다음 글자를 쓰게 합니다. 신경망도 똑같이 배웁니다. 이 방법이 teacher forcing입니다. 그런데 시험(실제 번역) 때는 선생님이 없다면 어떻게 될까요?"
+};
+
+const QUICK = {
+  day01: [
+    {q:"두 벡터의 코사인 유사도가 −1에 가깝다면?", o:["거의 같은 방향","서로 직각","거의 정반대 방향"], a:2, w:"코사인은 방향만 봅니다. 1은 같은 방향, 0은 직각, −1은 정반대입니다."},
+    {q:"[3, 4]의 길이(노름)는?", o:["7","5","12"], a:1, w:"√(3² + 4²) = √25 = 5. 피타고라스 정리와 같습니다."},
+    {q:"벡터에 10을 곱하면 코사인 유사도는?", o:["10배가 된다","변하지 않는다","1/10이 된다"], a:1, w:"코사인은 길이로 나누기 때문에 길이를 바꿔도 그대로입니다. 내적 값은 10배가 됩니다."}
+  ],
+  day02: [
+    {q:"(1000, 160000) 행렬 × (160000,) 벡터의 결과 shape은?", o:["(160000,)","(1000,)","곱할 수 없다"], a:1, w:"안쪽 숫자 160000이 맞으니 곱할 수 있고, 결과는 바깥 숫자 1000이 됩니다."},
+    {q:"원-핫 벡터 [0, 0, 1]을 임베딩 행렬 E에 곱하면?", o:["E의 3번째 열","E의 3번째 행","E 전체의 합"], a:0, w:"1이 있는 자리의 열만 남습니다. 그래서 실제로는 곱셈 없이 그 열을 꺼내기만 합니다."},
+    {q:"층 사이에 비선형 함수가 없으면?", o:["학습이 더 빨라진다","층을 쌓아도 행렬 하나와 같아진다","파라미터가 0이 된다"], a:1, w:"W2(W1x) = (W2W1)x. 선형 변환은 아무리 겹쳐도 선형 변환 하나입니다."}
+  ],
+  day03: [
+    {q:"P(안경 | 코딩)에서 분모가 되는 집단은?", o:["학생 전체","코딩을 좋아하는 학생","안경 쓴 학생"], a:1, w:"'|' 뒤의 조건이 관심 범위를 좁힙니다. 코딩 좋아하는 40명 중 안경 쓴 30명 → 0.75."},
+    {q:"단계별 정답 확률 0.5, 0.8, 0.5인 문장의 확률은?", o:["1.8","0.2","0.6"], a:1, w:"연쇄법칙에 따라 모두 곱합니다. 0.5 × 0.8 × 0.5 = 0.2."},
+    {q:"논문이 모든 문장 끝에 <EOS>를 붙이는 이유는?", o:["문장 길이를 맞추려고","모델이 언제 멈출지 배우게 하려고","어휘 수를 늘리려고"], a:1, w:"<EOS>도 하나의 단어처럼 예측하기 때문에, 출력 길이를 모델이 스스로 정합니다."}
+  ],
+  day04: [
+    {q:"사전확률이 아주 작을 때, 정확한 검사에서 양성이 나오면?", o:["병일 확률이 매우 높다","생각보다 병일 확률이 낮을 수 있다","항상 50%다"], a:1, w:"건강한 사람이 압도적으로 많으면, 작은 오탐률도 많은 가짜 양성을 만듭니다."},
+    {q:"argmax로 최선의 후보를 고를 때 분모 P(B)를 무시해도 되는 이유는?", o:["P(B)는 항상 1이라서","모든 후보에 같은 값이라 순서를 안 바꿔서","P(B)는 계산할 수 없어서"], a:1, w:"모든 후보를 같은 수로 나누면 크기 순서는 그대로입니다."},
+    {q:"Seq2Seq가 옛 통계 번역(SMT)과 다른 점은?", o:["베이즈 정리로 P(S|T)P(T)를 계산","P(T|S)를 신경망 하나로 직접 학습","확률을 쓰지 않음"], a:1, w:"SMT는 뒤집어서 두 모델을 곱했고, Seq2Seq는 뒤집지 않고 바로 P(번역|원문)을 배웁니다."}
+  ],
+  day05: [
+    {q:"logit [3, 3, 3]의 소프트맥스는?", o:["[1, 1, 1]","[1/3, 1/3, 1/3]","[0, 0, 1]"], a:1, w:"점수가 모두 같으면 확률도 모두 같습니다. 점수 차이만 중요합니다."},
+    {q:"temperature를 아주 작게(0에 가깝게) 하면?", o:["균등분포에 가까워진다","가장 높은 점수에 확률이 몰린다","확률 합이 1보다 커진다"], a:1, w:"z/T에서 T가 작으면 점수 차이가 커져, 최고점이 거의 확률 1을 가져갑니다."},
+    {q:"확률을 곱하는 대신 로그 확률을 더하는 가장 큰 이유는?", o:["더 정확한 답이 나와서","긴 문장에서 곱이 0으로 뭉개지는 걸 막으려고","로그가 항상 양수라서"], a:1, w:"0.5를 2000번 곱하면 컴퓨터에선 0.0이 되지만, 로그 합은 −1386.3으로 멀쩡합니다."}
+  ],
+  day06: [
+    {q:"공정한 동전의 엔트로피는?", o:["0비트","1비트","2비트"], a:1, w:"−(0.5·log₂0.5 + 0.5·log₂0.5) = 1비트."},
+    {q:"엔트로피가 가장 큰 분포는?", o:["[0.97, 0.01, 0.01, 0.01]","[0.25, 0.25, 0.25, 0.25]","[0.5, 0.5, 0, 0]"], a:1, w:"모든 결과가 똑같이 그럴듯할 때 불확실성이 가장 큽니다. 4가지면 log₂4 = 2비트."},
+    {q:"확률 1/8인 일이 일어났을 때 정보량은?", o:["3비트","8비트","0.125비트"], a:0, w:"−log₂(1/8) = 3. 예/아니오 질문 세 번 분량입니다."}
+  ],
+  day07: [
+    {q:"정답이 원-핫일 때 크로스엔트로피는?", o:["모델 분포의 엔트로피","−log q(정답)","q(정답)²"], a:1, w:"정답 칸만 1이라 다른 항은 모두 0이 되고, 정답 확률의 음의 로그만 남습니다."},
+    {q:"가장 큰 손실을 받는 모델은? (정답: mat)", o:["mat 0.7","세 단어에 0.33씩","dog 0.9, mat 0.05"], a:2, w:"−ln 0.05 ≈ 3.0. 틀린 답에 확신하면 가장 크게 벌받습니다."},
+    {q:"KL 발산 D(p‖q)와 D(q‖p)는?", o:["항상 같다","일반적으로 다르다","항상 0이다"], a:1, w:"KL은 대칭이 아닙니다. 그래서 엄밀히는 '거리'가 아닙니다."}
+  ],
+  day08: [
+    {q:"모든 정답 확률이 0.2인 모델의 perplexity는?", o:["0.2","5","20"], a:1, w:"평균 CE = −ln 0.2 = ln 5 → PPL = e^(ln 5) = 5. 매번 5개 중 고민하는 셈."},
+    {q:"학습률이 너무 크면?", o:["최솟값을 지나쳐 튀거나 발산한다","학습이 너무 느려진다","손실이 항상 0이 된다"], a:0, w:"걸음이 너무 크면 골짜기를 건너뛰어 반대편 벽으로 올라갑니다."},
+    {q:"소프트맥스+크로스엔트로피에서 정답 칸 logit의 기울기는?", o:["q − 1 (음수)","q (양수)","항상 0"], a:0, w:"기울기 q − y에서 정답 칸은 q − 1 < 0. 빼면 정답 점수가 올라갑니다."}
+  ],
+  day09: [
+    {q:"주사위 100개 평균의 표준편차는 주사위 1개의 몇 배?", o:["1/100","1/10","100배"], a:1, w:"n개 평균의 표준편차는 σ/√n. √100 = 10."},
+    {q:"중심극한정리가 성립하려면 원래 분포가?", o:["반드시 정규분포여야 한다","모양과 상관없다(분산이 유한하면)","균등분포여야 한다"], a:1, w:"주사위(균등)든 지수분포(비대칭)든, 평균은 종 모양에 가까워집니다."},
+    {q:"초기화 범위를 너무 크게 잡으면 tanh 출력은?", o:["0 근처에 몰린다","±1 근처로 포화된다","정확히 정규분포가 된다"], a:1, w:"합 z의 분산이 커져 tanh 끝의 평평한 부분에 몰리고, 기울기가 거의 0이 됩니다."}
+  ],
+  day10: [
+    {q:"Teacher forcing에서 디코더의 다음 입력은?", o:["모델이 방금 예측한 단어","정답 문장의 이전 단어","항상 <BOS>"], a:1, w:"학습 중에는 정답을 넣어 줘서, 앞의 실수가 뒤로 번지지 않게 합니다."},
+    {q:"Exposure bias가 생기는 이유는?", o:["학습 때 정답만 보다가 추론 때 자기 예측을 보게 되어서","데이터가 너무 많아서","소프트맥스를 써서"], a:0, w:"처음 보는 입력(자기 실수)에 놓이면 오류가 연쇄적으로 번질 수 있습니다."},
+    {q:"RNN에서 모든 시점이 같은 W를 공유하는 장점은?", o:["길이와 상관없이 같은 파라미터로 처리","계산이 필요 없음","기억이 필요 없음"], a:0, w:"문장이 5단어든 50단어든 파라미터 수가 늘지 않습니다."}
+  ]
+};
+
+const GLOSSARY = [
+  ["벡터","숫자들의 목록. 공간 속 화살표로도 볼 수 있다. 논문의 단어 벡터는 1000차원.","day01"],
+  ["내적","같은 자리 숫자끼리 곱해 더한 값. 두 벡터가 얼마나 같은 방향인지 나타낸다.","day01"],
+  ["코사인 유사도","내적을 두 벡터 길이로 나눈 값. −1(정반대)~1(같은 방향).","day01"],
+  ["임베딩","단어마다 정해 둔 벡터. 임베딩 행렬의 한 열.","day01"],
+  ["행렬","숫자를 직사각형으로 배열한 것. n차원 벡터를 m차원으로 바꾸는 기계.","day02"],
+  ["shape","배열의 크기. (m, n)은 m행 n열.","day02"],
+  ["원-핫","한 자리만 1이고 나머지는 0인 벡터. 단어 하나를 가리킬 때 쓴다.","day02"],
+  ["편향","Wx + b의 b. 결과를 일정량 밀어 주는 학습 파라미터.","day02"],
+  ["조건부확률","P(B|A). A가 일어났다는 걸 알 때 B의 확률. 관심 범위를 A로 좁힌다.","day03"],
+  ["결합확률","P(A, B). A와 B가 동시에 일어날 확률.","day03"],
+  ["연쇄법칙","P(A,B,C) = P(A)P(B|A)P(C|A,B). 항상 정확히 성립하는 분해.","day03"],
+  ["EOS","End Of Sentence. 문장 끝을 나타내는 특수 토큰.","day03"],
+  ["베이즈 정리","P(A|B) = P(B|A)P(A)/P(B). 조건을 뒤집는 공식.","day04"],
+  ["사전확률","증거를 보기 전의 믿음 P(A).","day04"],
+  ["사후확률","증거를 본 뒤 업데이트된 믿음 P(A|B).","day04"],
+  ["가능도","가설이 맞다면 이 증거가 나올 확률 P(B|A).","day04"],
+  ["argmax","함수값을 가장 크게 만드는 '입력'(후보)을 돌려주는 연산.","day04"],
+  ["logit","소프트맥스에 들어가기 전의 점수. 아무 실수나 될 수 있다.","day05"],
+  ["소프트맥스","점수 벡터를 지수화한 뒤 합으로 나눠 확률분포로 만드는 함수.","day05"],
+  ["underflow","너무 작은 수가 컴퓨터에서 0으로 뭉개지는 현상.","day05"],
+  ["정보량","−log p. 확률 p인 일이 일어났을 때의 놀람.","day06"],
+  ["엔트로피","평균 놀람 = 불확실성. H(p) = −Σ p log p.","day06"],
+  ["크로스엔트로피","정답 분포 p 기준으로 모델 q가 느끼는 평균 놀람. 논문의 손실 함수.","day07"],
+  ["KL 발산","크로스엔트로피 − 엔트로피. 진짜 분포를 몰라 생기는 추가 놀람. 비대칭.","day07"],
+  ["NLL","Negative Log-Likelihood. −log p(정답). 원-핫 정답의 크로스엔트로피와 같다.","day07"],
+  ["perplexity","exp(평균 크로스엔트로피). 매 단어 몇 개 후보 중 고민하는지.","day08"],
+  ["경사하강","기울기의 반대 방향으로 파라미터를 조금씩 옮겨 손실을 줄이는 방법.","day08"],
+  ["학습률","경사하강 한 걸음의 크기. 논문은 0.7.","day08"],
+  ["SGD","확률적 경사하강. 미니배치로 기울기를 추정해 걸음을 뗀다.","day08"],
+  ["미니배치","한 번의 업데이트에 쓰는 데이터 묶음. 논문은 문장 128개.","day09"],
+  ["분산","평균에서 얼마나 흩어지는지. 제곱 편차의 평균.","day09"],
+  ["중심극한정리","독립 무작위 값을 많이 더하면(평균 내면) 정규분포에 가까워진다는 정리.","day09"],
+  ["정규분포","평균 중심의 대칭 종 모양 분포.","day09"],
+  ["RNN","순환신경망. 같은 계산을 시점마다 반복하며 은닉 상태(기억)를 갱신한다.","day10"],
+  ["LSTM","게이트로 기억을 조절해 긴 문장도 다루는 RNN. 논문의 핵심 부품.","day10"],
+  ["은닉 상태","RNN이 지금까지 읽은 내용을 요약해 들고 있는 벡터 h.","day10"],
+  ["teacher forcing","학습 때 디코더 입력으로 정답 이전 단어를 넣는 방식.","day10"],
+  ["exposure bias","학습 땐 정답만 보다가 추론 땐 자기 예측을 보며 생기는 불일치.","day10"],
+  ["빔 서치","후보 문장 여러 개를 동시에 들고 가며 가장 확률 높은 번역을 찾는 디코딩.","day10"],
+  ["인코더","입력 문장을 읽어 벡터 v로 압축하는 부분.","day01"],
+  ["디코더","벡터 v에서 출발해 출력 문장을 한 단어씩 만드는 부분.","day01"]
+];
+
+/* ---------- helpers ---------- */
+const SVGNS = "http://www.w3.org/2000/svg";
+function h(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const k in attrs) {
+    const v = attrs[k];
+    if (v == null) continue;
+    if (k === "class") e.className = v;
+    else if (k === "html") e.innerHTML = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v);
+  }
+  kids.flat().forEach(c => { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(String(c))); });
+  return e;
+}
+function s(tag, attrs = {}, text) {
+  const e = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (text != null) e.textContent = text;
+  return e;
+}
+let UID = 0;
+const REDRAW = [];
+function cssv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function fmt(x, d = 3) { if (!isFinite(x)) return x > 0 ? "∞" : "−∞"; return (Math.round(x * 10 ** d) / 10 ** d).toString().replace("-", "−"); }
+function shell(root, lab, title, hint) {
+  root.innerHTML = "";
+  root.append(h("div", { class: "w-head" }, h("span", { class: "lab" }, lab), h("b", {}, title)));
+  const body = h("div", { class: "w-body" });
+  if (hint) body.append(h("p", { class: "w-hint" }, hint));
+  root.append(body);
+  return body;
+}
+function slider(label, min, max, step, val, on, f = v => v) {
+  const id = "sl" + (++UID);
+  const out = h("output", { for: id }, f(val));
+  const inp = h("input", { type: "range", id, min, max, step, value: val });
+  inp.addEventListener("input", () => { out.textContent = f(+inp.value); on(+inp.value); });
+  const el = h("label", { class: "sl", for: id }, h("span", { class: "row" }, h("span", {}, label), out), inp);
+  return { el, get v() { return +inp.value; }, set(v) { inp.value = v; out.textContent = f(+inp.value); } };
+}
+function ro(label, big) {
+  const b = h("b", {}, "–");
+  const el = h("div", { class: "ro" + (big ? " big" : "") }, h("small", {}, label), b);
+  return { el, set(v) { b.textContent = v; } };
+}
+function btn(text, on, cls = "") { return h("button", { class: "btn " + cls, type: "button", onclick: on }, text); }
+function randn() { let u = 0, v = 0; while (u === 0) u = Math.random(); v = Math.random(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+function softmax(z) { const m = Math.max(...z); const e = z.map(x => Math.exp(x - m)); const S = e.reduce((a, b) => a + b, 0); return e.map(x => x / S); }
+function setupCanvas(cv, w, hgt) { const r = window.devicePixelRatio || 1; cv.width = w * r; cv.height = hgt * r; cv.style.width = w + "px"; cv.style.aspectRatio = w + " / " + hgt; const c = cv.getContext("2d"); c.setTransform(r, 0, 0, r, 0, 0); return c; }
+
+const W = {};
+
+/* ---------- 1. paper map ---------- */
+W.papermap = function (root) {
+  const body = shell(root, "논문 지도", "Seq2Seq 번역 과정 따라가기", "버튼을 누르면 영어 문장 \"A B C\"가 프랑스어 \"W X Y Z\"로 번역되는 과정을 한 단계씩 보여 줍니다. 노란색이 지금 일하는 부분입니다.");
+  const svg = s("svg", { viewBox: "0 0 790 270", width: 790, height: 270, role: "img", "aria-label": "인코더와 디코더 구조도" });
+  const defs = s("defs");
+  const mk = s("marker", { id: "arr", viewBox: "0 0 10 10", refX: 9, refY: 5, markerWidth: 7, markerHeight: 7, orient: "auto-start-reverse" });
+  mk.append(s("path", { d: "M0 0L10 5L0 10z", class: "s-muted" }));
+  defs.append(mk); svg.append(defs);
+  const node = (id, x, y, w, hh, label, cls = "") => {
+    const g = s("g", { "data-id": id, class: "pm-n " + cls });
+    g.append(s("rect", { x, y, width: w, height: hh, rx: 8, class: cls.includes("cell") ? "s-card k-ink" : "s-paper", "stroke-width": cls.includes("cell") ? 1.5 : 0, fill: "transparent" }));
+    g.append(s("text", { x: x + w / 2, y: y + hh / 2 + 5, "text-anchor": "middle", "font-size": cls.includes("cell") ? 13 : 15, "font-weight": cls.includes("cell") ? 600 : 500, class: "s-ink" }, label));
+    svg.append(g); return g;
+  };
+  const line = (x1, y1, x2, y2, dash) => svg.append(s("line", { x1, y1, x2, y2, class: "k-muted", "stroke-width": 1.4, "marker-end": "url(#arr)", "stroke-dasharray": dash ? "4 4" : "none" }));
+  svg.append(s("rect", { x: 14, y: 96, width: 316, height: 94, rx: 14, fill: "none", class: "k-line", "stroke-dasharray": "5 5" }));
+  svg.append(s("rect", { x: 388, y: 96, width: 392, height: 94, rx: 14, fill: "none", class: "k-line", "stroke-dasharray": "5 5" }));
+  svg.append(s("text", { x: 22, y: 88, "font-size": 12, class: "s-muted" }, "인코더 · 입력을 읽는다 (뒤집은 순서)"));
+  svg.append(s("text", { x: 396, y: 88, "font-size": 12, class: "s-muted" }, "디코더 · 한 단어씩 쓴다"));
+  const inp = ["C", "B", "A"];
+  inp.forEach((t, i) => {
+    const x = 30 + i * 100;
+    node("e" + i, x, 120, 74, 46, "LSTM", "cell");
+    node("in" + i, x + 17, 214, 40, 30, t);
+    line(x + 37, 213, x + 37, 168);
+    if (i < 2) line(x + 74, 143, x + 98, 143);
+  });
+  line(304, 143, 324, 143);
+  const vg = s("g", { "data-id": "v", class: "pm-n" });
+  vg.append(s("circle", { cx: 346, cy: 143, r: 20, class: "s-card k-acc", "stroke-width": 2 }));
+  vg.append(s("text", { x: 346, y: 149, "text-anchor": "middle", "font-size": 16, "font-weight": 700, class: "s-acc" }, "v"));
+  svg.append(vg);
+  line(366, 143, 398, 143);
+  const din = ["<EOS>", "W", "X", "Y", "Z"], dout = ["W", "X", "Y", "Z", "<EOS>"];
+  din.forEach((t, i) => {
+    const x = 400 + i * 76;
+    node("d" + i, x, 120, 60, 46, "LSTM", "cell");
+    node("din" + i, x + 2, 214, 56, 30, t);
+    node("out" + i, x + 2, 26, 56, 30, dout[i]);
+    line(x + 30, 213, x + 30, 168);
+    line(x + 30, 120, x + 30, 58);
+    if (i < 4) line(x + 60, 143, x + 74, 143);
+    if (i < 4) svg.append(s("path", { d: `M${x + 52} 41 C ${x + 90} 60, ${x + 64} 210, ${x + 80} 222`, fill: "none", class: "k-acc", "stroke-width": 1.1, "stroke-dasharray": "3 4", opacity: .55, "marker-end": "url(#arr)" }));
+  });
+  const steps = [
+    [[], "▶ 다음을 눌러 시작하세요. 점선 화살표는 '방금 만든 단어를 다음 칸 입력으로 넣는다'는 뜻입니다."],
+    [["in0", "e0"], "인코더가 첫 단어 'C'를 읽습니다. 단어는 먼저 1000차원 벡터(임베딩)로 바뀝니다.", "day01"],
+    [["in1", "e1"], "'B'를 읽으며, 앞에서 읽은 내용(은닉 상태)과 합칩니다. 이 안의 계산은 전부 Wx + b입니다.", "day02"],
+    [["in2", "e2"], "마지막 'A'까지 읽었습니다. 입력을 뒤집었기 때문에 원문 첫 단어 A가 번역 시작 지점과 가장 가깝습니다.", "roadmap"],
+    [["v"], "인코더의 마지막 상태가 문장 전체를 담은 벡터 v가 됩니다. 이제 v만 들고 디코더로 넘어갑니다.", "day10"],
+    [["din0", "d0", "out0"], "디코더가 v에서 출발해 첫 단어의 확률을 계산합니다. 80,000개 단어에 소프트맥스를 씌워 'W'가 가장 높게 나왔습니다.", "day05"],
+    [["din1", "d1", "out1"], "방금 쓴 'W'를 다음 칸 입력으로 넣고 'X'를 예측합니다. 학습 때는 여기에 모델 예측 대신 정답을 넣어 줍니다(teacher forcing).", "day10"],
+    [["din2", "d2", "out2", "din3", "d3", "out3"], "같은 과정을 반복합니다. 단계별 확률을 모두 곱하면 문장 전체의 확률, 논문의 식 (1)이 됩니다.", "day03"],
+    [["din4", "d4", "out4"], "<EOS>가 나오면 멈춥니다. 학습은 정답 단어들의 −log 확률 합(크로스엔트로피)을 줄이는 방향으로 진행됩니다.", "day07"]
+  ];
+  let k = 0, timer = null;
+  const cap = h("p", { class: "w-hint", style: "min-height:3.4em;color:var(--ink)" });
+  const counter = h("span", { class: "w-hint", style: "font-family:var(--f-mono)" });
+  function show() {
+    svg.querySelectorAll(".pm-n").forEach(g => g.classList.toggle("on", steps[k][0].includes(g.dataset.id)));
+    cap.innerHTML = ""; cap.append(steps[k][1]);
+    if (steps[k][2]) { cap.append(" "); cap.append(h("a", { href: "#" + steps[k][2] }, steps[k][2] === "roadmap" ? "→ 3주차 Day 14" : "→ " + steps[k][2].replace("day", "Day "))); }
+    counter.textContent = k + " / " + (steps.length - 1);
+  }
+  const playB = btn("자동 재생", () => {
+    if (timer) { clearInterval(timer); timer = null; playB.textContent = "자동 재생"; return; }
+    playB.textContent = "멈춤";
+    timer = setInterval(() => { k = (k + 1) % steps.length; show(); if (k === steps.length - 1) { clearInterval(timer); timer = null; playB.textContent = "자동 재생"; } }, 2600);
+  });
+  body.append(h("div", { class: "svgwrap" }, svg), cap,
+    h("div", { class: "btns" }, btn("처음", () => { k = 0; show(); }), btn("이전", () => { k = Math.max(0, k - 1); show(); }), btn("다음", () => { k = Math.min(steps.length - 1, k + 1); show(); }, "pri"), playB, counter));
+  const st = h("style", {}, `.pm-n.on rect{fill:var(--mark)!important}.pm-n.on text{fill:var(--mark-ink)!important;font-weight:700}.pm-n.on circle{fill:var(--mark)}`);
+  root.append(st);
+  show();
+};
+
+/* ---------- 2. dot product ---------- */
+W.dot = function (root) {
+  const body = shell(root, "실습 · Day 01", "벡터 두 개를 끌어서 내적 느끼기", "파란 화살표 a와 초록 화살표 b의 끝점을 드래그하세요. 방향이 비슷할수록 코사인이 1에 가까워집니다.");
+  const S = 300, sc = 60, O = S / 2;
+  const svg = s("svg", { viewBox: `0 0 ${S} ${S}`, width: S, height: S, style: "touch-action:none;max-width:100%;height:auto" });
+  for (let i = -2; i <= 2; i++) {
+    svg.append(s("line", { x1: O + i * sc, y1: 0, x2: O + i * sc, y2: S, class: "k-line", "stroke-width": i === 0 ? 1.5 : 1 }));
+    svg.append(s("line", { y1: O + i * sc, x1: 0, y2: O + i * sc, x2: S, class: "k-line", "stroke-width": i === 0 ? 1.5 : 1 }));
+    if (i) svg.append(s("text", { x: O + i * sc + 3, y: O + 13, "font-size": 10, class: "s-muted" }, i));
+  }
+  const vec = { a: [0.9, 0.8], b: [0.8, 0.9] };
+  const col = { a: "accent", b: "good" };
+  const els = {};
+  const arc = s("path", { fill: "none", class: "k-muted", "stroke-width": 1.2, "stroke-dasharray": "3 3" });
+  svg.append(arc);
+  for (const n of ["a", "b"]) {
+    const ln = s("line", { x1: O, y1: O, class: "k-" + (col[n] === "accent" ? "acc" : "good"), "stroke-width": 3, "stroke-linecap": "round" });
+    const hd = s("circle", { r: 11, class: "s-" + (col[n] === "accent" ? "acc" : "good"), style: "cursor:grab", "fill-opacity": .85 });
+    const tx = s("text", { "font-size": 14, "font-weight": 700, class: "s-ink" }, n);
+    svg.append(ln, hd, tx); els[n] = { ln, hd, tx };
+    hd.addEventListener("pointerdown", e => { hd.setPointerCapture(e.pointerId); drag = n; });
+    hd.addEventListener("pointerup", () => drag = null);
+  }
+  let drag = null;
+  svg.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const r = svg.getBoundingClientRect();
+    const px = (e.clientX - r.left) * S / r.width, py = (e.clientY - r.top) * S / r.height;
+    let x = Math.round(((px - O) / sc) * 10) / 10, y = Math.round(((O - py) / sc) * 10) / 10;
+    x = Math.max(-2.4, Math.min(2.4, x)); y = Math.max(-2.4, Math.min(2.4, y));
+    if (Math.abs(x) < 0.05 && Math.abs(y) < 0.05) return;
+    vec[drag] = [x, y]; draw();
+  });
+  const rA = ro("a"), rB = ro("b"), rD = ro("a · b (내적)"), rC = ro("코사인 유사도", true), rT = ro("사이 각도");
+  const calc = h("div", { class: "calc" });
+  function draw() {
+    for (const n of ["a", "b"]) {
+      const [x, y] = vec[n]; const X = O + x * sc, Y = O - y * sc;
+      els[n].ln.setAttribute("x2", X); els[n].ln.setAttribute("y2", Y);
+      els[n].hd.setAttribute("cx", X); els[n].hd.setAttribute("cy", Y);
+      els[n].tx.setAttribute("x", X + 12); els[n].tx.setAttribute("y", Y - 10);
+    }
+    const [a1, a2] = vec.a, [b1, b2] = vec.b;
+    const d = a1 * b1 + a2 * b2, na = Math.hypot(a1, a2), nb = Math.hypot(b1, b2), c = d / (na * nb);
+    const ang = Math.acos(Math.max(-1, Math.min(1, c))) * 180 / Math.PI;
+    const t1 = Math.atan2(a2, a1), t2 = Math.atan2(b2, b1);
+    const R = 26;
+    let dt = t2 - t1; while (dt > Math.PI) dt -= 2 * Math.PI; while (dt < -Math.PI) dt += 2 * Math.PI;
+    const p1 = [O + R * Math.cos(t1), O - R * Math.sin(t1)], p2 = [O + R * Math.cos(t1 + dt), O - R * Math.sin(t1 + dt)];
+    arc.setAttribute("d", `M${p1[0]} ${p1[1]} A ${R} ${R} 0 0 ${dt > 0 ? 0 : 1} ${p2[0]} ${p2[1]}`);
+    rA.set(`[${fmt(a1, 1)}, ${fmt(a2, 1)}]`); rB.set(`[${fmt(b1, 1)}, ${fmt(b2, 1)}]`);
+    rD.set(fmt(d, 2)); rC.set(fmt(c, 3)); rT.set(fmt(ang, 0) + "°");
+    calc.textContent = `a·b = ${fmt(a1,1)}×${fmt(b1,1)} + ${fmt(a2,1)}×${fmt(b2,1)} = ${fmt(d,2)}\n‖a‖ = ${fmt(na,3)},  ‖b‖ = ${fmt(nb,3)}\ncos = ${fmt(d,2)} / (${fmt(na,3)} × ${fmt(nb,3)}) = ${fmt(c,3)}   ${c > .9 ? "→ 거의 같은 방향" : c > .2 ? "→ 비슷한 편" : c > -.2 ? "→ 거의 직각 (무관)" : "→ 반대 방향"}`;
+  }
+  const preset = (a, b) => () => { vec.a = a; vec.b = b; draw(); };
+  body.append(
+    h("div", { style: "display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start" },
+      h("div", { style: "flex:0 1 300px;min-width:0" }, svg),
+      h("div", { style: "flex:1 1 220px;display:grid;gap:8px;min-width:0" },
+        h("div", { class: "readout" }, rA.el, rB.el, rD.el), h("div", { class: "readout" }, rC.el, rT.el),
+        h("div", { class: "btns" }, btn("고양이 · 강아지", preset([0.9, 0.8], [0.8, 0.9])), btn("고양이 · 자동차", preset([0.9, 0.8], [-0.7, 0.2])), btn("직각", preset([1, 0], [0, 1])), btn("정반대", preset([1, 1], [-1, -1])), btn("길이만 2배", () => { vec.b = [vec.a[0] * 2, vec.a[1] * 2]; draw(); })))),
+    calc);
+  draw();
+};
+
+/* ---------- 3. matrix × vector ---------- */
+W.matvec = function (root) {
+  const body = shell(root, "실습 · Day 02", "행렬 × 벡터 계산기", "숫자를 바꿔 보세요. 결과 y의 칸에 마우스를 올리면(또는 탭하면) 그 칸을 만든 W의 행이 노랗게 표시됩니다.");
+  const Wm = [[1, -1, 0], [2, 0, 1]], x = [3, 1, 2], b = [0.5, -1];
+  let relu = true;
+  const mkIn = (arr, i, j) => { const e = h("input", { class: "numin", type: "number", step: "0.5", value: j == null ? arr[i] : arr[i][j], "aria-label": "값" }); e.addEventListener("input", () => { const v = parseFloat(e.value) || 0; if (j == null) arr[i] = v; else arr[i][j] = v; calc(); }); return e; };
+  const wIn = Wm.map((r, i) => r.map((_, j) => mkIn(Wm, i, j)));
+  const xIn = x.map((_, i) => mkIn(x, i));
+  const bIn = b.map((_, i) => mkIn(b, i));
+  const yOut = [0, 1].map(i => h("div", { class: "numin", style: "width:auto;min-width:58px;font-weight:700;color:var(--accent);cursor:pointer", tabindex: 0 }));
+  const matW = h("div", { class: "mat", style: "grid-template-columns:repeat(3,auto)" }, ...wIn.flat());
+  const matX = h("div", { class: "mat" }, ...xIn);
+  const matB = h("div", { class: "mat" }, ...bIn);
+  const matY = h("div", { class: "mat" }, ...yOut);
+  const lines = h("div", { class: "calc" });
+  const reluB = btn("ReLU 켜짐", () => { relu = !relu; reluB.textContent = relu ? "ReLU 켜짐" : "ReLU 꺼짐"; reluB.classList.toggle("on", relu); calc(); }, "on");
+  function hl(i) { wIn.forEach((r, k) => r.forEach(e => e.classList.toggle("hl", k === i))); xIn.forEach(e => e.classList.toggle("hl", i != null)); bIn.forEach((e, k) => e.classList.toggle("hl", k === i)); }
+  yOut.forEach((e, i) => { e.addEventListener("mouseenter", () => hl(i)); e.addEventListener("mouseleave", () => hl(null)); e.addEventListener("focus", () => hl(i)); e.addEventListener("blur", () => hl(null)); });
+  function calc() {
+    const out = [];
+    let txt = "";
+    for (let i = 0; i < 2; i++) {
+      const terms = Wm[i].map((w, j) => `${fmt(w, 2)}·${fmt(x[j], 2)}`).join(" + ");
+      const z = Wm[i].reduce((a, w, j) => a + w * x[j], 0) + b[i];
+      const y = relu ? Math.max(0, z) : z;
+      out.push(y);
+      yOut[i].textContent = fmt(y, 2);
+      txt += `y${i + 1} = ${relu ? "ReLU(" : ""}${terms} + ${fmt(b[i], 2)}${relu ? ")" : ""} = ${relu ? `ReLU(${fmt(z, 2)}) = ` : ""}${fmt(y, 2)}\n`;
+    }
+    txt += `\nshape: W (2, 3) × x (3,) + b (2,) → y (2,)    파라미터 수 = 2×3 + 2 = 8`;
+    lines.textContent = txt;
+  }
+  const sym = t => h("span", { style: "font-size:20px;color:var(--muted)" }, t);
+  // shape checker
+  const m = h("input", { class: "numin", type: "number", value: 1000, "aria-label": "행 수 m" });
+  const n = h("input", { class: "numin", type: "number", value: 160000, style: "width:80px", "aria-label": "열 수 n" });
+  const k = h("input", { class: "numin", type: "number", value: 160000, style: "width:80px", "aria-label": "벡터 길이" });
+  const res = h("p", {});
+  function shape() {
+    const M = +m.value, N = +n.value, K = +k.value;
+    res.innerHTML = "";
+    if (N === K) res.append(h("span", { class: "badge good" }, "곱할 수 있음"), ` 결과 shape = (${M},)  ·  W의 파라미터 ${(M * N).toLocaleString()}개`);
+    else res.append(h("span", { class: "badge bad" }, "곱할 수 없음"), ` 안쪽 숫자 ${N} ≠ ${K}`);
+  }
+  [m, n, k].forEach(e => e.addEventListener("input", shape));
+  body.append(
+    h("div", { class: "matrow" }, h("div", {}, h("small", { class: "w-hint" }, "W (2×3)"), h("br"), matW), sym("×"), h("div", {}, h("small", { class: "w-hint" }, "x"), h("br"), matX), sym("+"), h("div", {}, h("small", { class: "w-hint" }, "b"), h("br"), matB), sym("→"), h("div", {}, h("small", { class: "w-hint" }, "y"), h("br"), matY)),
+    h("div", { class: "btns" }, reluB, btn("예제로 되돌리기", () => { [[1, -1, 0], [2, 0, 1]].forEach((r, i) => r.forEach((v, j) => { Wm[i][j] = v; wIn[i][j].value = v; })); [3, 1, 2].forEach((v, i) => { x[i] = v; xIn[i].value = v; }); [0.5, -1].forEach((v, i) => { b[i] = v; bIn[i].value = v; }); calc(); })),
+    lines,
+    h("div", { style: "border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:8px" },
+      h("b", {}, "shape 맞추기 연습"),
+      h("div", { class: "matrow" }, "W (", m, ",", n, ") × x (", k, ",)"), res,
+      h("p", { class: "w-hint" }, "기본값은 논문의 입력 임베딩 크기(1000 × 160,000)입니다. 세 번째 칸을 바꿔 에러를 만들어 보세요.")));
+  calc(); shape();
+};
+
+/* ---------- 4. conditional probability + chain rule ---------- */
+W.condprob = function (root) {
+  const body = shell(root, "실습 · Day 03", "조건을 걸면 분모가 바뀐다", "버튼으로 '누구 중에서' 볼지 고르세요. 노란 칸이 분자, 굵은 테두리가 분모(관심 범위)입니다.");
+  const C = [[30, 10], [20, 40]];
+  const rows = ["코딩 좋아함", "코딩 안 좋아함"], cols = ["안경 O", "안경 X"];
+  const cells = [[], []];
+  const tbl = h("table", {}, h("thead", {}, h("tr", {}, h("th", {}, ""), h("th", {}, cols[0]), h("th", {}, cols[1]), h("th", {}, "합계"))));
+  const tb = h("tbody");
+  rows.forEach((r, i) => { const tr = h("tr", {}, h("th", {}, r)); C[i].forEach((c, j) => { const td = h("td", { style: "font-family:var(--f-mono);text-align:center;transition:all .2s" }, c); cells[i][j] = td; tr.append(td); }); tr.append(h("td", { style: "text-align:center;color:var(--muted)" }, C[i][0] + C[i][1])); tb.append(tr); });
+  tb.append(h("tr", {}, h("th", {}, "합계"), h("td", { style: "text-align:center;color:var(--muted)" }, 50), h("td", { style: "text-align:center;color:var(--muted)" }, 50), h("td", { style: "text-align:center;color:var(--muted)" }, 100)));
+  tbl.append(tb);
+  const out = h("div", { class: "calc" });
+  const modes = {
+    all: { den: [[0, 0], [0, 1], [1, 0], [1, 1]], txt: "P(코딩, 안경) = 둘 다인 사람 / 전체 = 30 / 100 = 0.30\n→ 결합확률: 관심 범위는 학생 전체" },
+    row: { den: [[0, 0], [0, 1]], txt: "P(안경 | 코딩) = 30 / (30 + 10) = 30 / 40 = 0.75\n→ 코딩 좋아하는 40명만 남기고, 그중 안경 쓴 비율" },
+    col: { den: [[0, 0], [1, 0]], txt: "P(코딩 | 안경) = 30 / (30 + 20) = 30 / 50 = 0.60\n→ 안경 쓴 50명만 남기고, 그중 코딩 좋아하는 비율\n같은 30명인데 분모가 달라서 답이 다릅니다. (내일 베이즈 정리가 이 둘을 잇습니다)" }
+  };
+  const bs = {};
+  function set(mo) {
+    Object.values(bs).forEach(b => b.classList.remove("on")); bs[mo].classList.add("on");
+    for (let i = 0; i < 2; i++) for (let j = 0; j < 2; j++) {
+      const inDen = modes[mo].den.some(([a, b]) => a === i && b === j);
+      cells[i][j].classList.toggle("hl", i === 0 && j === 0);
+      cells[i][j].style.outline = inDen ? "2px solid var(--ink)" : "none";
+      cells[i][j].style.opacity = inDen ? 1 : .3;
+    }
+    out.textContent = modes[mo].txt;
+  }
+  bs.all = btn("전체 중에서", () => set("all")); bs.row = btn("코딩 좋아하는 사람 중에서", () => set("row")); bs.col = btn("안경 쓴 사람 중에서", () => set("col"));
+  // chain rule builder
+  const words = ["나는", "밥을", "먹었다", "<EOS>"];
+  const conds = ["p(나는)", "p(밥을 | 나는)", "p(먹었다 | 나는, 밥을)", "p(<EOS> | 나는, 밥을, 먹었다)"];
+  const ps = [0.6, 0.5, 0.9, 0.8];
+  const bar = h("div", { style: "height:14px;border-radius:7px;background:var(--line);overflow:hidden" }, h("i", { style: "display:block;height:100%;background:var(--accent);transition:width .2s" }));
+  const chainTxt = h("div", { class: "calc" });
+  const sls = ps.map((p, i) => slider(conds[i], 0.01, 1, 0.01, p, v => { ps[i] = v; chain(); }, v => v.toFixed(2)));
+  function chain() {
+    const prod = ps.reduce((a, b) => a * b, 1), lg = ps.reduce((a, b) => a + Math.log(b), 0);
+    bar.firstChild.style.width = (prod * 100) + "%";
+    chainTxt.textContent = `P("나는 밥을 먹었다") = ${ps.map(p => p.toFixed(2)).join(" × ")} = ${fmt(prod, 4)}\nlog P = ${ps.map(p => fmt(Math.log(p), 3)).join(" + ")} = ${fmt(lg, 3)}`;
+  }
+  // underflow
+  const uTxt = h("div", { class: "calc" });
+  let up = 0.5, un = 50;
+  const u1 = slider("단어마다 정답 확률", 0.05, 0.99, 0.01, up, v => { up = v; uf(); }, v => v.toFixed(2));
+  const u2 = slider("문장 길이 (단어 수)", 1, 3000, 1, un, v => { un = v; uf(); });
+  function uf() {
+    const prod = Math.pow(up, un), lg = un * Math.log(up);
+    uTxt.textContent = `곱: ${up.toFixed(2)}^${un} = ${prod === 0 ? "0  ← underflow! 컴퓨터가 0으로 뭉갰습니다" : prod.toExponential(3)}\n로그 합: ${un} × ${fmt(Math.log(up), 4)} = ${fmt(lg, 2)}  ← 로그는 멀쩡합니다 (Day 05)`;
+  }
+  body.append(h("div", { class: "btns" }, bs.all, bs.row, bs.col), h("div", { class: "tablewrap" }, tbl), out,
+    h("div", { style: "border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:10px" },
+      h("b", {}, "연쇄법칙: 문장 확률 = 단계별 조건부확률의 곱"), h("div", { class: "ctrls" }, ...sls.map(x => x.el)), bar, chainTxt),
+    h("div", { style: "border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:10px" },
+      h("b", {}, "긴 문장의 함정: 곱하면 0으로 사라진다"), h("div", { class: "ctrls" }, u1.el, u2.el), uTxt));
+  set("row"); chain(); uf();
+};
+
+/* ---------- 5. Bayes ---------- */
+W.bayes = function (root) {
+  const body = shell(root, "실습 · Day 04", "1,000명 마을의 건강검진", "점 하나가 한 사람입니다. 슬라이더를 움직여 양성 판정 중 진짜 환자가 몇 명인지 세어 보세요.");
+  let prior = 1, sens = 90, fpr = 5;
+  const cv = h("canvas", { role: "img", "aria-label": "1000명 점 그림" });
+  const CW = 560, CH = 360;
+  const leg = h("div", { class: "btns", style: "font-size:13px;gap:14px" });
+  const big = ro("양성일 때 실제 병일 확률 P(병|양성)", true), tp = ro("병 + 양성"), fp = ro("건강 + 양성"), pos = ro("양성 전체");
+  const calc = h("div", { class: "calc" });
+  const sP = slider("유병률 (사전확률)", 0.1, 50, 0.1, prior, v => { prior = v; draw(); }, v => v.toFixed(1) + "%");
+  const sS = slider("민감도 P(양성|병)", 50, 100, 1, sens, v => { sens = v; draw(); }, v => v + "%");
+  const sF = slider("오탐률 P(양성|건강)", 0, 30, 0.5, fpr, v => { fpr = v; draw(); }, v => v + "%");
+  function draw() {
+    const c = setupCanvas(cv, CW, CH);
+    const N = 1000, sick = Math.round(N * prior / 100), TP = Math.round(sick * sens / 100), FN = sick - TP;
+    const healthy = N - sick, FP = Math.round(healthy * fpr / 100);
+    const col = { tp: cssv("--accent"), fn: cssv("--accent"), fp: cssv("--bad"), tn: cssv("--line") };
+    const kinds = []; for (let i = 0; i < TP; i++) kinds.push("tp"); for (let i = 0; i < FN; i++) kinds.push("fn"); for (let i = 0; i < FP; i++) kinds.push("fp"); while (kinds.length < N) kinds.push("tn");
+    const cols = 40, cell = 14;
+    kinds.forEach((kd, i) => {
+      const x = (i % cols) * cell + 1, y = Math.floor(i / cols) * cell + 1;
+      c.beginPath(); c.arc(x + 6, y + 6, 5, 0, Math.PI * 2);
+      if (kd === "fn") { c.strokeStyle = col.fn; c.lineWidth = 1.5; c.stroke(); } else { c.fillStyle = col[kd]; c.fill(); }
+    });
+    const p = prior / 100, se = sens / 100, f = fpr / 100, ev = se * p + f * (1 - p), post = ev ? se * p / ev : 0;
+    big.set((post * 100).toFixed(1) + "%"); tp.set(TP + "명"); fp.set(FP + "명"); pos.set((TP + FP) + "명");
+    calc.textContent = `P(양성) = ${se}×${fmt(p, 4)} + ${f}×${fmt(1 - p, 4)} = ${fmt(ev, 5)}\nP(병|양성) = ${se}×${fmt(p, 4)} / ${fmt(ev, 5)} = ${fmt(post, 4)}\n점으로 세면: 양성 ${TP + FP}명 중 진짜 환자 ${TP}명 (1,000명 기준 반올림)`;
+    leg.innerHTML = "";
+    [["tp", "병 + 양성"], ["fn", "병 + 음성 (놓침)"], ["fp", "건강 + 양성 (오탐)"], ["tn", "건강 + 음성"]].forEach(([kd, t]) => leg.append(h("span", { style: "display:inline-flex;align-items:center;gap:6px" }, h("i", { style: `width:11px;height:11px;border-radius:50%;display:inline-block;${kd === "fn" ? "border:1.5px solid " + col.fn : "background:" + col[kd]}` }), t)));
+  }
+  REDRAW.push(() => root.isConnected && draw());
+  body.append(h("div", { class: "ctrls" }, sP.el, sS.el, sF.el), h("div", { class: "readout" }, big.el, tp.el, fp.el, pos.el), h("div", { style: "overflow-x:auto" }, cv), leg, calc,
+    h("div", { class: "btns" }, btn("두 번째 검사도 양성 → 사후를 새 사전으로", () => { const p = prior / 100, se = sens / 100, f = fpr / 100; const post = se * p / (se * p + f * (1 - p)); prior = Math.min(50, Math.max(0.1, Math.round(post * 1000) / 10)); sP.set(prior); draw(); }, "pri"), btn("처음 예제 (1% · 90% · 5%)", () => { prior = 1; sens = 90; fpr = 5; sP.set(1); sS.set(90); sF.set(5); draw(); })),
+    h("p", { class: "w-hint" }, "슬라이더 범위 때문에 두 번째 검사 후 유병률은 최대 50%까지만 표시됩니다."));
+  draw();
+};
+
+/* ---------- 6. softmax ---------- */
+W.softmax = function (root) {
+  const body = shell(root, "실습 · Day 05", "점수를 확률로 바꾸는 소프트맥스", "디코더가 \"the cat sat on the ___\" 다음 단어에 매긴 점수(logit)입니다. 점수와 온도를 바꿔 보세요.");
+  const words = ["mat", "floor", "dog", "car"], z = [2, 1, 0, -1];
+  let T = 1;
+  const BW = 520, BH = 210;
+  const svg = s("svg", { viewBox: `0 0 ${BW} ${BH}`, width: BW, height: BH, style: "max-width:100%;height:auto" });
+  const table = h("div", { class: "tablewrap" });
+  const sls = z.map((v, i) => slider(`logit: ${words[i]}`, -5, 5, 0.1, v, x => { z[i] = x; draw(); }, x => x.toFixed(1)));
+  const sT = slider("온도 T (temperature)", 0.1, 5, 0.1, T, x => { T = x; draw(); }, x => x.toFixed(1));
+  function draw() {
+    const zt = z.map(v => v / T), p = softmax(zt), e = zt.map(v => Math.exp(v)), S = e.reduce((a, b) => a + b, 0);
+    const am = p.indexOf(Math.max(...p));
+    svg.innerHTML = "";
+    const base = BH - 30, top = 20, bw = 80, gap = (BW - 40 - bw * 4) / 3;
+    [0, .25, .5, .75, 1].forEach(t => { const y = base - t * (base - top); svg.append(s("line", { x1: 30, x2: BW - 6, y1: y, y2: y, class: "k-line" })); svg.append(s("text", { x: 2, y: y + 4, "font-size": 10, class: "s-muted" }, t.toFixed(2))); });
+    p.forEach((v, i) => {
+      const x = 40 + i * (bw + gap), hh = v * (base - top);
+      svg.append(s("rect", { x, y: base - hh, width: bw, height: Math.max(hh, 0.5), rx: 4, class: i === am ? "s-acc" : "s-muted", "fill-opacity": i === am ? 1 : .45 }));
+      svg.append(s("text", { x: x + bw / 2, y: base - hh - 6, "text-anchor": "middle", "font-size": 13, "font-weight": 700, class: "s-ink" }, v.toFixed(3)));
+      svg.append(s("text", { x: x + bw / 2, y: base + 18, "text-anchor": "middle", "font-size": 13, class: "s-ink" }, words[i] + (i === am ? " ★" : "")));
+    });
+    table.innerHTML = "";
+    const t = h("table", {}, h("thead", {}, h("tr", {}, h("th", {}, "단어"), h("th", {}, "z"), h("th", {}, "z / T"), h("th", {}, "e^(z/T)"), h("th", {}, "확률 = e / 합"))));
+    const tb = h("tbody"); words.forEach((w, i) => tb.append(h("tr", {}, h("td", {}, w), h("td", {}, fmt(z[i], 1)), h("td", {}, fmt(zt[i], 2)), h("td", {}, fmt(e[i], 3)), h("td", {}, fmt(p[i], 3)))));
+    tb.append(h("tr", {}, h("td", {}, "합"), h("td", {}, ""), h("td", {}, ""), h("td", {}, fmt(S, 3)), h("td", {}, "1.000")));
+    t.append(tb); table.append(t);
+  }
+  body.append(h("div", { class: "ctrls" }, ...sls.map(x => x.el), sT.el), h("div", { class: "svgwrap" }, svg), table,
+    h("div", { class: "btns" }, btn("모두 같은 점수", () => { z.fill(1); sls.forEach(x => x.set(1)); draw(); }), btn("모두 +10 (차이만 중요!)", () => { for (let i = 0; i < 4; i++) { z[i] = Math.min(5, z[i] + 3); sls[i].set(z[i]); } draw(); }), btn("T = 0.2 (확신)", () => { T = 0.2; sT.set(0.2); draw(); }), btn("T = 5 (무작위)", () => { T = 5; sT.set(5); draw(); }), btn("초기화", () => { [2, 1, 0, -1].forEach((v, i) => { z[i] = v; sls[i].set(v); }); T = 1; sT.set(1); draw(); })),
+    h("p", { class: "w-hint" }, "확인해 볼 것: 모든 점수에 같은 값을 더해도 확률이 변하지 않나요? (이게 '최댓값 빼기' 트릭이 가능한 이유)"));
+  draw();
+};
+
+/* ---------- 7. entropy ---------- */
+W.entropy = function (root) {
+  const body = shell(root, "실습 · Day 06", "불확실성 측정기", "위는 동전, 아래는 결과가 4가지인 상황입니다. 분포를 바꾸며 엔트로피가 언제 커지고 작아지는지 보세요.");
+  const H2 = p => -p.filter(x => x > 0).reduce((a, x) => a + x * Math.log2(x), 0);
+  const PW = 360, PH = 190, L = 34, Rr = 10, Tt = 12, B = 30;
+  const svg = s("svg", { viewBox: `0 0 ${PW} ${PH}`, width: PW, height: PH, style: "max-width:100%;height:auto" });
+  const X = q => L + q * (PW - L - Rr), Y = v => PH - B - v * (PH - B - Tt);
+  [0, .5, 1].forEach(v => { svg.append(s("line", { x1: L, x2: PW - Rr, y1: Y(v), y2: Y(v), class: "k-line" })); svg.append(s("text", { x: 4, y: Y(v) + 4, "font-size": 10, class: "s-muted" }, v + " bit")); });
+  [0, .5, 1].forEach(q => svg.append(s("text", { x: X(q), y: PH - 12, "text-anchor": "middle", "font-size": 10, class: "s-muted" }, "q=" + q)));
+  let d = ""; for (let i = 0; i <= 100; i++) { const q = i / 100; d += (i ? "L" : "M") + X(q) + " " + Y(H2([q, 1 - q])); }
+  svg.append(s("path", { d, fill: "none", class: "k-acc", "stroke-width": 2.5 }));
+  const pt = s("circle", { r: 7, class: "s-acc" }); const ptx = s("text", { "font-size": 12, "font-weight": 700, class: "s-ink" });
+  svg.append(pt, ptx);
+  const coinR = ro("동전 엔트로피", true);
+  const sq = slider("앞면 확률 q", 0, 1, 0.01, 0.9, q => coin(q), v => v.toFixed(2));
+  function coin(q) { const v = H2([q, 1 - q]); pt.setAttribute("cx", X(q)); pt.setAttribute("cy", Y(v)); ptx.setAttribute("x", Math.min(X(q) + 10, PW - 70)); ptx.setAttribute("y", Y(v) - 10); ptx.textContent = v.toFixed(3) + " bit"; coinR.set(v.toFixed(3) + " bit"); }
+  // 4-outcome
+  const names = ["mat", "floor", "rug", "dog"], w = [7, 2, 1, 0.5];
+  const sl4 = w.map((v, i) => slider("가중치: " + names[i], 0, 10, 0.1, v, x => { w[i] = x; four(); }, x => x.toFixed(1)));
+  const bars = h("div", { style: "display:grid;gap:6px" });
+  const hR = ro("엔트로피 H", true), effR = ro("2^H = 실질 후보 수"), maxR = ro("최대 가능 (균등)");
+  function four() {
+    const S = w.reduce((a, b) => a + b, 0) || 1, p = w.map(x => x / S), Hh = H2(p);
+    bars.innerHTML = "";
+    p.forEach((v, i) => bars.append(h("div", { style: "display:grid;grid-template-columns:60px 1fr 60px;gap:8px;align-items:center;font-size:13px" }, h("span", {}, names[i]), h("div", { style: "height:12px;background:var(--line);border-radius:6px;overflow:hidden" }, h("i", { style: `display:block;height:100%;width:${v * 100}%;background:var(--accent)` })), h("span", { style: "font-family:var(--f-mono);text-align:right" }, v.toFixed(3)))));
+    hR.set(Hh.toFixed(3) + " bit"); effR.set((2 ** Hh).toFixed(2) + "개"); maxR.set("2.000 bit");
+  }
+  const preset = arr => () => { arr.forEach((v, i) => { w[i] = v; sl4[i].set(v); }); four(); };
+  body.append(
+    h("div", { style: "display:flex;flex-wrap:wrap;gap:16px;align-items:center" }, h("div", { style: "flex:0 1 360px;min-width:0" }, svg), h("div", { style: "flex:1 1 200px;display:grid;gap:10px;min-width:0" }, sq.el, coinR.el, h("p", { class: "w-hint" }, "q = 0.5에서 곡선이 가장 높습니다. 결과를 전혀 예측할 수 없을 때 불확실성이 최대입니다."))),
+    h("div", { style: "border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:10px" },
+      h("b", {}, "\"the cat sat on the ___\" 다음 단어 분포"), h("div", { class: "ctrls" }, ...sl4.map(x => x.el)), bars, h("div", { class: "readout" }, hR.el, effR.el, maxR.el),
+      h("div", { class: "btns" }, btn("균등 (최대 불확실)", preset([1, 1, 1, 1])), btn("확실 (mat 100%)", preset([10, 0, 0, 0])), btn("반반", preset([5, 5, 0, 0])), btn("처음 예제", preset([7, 2, 1, 0.5])))));
+  coin(0.9); four();
+};
+
+/* ---------- 8. cross-entropy ---------- */
+W.crossent = function (root) {
+  const body = shell(root, "실습 · Day 07", "모델 조종하기: 손실을 줄여라", "정답 단어를 고르고, 모델의 예측 분포를 조절하세요. 손실(크로스엔트로피)이 0.1보다 작아지면 성공입니다.");
+  const names = ["mat", "floor", "dog"], w = [3, 2, 5];
+  let target = 0;
+  const tb = names.map((n, i) => btn("정답: " + n, () => { target = i; draw(); }));
+  const sls = w.map((v, i) => slider("모델 가중치: " + names[i], 0, 10, 0.1, v, x => { w[i] = x; draw(); }, x => x.toFixed(1)));
+  const bars = h("div", { style: "display:grid;gap:6px" });
+  const ce = ro("손실 = −ln q(정답)", true), qv = ro("정답에 준 확률"), st = ro("상태");
+  const PW = 360, PH = 170, L = 30, B = 26;
+  const svg = s("svg", { viewBox: `0 0 ${PW} ${PH}`, width: PW, height: PH, style: "max-width:100%;height:auto" });
+  const X = q => L + q * (PW - L - 10), Y = v => PH - B - Math.min(v, 4.6) / 4.6 * (PH - B - 10);
+  [0, 1, 2, 3, 4].forEach(v => { svg.append(s("line", { x1: L, x2: PW - 10, y1: Y(v), y2: Y(v), class: "k-line" })); svg.append(s("text", { x: 4, y: Y(v) + 4, "font-size": 10, class: "s-muted" }, v)); });
+  [0.01, 0.5, 1].forEach(q => svg.append(s("text", { x: X(q), y: PH - 8, "text-anchor": "middle", "font-size": 10, class: "s-muted" }, "q=" + q)));
+  let d = ""; for (let i = 1; i <= 100; i++) { const q = i / 100; d += (i > 1 ? "L" : "M") + X(q) + " " + Y(-Math.log(q)); }
+  svg.append(s("path", { d, fill: "none", class: "k-bad", "stroke-width": 2.2 }));
+  const pt = s("circle", { r: 7, class: "s-bad" }); svg.append(pt);
+  let won = false;
+  function draw() {
+    tb.forEach((b, i) => b.classList.toggle("on", i === target));
+    const S = w.reduce((a, b) => a + b, 0) || 1e-9, q = w.map(x => x / S), qt = Math.max(q[target], 1e-6), L_ = -Math.log(qt);
+    bars.innerHTML = "";
+    q.forEach((v, i) => bars.append(h("div", { style: "display:grid;grid-template-columns:70px 1fr 60px;gap:8px;align-items:center;font-size:13px" }, h("span", { style: i === target ? "font-weight:700;color:var(--good)" : "" }, names[i] + (i === target ? " ✓" : "")), h("div", { style: "height:12px;background:var(--line);border-radius:6px;overflow:hidden" }, h("i", { style: `display:block;height:100%;width:${v * 100}%;background:${i === target ? "var(--good)" : "var(--muted)"}` })), h("span", { style: "font-family:var(--f-mono);text-align:right" }, v.toFixed(3)))));
+    ce.set(fmt(L_, 3)); qv.set(qt.toFixed(3));
+    const mx = q.indexOf(Math.max(...q));
+    if (L_ < 0.1) { st.set("성공! 🎯".replace(" 🎯", "")); if (!won) { won = true; } }
+    else if (mx !== target && q[mx] > 0.6) st.set("틀린 확신 (큰 벌점)");
+    else if (L_ > 1) st.set("애매함");
+    else st.set("괜찮음");
+    pt.setAttribute("cx", X(Math.max(qt, 0.01))); pt.setAttribute("cy", Y(L_));
+  }
+  body.append(h("div", { class: "btns" }, ...tb), h("div", { class: "ctrls" }, ...sls.map(x => x.el)), bars, h("div", { class: "readout" }, ce.el, qv.el, st.el),
+    h("div", { style: "display:flex;flex-wrap:wrap;gap:16px;align-items:center" }, h("div", { style: "flex:0 1 360px;min-width:0" }, svg), h("p", { class: "w-hint", style: "flex:1 1 200px" }, "빨간 곡선이 −ln q입니다. q가 1에 가까우면 손실이 0, q가 0에 가까우면 손실이 끝없이 커집니다. 정답에 0.05만 주면 손실이 약 3.0입니다.")));
+  draw();
+};
+
+/* ---------- 9. gradient descent ---------- */
+W.gd = function (root) {
+  const body = shell(root, "실습 · Day 08", "경사하강으로 골짜기 내려가기", "손실 L(w) = (w − 3)²의 바닥(w = 3)을 찾아가는 과정입니다. 학습률을 바꿔 가며 '한 걸음'을 눌러 보세요.");
+  const PW = 540, PH = 260, xmin = -3, xmax = 9, ymax = 40, L = 30, B = 26;
+  const svg = s("svg", { viewBox: `0 0 ${PW} ${PH}`, width: PW, height: PH, style: "max-width:100%;height:auto" });
+  const X = w => L + (w - xmin) / (xmax - xmin) * (PW - L - 10), Y = v => PH - B - Math.min(v, ymax) / ymax * (PH - B - 10);
+  [0, 10, 20, 30, 40].forEach(v => { svg.append(s("line", { x1: L, x2: PW - 10, y1: Y(v), y2: Y(v), class: "k-line" })); svg.append(s("text", { x: 2, y: Y(v) + 4, "font-size": 10, class: "s-muted" }, v)); });
+  [-3, 0, 3, 6, 9].forEach(w => svg.append(s("text", { x: X(w), y: PH - 8, "text-anchor": "middle", "font-size": 10, class: "s-muted" }, "w=" + w)));
+  let d = ""; for (let i = 0; i <= 120; i++) { const w = xmin + i / 120 * (xmax - xmin); d += (i ? "L" : "M") + X(w) + " " + Y((w - 3) ** 2); }
+  svg.append(s("path", { d, fill: "none", class: "k-ink", "stroke-width": 2 }));
+  const trail = s("g"); svg.append(trail);
+  const pt = s("circle", { r: 8, class: "s-acc" }); svg.append(pt);
+  let lr = 0.1, w0 = 0, w = 0, hist = [], timer = null;
+  const sl = slider("학습률 η", 0.01, 1.2, 0.01, lr, v => { lr = v; }, v => v.toFixed(2));
+  const sw = slider("시작 위치 w₀", -2, 8, 0.5, w0, v => { w0 = v; reset(); }, v => v.toFixed(1));
+  const rW = ro("현재 w"), rL = ro("손실 L(w)"), rG = ro("기울기 2(w−3)"), rS = ro("상태", true);
+  const log = h("div", { class: "calc", style: "max-height:150px;overflow:auto" });
+  function render() {
+    trail.innerHTML = "";
+    for (let i = 1; i < hist.length; i++) trail.append(s("line", { x1: X(Math.max(xmin, Math.min(xmax, hist[i - 1]))), y1: Y((hist[i - 1] - 3) ** 2), x2: X(Math.max(xmin, Math.min(xmax, hist[i]))), y2: Y((hist[i] - 3) ** 2), class: "k-acc", "stroke-width": 1.3, "stroke-dasharray": "4 3" }));
+    hist.forEach(v => trail.append(s("circle", { cx: X(Math.max(xmin, Math.min(xmax, v))), cy: Y((v - 3) ** 2), r: 3, class: "s-acc", "fill-opacity": .5 })));
+    pt.setAttribute("cx", X(Math.max(xmin, Math.min(xmax, w)))); pt.setAttribute("cy", Y((w - 3) ** 2));
+    rW.set(fmt(w, 3)); rL.set(fmt((w - 3) ** 2, 3)); rG.set(fmt(2 * (w - 3), 3));
+    const n = hist.length;
+    if (Math.abs(w - 3) < 0.01) rS.set("도착!");
+    else if (n > 2 && Math.abs(hist[n - 1] - 3) > Math.abs(hist[n - 2] - 3) + 1e-9) rS.set("발산 중");
+    else if (n > 2 && (hist[n - 1] - 3) * (hist[n - 2] - 3) < 0) rS.set("진동하며 수렴");
+    else rS.set(n > 1 ? "내려가는 중" : "출발 전");
+  }
+  function step() {
+    const g = 2 * (w - 3), nw = w - lr * g;
+    log.textContent += `${hist.length}: w = ${fmt(w, 3)} − ${lr.toFixed(2)} × (${fmt(g, 3)}) = ${fmt(nw, 3)}\n`;
+    log.scrollTop = log.scrollHeight;
+    w = nw; hist.push(w); render();
+    if (Math.abs(w) > 1e6 && timer) { clearInterval(timer); timer = null; }
+  }
+  function reset() { if (timer) { clearInterval(timer); timer = null; } w = w0; hist = [w]; log.textContent = ""; render(); }
+  body.append(h("div", { class: "ctrls" }, sl.el, sw.el), h("div", { class: "svgwrap" }, svg), h("div", { class: "readout" }, rW.el, rL.el, rG.el, rS.el),
+    h("div", { class: "btns" }, btn("한 걸음", step, "pri"), btn("20걸음 자동", () => { if (timer) return; let k = 0; timer = setInterval(() => { step(); if (++k >= 20) { clearInterval(timer); timer = null; } }, 180); }), btn("처음으로", reset),
+      btn("η = 0.1", () => { lr = 0.1; sl.set(0.1); reset(); }), btn("η = 0.9", () => { lr = 0.9; sl.set(0.9); reset(); }), btn("η = 1.1 (위험)", () => { lr = 1.1; sl.set(1.1); reset(); })),
+    log, h("p", { class: "w-hint" }, "이 함수에서는 η < 0.5면 한쪽에서 차분히, 0.5 < η < 1이면 좌우로 튀며 수렴, η > 1이면 발산합니다. 논문의 0.7은 실제 신경망 손실에 맞춰 고른 값입니다."));
+  reset();
+};
+
+/* ---------- 10. CLT ---------- */
+W.clt = function (root) {
+  const body = shell(root, "실습 · Day 09", "중심극한정리 실험실", "원래 분포와 n을 고른 뒤 '뽑기'를 누르세요. n개씩 뽑아 평균 낸 값 2,000개의 히스토그램이 쌓입니다. 점선은 중심극한정리가 예측하는 정규분포입니다.");
+  const src = {
+    dice: { name: "주사위", gen: () => 1 + Math.floor(Math.random() * 6), mu: 3.5, sd: Math.sqrt(35 / 12), lo: 1, hi: 6 },
+    coin: { name: "동전 (0/1)", gen: () => Math.random() < .5 ? 0 : 1, mu: .5, sd: .5, lo: 0, hi: 1 },
+    exp: { name: "지수분포 (비대칭)", gen: () => -Math.log(1 - Math.random()), mu: 1, sd: 1, lo: 0, hi: 4 }
+  };
+  let cur = "dice", n = 1, data = [], anim = null;
+  const sb = {}; Object.keys(src).forEach(k => sb[k] = btn(src[k].name, () => { cur = k; Object.values(sb).forEach(b => b.classList.remove("on")); sb[k].classList.add("on"); run(); }));
+  sb.dice.classList.add("on");
+  const sn = slider("평균 낼 개수 n", 1, 50, 1, n, v => { n = v; }, v => v);
+  const cv = h("canvas", { role: "img", "aria-label": "표본평균 히스토그램" });
+  const CW = 560, CH = 230;
+  const r1 = ro("예측 σ/√n"), r2 = ro("실제 표준편차"), r3 = ro("표본 평균의 평균");
+  function draw() {
+    const c = setupCanvas(cv, CW, CH), S = src[cur], bins = 40, lo = S.lo, hi = S.hi, bw = (hi - lo) / bins;
+    const cnt = new Array(bins).fill(0);
+    data.forEach(v => { let b = Math.floor((v - lo) / bw); if (b >= bins) b = bins - 1; if (b >= 0) cnt[b]++; });
+    const sdm = S.sd / Math.sqrt(n);
+    const dens = x => Math.exp(-((x - S.mu) ** 2) / (2 * sdm * sdm)) / (sdm * Math.sqrt(2 * Math.PI));
+    const expPeak = 2000 * bw * dens(S.mu);
+    const ymax = Math.max(...cnt, Math.min(expPeak, 2000), 10) * 1.1;
+    const L = 8, B = 22, PWd = CW - 16, PHd = CH - B - 8;
+    c.strokeStyle = cssv("--line"); c.lineWidth = 1; c.beginPath(); c.moveTo(L, 8 + PHd); c.lineTo(L + PWd, 8 + PHd); c.stroke();
+    c.fillStyle = cssv("--accent");
+    cnt.forEach((k, i) => { const hh = k / ymax * PHd; c.fillRect(L + i * PWd / bins + 1, 8 + PHd - hh, PWd / bins - 2, hh); });
+    if (data.length && n > 1 || cur !== "dice") {
+      c.strokeStyle = cssv("--ink"); c.setLineDash([5, 4]); c.lineWidth = 1.6; c.beginPath();
+      for (let i = 0; i <= 200; i++) { const x = lo + i / 200 * (hi - lo), y = 2000 * bw * dens(x) / ymax * PHd; const X = L + (x - lo) / (hi - lo) * PWd, Y = 8 + PHd - Math.min(y, PHd + 4); i ? c.lineTo(X, Y) : c.moveTo(X, Y); }
+      c.stroke(); c.setLineDash([]);
+    }
+    c.fillStyle = cssv("--muted"); c.font = "11px " + cssv("--f-mono");
+    [lo, (lo + hi) / 2, hi].forEach((v, i) => { c.textAlign = ["left", "center", "right"][i]; c.fillText(fmt(v, 2), L + (v - lo) / (hi - lo) * PWd, CH - 6); });
+    if (data.length) { const m = data.reduce((a, b) => a + b, 0) / data.length, sd = Math.sqrt(data.reduce((a, b) => a + (b - m) ** 2, 0) / data.length); r1.set(fmt(sdm, 3)); r2.set(fmt(sd, 3)); r3.set(fmt(m, 3)); }
+  }
+  function run() {
+    if (anim) cancelAnimationFrame(anim);
+    data = []; const S = src[cur];
+    const tick = () => {
+      for (let k = 0; k < 80 && data.length < 2000; k++) { let t = 0; for (let j = 0; j < n; j++) t += S.gen(); data.push(t / n); }
+      draw(); if (data.length < 2000) anim = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+  REDRAW.push(() => root.isConnected && draw());
+  // init part
+  const cv2 = h("canvas", { role: "img", "aria-label": "tanh 출력 히스토그램" });
+  const xs = Array.from({ length: 1000 }, randn);
+  let a = 0.08;
+  const sa = slider("초기화 범위 a  (W ~ U(−a, a))", 0.01, 0.5, 0.01, a, v => { a = v; init(); }, v => "±" + v.toFixed(2));
+  const q1 = ro("예측 σ_z = √(1000·a²/3)"), q2 = ro("실제 σ_z"), q3 = ro("포화된 뉴런 |tanh| > 0.95", true);
+  function init() {
+    const N = 1500, zs = new Float64Array(N);
+    for (let i = 0; i < N; i++) { let z = 0; for (let j = 0; j < 1000; j++) z += (Math.random() * 2 - 1) * a * xs[j]; zs[i] = z; }
+    const m = zs.reduce((p, v) => p + v, 0) / N, sd = Math.sqrt(zs.reduce((p, v) => p + (v - m) ** 2, 0) / N);
+    let sat = 0; const bins = 40, cnt = new Array(bins).fill(0);
+    zs.forEach(z => { const t = Math.tanh(z); if (Math.abs(t) > .95) sat++; let b = Math.floor((t + 1) / 2 * bins); if (b >= bins) b = bins - 1; cnt[b]++; });
+    q1.set(fmt(Math.sqrt(1000 * a * a / 3), 3)); q2.set(fmt(sd, 3)); q3.set((sat / N * 100).toFixed(1) + "%");
+    const c = setupCanvas(cv2, CW, 170), PWd = CW - 16, PHd = 130, ymax = Math.max(...cnt) * 1.1;
+    cnt.forEach((k, i) => { const hh = k / ymax * PHd; const edge = i < 1 || i >= bins - 1; c.fillStyle = edge ? cssv("--bad") : cssv("--good"); c.fillRect(8 + i * PWd / bins + 1, 8 + PHd - hh, PWd / bins - 2, hh); });
+    c.fillStyle = cssv("--muted"); c.font = "11px " + cssv("--f-mono");
+    [["−1", "left", 8], ["0", "center", 8 + PWd / 2], ["+1", "right", 8 + PWd]].forEach(([t, al, x]) => { c.textAlign = al; c.fillText("tanh = " + t, x, 162); });
+  }
+  REDRAW.push(() => root.isConnected && init());
+  body.append(h("div", { class: "btns" }, ...Object.values(sb)), h("div", { class: "ctrls" }, sn.el), h("div", { class: "btns" }, btn("2,000번 뽑기", run, "pri"), btn("n = 1", () => { n = 1; sn.set(1); run(); }), btn("n = 5", () => { n = 5; sn.set(5); run(); }), btn("n = 30", () => { n = 30; sn.set(30); run(); })),
+    h("div", { style: "overflow-x:auto" }, cv), h("div", { class: "readout" }, r1.el, r2.el, r3.el),
+    h("div", { style: "border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:10px" },
+      h("b", {}, "논문의 초기화: 뉴런 1,500개의 tanh(Σ wᵢxᵢ) 분포"),
+      h("p", { class: "w-hint" }, "입력 1,000개를 받는 뉴런의 출력입니다. 논문의 a = 0.08에서는 대부분이 기울기가 살아 있는 가운데(초록)에 있습니다. a를 0.5로 올리면 양 끝(빨강)에 몰리는 '포화'가 생깁니다."),
+      sa.el, h("div", { style: "overflow-x:auto" }, cv2), h("div", { class: "readout" }, q1.el, q2.el, q3.el)));
+  run(); init();
+};
+
+/* ---------- 11. teacher forcing ---------- */
+W.tf = function (root) {
+  const body = shell(root, "실습 · Day 10", "Teacher forcing vs Free running", "같은 디코더를 두 방식으로 돌려 봅니다. 이 모델은 '나는' 다음 단어를 살짝 잘못 배웠습니다. '다음 스텝'을 눌러 한 칸씩 진행하세요.");
+  const V = ["<BOS>", "나는", "밥을", "빵을", "먹었다", "<EOS>"];
+  const P = {
+    "<BOS>": [0, .90, .04, .03, .02, .01],
+    "나는": [0, 0, .45, .50, .04, .01],
+    "밥을": [0, .02, .03, .03, .90, .02],
+    "빵을": [0, .02, .03, .55, .38, .02],
+    "먹었다": [0, .03, .02, .02, .03, .90]
+  };
+  const target = ["나는", "밥을", "먹었다", "<EOS>"];
+  let mode = "tf", t = 0, seq = [], loss = 0;
+  const mb = { tf: btn("Teacher forcing (학습)", () => setMode("tf")), fr: btn("Free running (추론)", () => setMode("fr")) };
+  const sp = slider("모델의 p(밥을 | 나는)  (나머지는 빵을)", 0.05, 0.9, 0.01, 0.45, v => { P["나는"][2] = v; P["나는"][3] = +(0.95 - v).toFixed(2); reset(); }, v => v.toFixed(2) + " / 빵을 " + (0.95 - v).toFixed(2));
+  const lane = h("div", { style: "display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px" });
+  const dist = h("div", { style: "display:grid;gap:5px" });
+  const cap = h("p", { style: "min-height:3em" });
+  const r1 = ro("누적 손실 Σ −ln q(정답)"), r2 = ro("만든 문장", true);
+  function setMode(m) { mode = m; Object.entries(mb).forEach(([k, b]) => b.classList.toggle("on", k === m)); reset(); }
+  function reset() { t = 0; seq = []; loss = 0; render(null); }
+  function done() { return mode === "tf" ? t >= target.length : (seq.length && seq[seq.length - 1].out === "<EOS>") || t >= 8; }
+  function step() {
+    if (done()) return;
+    const inp = t === 0 ? "<BOS>" : (mode === "tf" ? target[t - 1] : seq[t - 1].out);
+    const q = P[inp];
+    const am = V[q.indexOf(Math.max(...q))];
+    let rec;
+    if (mode === "tf") { const y = target[t], qy = q[V.indexOf(y)]; loss += -Math.log(qy); rec = { inp, out: y, pred: am, q, qy }; }
+    else rec = { inp, out: am, q };
+    seq.push(rec); t++; render(rec);
+  }
+  function render(rec) {
+    lane.innerHTML = "";
+    seq.forEach((r, i) => {
+      const wrongPred = mode === "tf" && r.pred !== r.out;
+      lane.append(h("div", { style: "flex:none;display:grid;gap:4px;justify-items:center;font-size:13px;min-width:86px" },
+        h("span", { style: `font-weight:700;color:${mode === "tf" ? "var(--good)" : (i > 0 && r.out !== target[i] ? "var(--bad)" : "var(--ink)")}` }, r.out),
+        h("span", { class: "w-hint", style: "font-size:11px" }, mode === "tf" ? (wrongPred ? `모델 1순위: ${r.pred}` : "모델도 맞힘") : "모델이 고름"),
+        h("div", { style: "border:1.5px solid var(--ink);border-radius:8px;padding:6px 10px;background:var(--card);font-weight:600" + (i === seq.length - 1 ? ";background:var(--mark);color:var(--mark-ink)" : "") }, "LSTM"),
+        h("span", { style: `font-family:var(--f-mono);font-size:12px;padding:2px 6px;border-radius:6px;${i > 0 ? (mode === "tf" ? "background:var(--good-soft);color:var(--good)" : "background:var(--accent-soft);color:var(--accent)") : ""}` }, r.inp),
+        h("span", { class: "w-hint", style: "font-size:11px" }, i === 0 ? "시작" : (mode === "tf" ? "정답 입력" : "내 예측 입력"))));
+    });
+    if (!seq.length) lane.append(h("p", { class: "w-hint" }, "아직 시작 전입니다. '다음 스텝'을 누르세요."));
+    dist.innerHTML = "";
+    if (rec) {
+      dist.append(h("small", { class: "w-hint" }, `입력이 "${rec.inp}"일 때 모델의 다음 단어 확률`));
+      V.slice(1).forEach(w => {
+        const v = rec.q[V.indexOf(w)], isT = mode === "tf" && w === rec.out, isC = mode === "fr" && w === rec.out;
+        dist.append(h("div", { style: "display:grid;grid-template-columns:64px 1fr 48px;gap:8px;align-items:center;font-size:13px" },
+          h("span", { style: isT || isC ? "font-weight:700" : "" }, w + (isT ? " ✓정답" : isC ? " ←선택" : "")),
+          h("div", { style: "height:11px;background:var(--line);border-radius:6px;overflow:hidden" }, h("i", { style: `display:block;height:100%;width:${v * 100}%;background:${isT ? "var(--good)" : isC ? "var(--accent)" : "var(--muted)"}` })),
+          h("span", { style: "font-family:var(--f-mono);text-align:right" }, v.toFixed(2))));
+      });
+    }
+    r1.set(mode === "tf" ? fmt(loss, 3) : "추론엔 정답 없음");
+    r2.set(seq.map(r => r.out).join(" ") || "–");
+    if (!rec) cap.textContent = mode === "tf" ? "학습 모드: 매 칸 입력으로 '정답의 이전 단어'를 넣고, 정답 단어 확률의 −ln을 손실로 더합니다." : "추론 모드: 정답을 모릅니다. 매 칸 가장 확률 높은 단어를 골라 다음 입력으로 넣습니다(greedy).";
+    else if (mode === "tf") cap.textContent = rec.pred !== rec.out ? `모델은 "${rec.pred}"를 더 높게 봤지만, 정답 "${rec.out}"의 확률 ${rec.qy.toFixed(2)}로 손실 ${fmt(-Math.log(rec.qy), 3)}를 받습니다. 다음 칸에는 그래도 정답 "${rec.out}"이 들어갑니다.` : `정답 "${rec.out}"의 확률 ${rec.qy.toFixed(2)} → 손실 ${fmt(-Math.log(rec.qy), 3)}. 다음 칸 입력은 정답 "${rec.out}".`;
+    else cap.textContent = done() && rec.out !== "<EOS>" ? `8칸 제한에 걸렸습니다. "빵을"에 한 번 빠지자 학습 때 본 적 없는 상황이 이어졌습니다. 이것이 exposure bias입니다.` : rec.out === "<EOS>" ? "문장을 끝냈습니다." : `"${rec.out}"을(를) 골라 다음 칸 입력으로 넣습니다.`;
+  }
+  body.append(h("div", { class: "btns" }, mb.tf, mb.fr), sp.el, lane, cap, dist, h("div", { class: "readout" }, r1.el, r2.el),
+    h("div", { class: "btns" }, btn("다음 스텝", step, "pri"), btn("끝까지", () => { while (!done()) step(); }), btn("처음부터", reset)),
+    h("p", { class: "w-hint" }, "해볼 것: Free running에서 슬라이더를 0.50 이상으로 올려 모델을 '고쳐' 보세요. 학습(teacher forcing 손실 줄이기)이 하는 일이 바로 이것입니다."));
+  setMode("tf");
+};
+
+/* ---------- 12. RNN step ---------- */
+W.rnn = function (root) {
+  const body = shell(root, "실습 · Day 10", "RNN 기억 상태 들여다보기", "입력 숫자를 바꾸면 h₁, h₂, h₃가 다시 계산됩니다. W_h를 키우면 과거를 더 오래 기억합니다.");
+  const xs = [1, 2, -1];
+  let wh = 0.5;
+  const ins = xs.map((v, i) => { const e = h("input", { class: "numin", type: "number", step: "0.5", value: v, "aria-label": "x" + (i + 1) }); e.addEventListener("input", () => { xs[i] = parseFloat(e.value) || 0; calc(); }); return e; });
+  const sw = slider("W_h 대각값 (기억 유지 정도)", 0, 1.5, 0.05, wh, v => { wh = v; calc(); }, v => v.toFixed(2));
+  const out = h("div", { class: "calc" });
+  const bars = h("div", { style: "display:flex;gap:16px;flex-wrap:wrap" });
+  function calc() {
+    let hh = [0, 0], txt = "h₀ = [0, 0]\n";
+    bars.innerHTML = "";
+    xs.forEach((x, i) => {
+      const pre = [wh * hh[0] + x, wh * hh[1] - x];
+      hh = pre.map(Math.tanh);
+      txt += `h${"₁₂₃"[i]} = tanh(W_h·h${"₀₁₂"[i]} + W_x·${fmt(x, 1)}) = tanh([${fmt(pre[0], 3)}, ${fmt(pre[1], 3)}]) = [${fmt(hh[0], 3)}, ${fmt(hh[1], 3)}]\n`;
+      bars.append(h("div", { style: "display:grid;gap:4px;font-size:12px;justify-items:center" }, h("b", {}, "h" + "₁₂₃"[i]),
+        h("div", { style: "display:flex;gap:4px;align-items:center;height:80px" }, ...hh.map(v => h("div", { style: "width:18px;height:80px;position:relative;background:var(--paper);border:1px solid var(--line);border-radius:4px" }, h("i", { style: `position:absolute;left:0;right:0;${v >= 0 ? "bottom:50%" : "top:50%"};height:${Math.abs(v) * 50}%;background:${v >= 0 ? "var(--accent)" : "var(--bad)"};border-radius:3px` }))))));
+    });
+    out.textContent = txt.trim();
+  }
+  body.append(h("div", { class: "matrow" }, "입력 x₁, x₂, x₃:", ...ins), sw.el, bars, out);
+  calc();
+};
+
+// t: mc(객관식) num(계산 입력) ox(O/X) order(순서 맞추기)
+const DRILL = {
+  day01: [
+    {t:"num", q:"[1, 2, 3] · [4, −5, 6] = ?", a:12, w:"1×4 + 2×(−5) + 3×6 = 4 − 10 + 18 = 12"},
+    {t:"num", q:"[6, 8]의 길이(노름)는?", a:10, w:"√(36 + 64) = √100 = 10"},
+    {t:"ox", q:"내적이 0이면 두 벡터는 서로 직각이다.", a:true, w:"cos θ = 0 → θ = 90°"},
+    {t:"num", q:"고양이 [0.9, 0.8]과 강아지 [0.8, 0.9]의 내적은?", a:1.44, tol:0.01, w:"0.72 + 0.72 = 1.44"},
+    {t:"order", q:"코사인 유사도를 구하는 순서대로 탭하세요.", tokens:["내적 a·b 구하기","두 벡터의 길이 구하기","내적 ÷ (길이 × 길이)"], w:"cos = a·b / (‖a‖‖b‖)"},
+    {t:"mc", q:"[3, 4]와 같은 방향이면서 길이가 1인 벡터는?", o:["[0.6, 0.8]","[3, 4]","[0.3, 0.4]"], a:0, w:"길이 5로 나누면 [3/5, 4/5]"},
+    {t:"ox", q:"논문의 단어 임베딩은 1000차원이다.", a:true, w:"3.4절: 1000 dimensional word embeddings"}
+  ],
+  day02: [
+    {t:"num", q:"[[2, 1], [0, −1]] × [3, 4]의 첫째 칸은?", a:10, w:"2×3 + 1×4 = 10"},
+    {t:"num", q:"입력 3차원 → 출력 2차원 층(W와 b)의 파라미터 수는?", a:8, w:"2×3 + 2 = 8"},
+    {t:"num", q:"1000차원 → 1000차원 층(W와 b)의 파라미터 수는?", a:1001000, w:"1000×1000 + 1000 = 1,001,000"},
+    {t:"ox", q:"(5, 7) 행렬과 (5,) 벡터는 곱할 수 있다.", a:false, w:"안쪽 숫자 7 ≠ 5라 곱할 수 없습니다."},
+    {t:"order", q:"신경망 한 층의 계산 순서대로 탭하세요.", tokens:["W와 x를 곱한다","b를 더한다","비선형 함수 f를 씌운다"], w:"y = f(Wx + b)"},
+    {t:"num", q:"ReLU(−2.5) = ?", a:0, w:"ReLU는 음수를 0으로 만듭니다."},
+    {t:"mc", q:"160,000단어 × 1000차원 임베딩 행렬의 파라미터 수는?", o:["160만 개","1억 6천만 개","16억 개"], a:1, w:"160,000 × 1000 = 160,000,000"}
+  ],
+  day03: [
+    {t:"num", q:"P(A) = 0.5, P(B|A) = 0.4일 때 P(A, B)는?", a:0.2, tol:0.001, w:"P(A,B) = P(A)P(B|A) = 0.2"},
+    {t:"num", q:"안경 쓴 50명 중 코딩 좋아하는 사람이 30명. P(코딩|안경)은?", a:0.6, tol:0.001, w:"30 / 50 = 0.6"},
+    {t:"num", q:"단계별 정답 확률이 0.6, 0.9, 0.8인 문장의 확률은?", a:0.432, tol:0.001, w:"0.6 × 0.9 × 0.8 = 0.432"},
+    {t:"ox", q:"연쇄법칙은 근사식이다.", a:false, w:"항상 정확히 성립하는 등식입니다."},
+    {t:"ox", q:"식 (1)에서 입력 길이 T와 출력 길이 T′는 달라도 된다.", a:true, w:"언어마다 단어 수가 달라서 꼭 필요한 성질입니다."},
+    {t:"order", q:"P(나는, 밥을, 먹었다)를 연쇄법칙으로 쪼개세요.", tokens:["P(나는)","× P(밥을 | 나는)","× P(먹었다 | 나는, 밥을)"], extra:["× P(나는 | 밥을)"], w:"앞 단어들을 조건으로 하나씩 곱합니다."},
+    {t:"mc", q:"P(B|A)의 '|'는 어떻게 읽나요?", o:["그리고","~가 주어졌을 때","나누기"], a:1, w:"A를 이미 알 때 B의 확률"}
+  ],
+  day04: [
+    {t:"num", q:"유병률 10%, 민감도 90%, 오탐률 5%일 때 P(양성)은?", a:0.135, tol:0.001, w:"0.9×0.1 + 0.05×0.9 = 0.135"},
+    {t:"num", q:"같은 조건에서 P(병|양성)은? (소수 둘째 자리)", a:0.67, tol:0.01, w:"0.09 / 0.135 ≈ 0.667"},
+    {t:"ox", q:"사후확률은 가능도 × 사전확률에 비례한다.", a:true, w:"P(A|B) ∝ P(B|A)P(A)"},
+    {t:"order", q:"베이즈 정리를 유도하는 순서대로 탭하세요.", tokens:["P(A,B) = P(A)P(B|A)","P(A,B) = P(B)P(A|B)","두 식을 같다고 놓기","양변을 P(B)로 나누기"], w:"외우지 말고 곱셈 규칙에서 만들어 내세요."},
+    {t:"mc", q:"T₁(가능도 0.02, 사전 0.3)과 T₂(가능도 0.05, 사전 0.1) 중 고를 번역은?", o:["T₁","T₂","같다"], a:0, w:"0.006 > 0.005"},
+    {t:"ox", q:"argmax는 최댓값 그 자체를 돌려준다.", a:false, w:"최댓값을 만드는 '후보'를 돌려줍니다."},
+    {t:"mc", q:"증거를 보기 전의 믿음은?", o:["사전확률","가능도","사후확률"], a:0, w:"prior = 사전확률"}
+  ],
+  day05: [
+    {t:"num", q:"logit [0, 0, 0, 0]의 소프트맥스에서 한 칸의 값은?", a:0.25, tol:0.001, w:"모두 같으면 1/4씩"},
+    {t:"num", q:"log 0.5 ≈ −0.693일 때 log 0.25는?", a:-1.386, tol:0.003, w:"log(0.5²) = 2 × (−0.693)"},
+    {t:"ox", q:"모든 logit에서 같은 수를 빼도 소프트맥스 결과는 같다.", a:true, w:"분자와 분모에 같은 e^(−c)가 곱해져 약분됩니다."},
+    {t:"order", q:"안전한 소프트맥스 계산 순서대로 탭하세요.", tokens:["최댓값 빼기","지수함수 e^z 씌우기","전체 합으로 나누기"], w:"z − max → exp → 정규화"},
+    {t:"num", q:"logit [2, 1, 0]의 첫째 확률은? (소수 셋째 자리)", a:0.665, tol:0.002, w:"7.389 / 11.107 ≈ 0.665"},
+    {t:"ox", q:"log는 단조증가라 argmax 결과를 바꾸지 않는다.", a:true, w:"그래서 확률 대신 로그 확률로 비교해도 됩니다."},
+    {t:"mc", q:"논문 디코더의 소프트맥스 출력 길이는?", o:["1,000","80,000","160,000"], a:1, w:"출력 어휘 80,000개"}
+  ],
+  day06: [
+    {t:"num", q:"확률 1/16인 사건의 정보량은 몇 비트?", a:4, w:"−log₂(1/16) = 4"},
+    {t:"num", q:"p = [0.5, 0.25, 0.25]의 엔트로피는 몇 비트?", a:1.5, tol:0.001, w:"0.5 + 0.5 + 0.5 = 1.5"},
+    {t:"num", q:"결과 8가지가 모두 같은 확률일 때 엔트로피는 몇 비트?", a:3, w:"log₂ 8 = 3"},
+    {t:"ox", q:"엔트로피가 0이면 결과를 확실히 안다.", a:true, w:"한 결과의 확률이 1일 때입니다."},
+    {t:"ox", q:"엔트로피가 낮은 모델이 항상 좋은 모델이다.", a:false, w:"틀린 답에 확신해도 엔트로피는 낮습니다. 정답과 비교해야 합니다(Day 07)."},
+    {t:"order", q:"엔트로피 계산 순서대로 탭하세요.", tokens:["결과마다 놀람 −log p 구하기","각 놀람에 확률 p 곱하기","모두 더하기"], w:"H = −Σ p log p"},
+    {t:"mc", q:"1 nat은 약 몇 bit?", o:["0.693","1.443","2.718"], a:1, w:"1/ln 2 ≈ 1.443"}
+  ],
+  day07: [
+    {t:"num", q:"정답 확률이 0.5일 때 크로스엔트로피는? (nat)", a:0.693, tol:0.003, w:"−ln 0.5 ≈ 0.693"},
+    {t:"num", q:"정답 확률 0.5, 0.9, 0.25인 문장의 −log p(T|S)는?", a:2.184, tol:0.005, w:"0.693 + 0.105 + 1.386"},
+    {t:"ox", q:"H(p, q) ≥ H(p)는 항상 성립한다.", a:true, w:"q = p일 때만 등호"},
+    {t:"ox", q:"p가 고정이면 크로스엔트로피 최소화와 KL 최소화는 같은 목표다.", a:true, w:"KL = H(p,q) − H(p), H(p)는 상수"},
+    {t:"order", q:"KL 발산의 정의를 완성하세요.", tokens:["D_KL(p‖q)","=","H(p, q)","−","H(p)"], extra:["+","H(q)"], w:"추가로 놀란 양 = 크로스엔트로피 − 엔트로피"},
+    {t:"mc", q:"PyTorch에서 이 손실 함수의 이름은?", o:["MSELoss","CrossEntropyLoss","L1Loss"], a:1, w:"logit을 받아 소프트맥스 + NLL을 한 번에 계산합니다."},
+    {t:"num", q:"정답에 확률 1을 주면 손실은?", a:0, w:"−ln 1 = 0"}
+  ],
+  day08: [
+    {t:"num", q:"평균 크로스엔트로피가 ln 4일 때 perplexity는?", a:4, w:"e^(ln 4) = 4"},
+    {t:"num", q:"L = (w−3)², w = 0, η = 0.1로 한 걸음 가면 w는?", a:0.6, tol:0.001, w:"0 − 0.1 × (−6) = 0.6"},
+    {t:"num", q:"같은 조건에서 두 걸음 가면 w는?", a:1.08, tol:0.001, w:"0.6 − 0.1 × (−4.8) = 1.08"},
+    {t:"ox", q:"η = 1.1이면 이 함수에서 경사하강이 발산한다.", a:true, w:"매 걸음 3에서 더 멀어집니다."},
+    {t:"order", q:"경사하강 한 걸음의 순서대로 탭하세요.", tokens:["손실 계산","기울기 계산","w ← w − η × 기울기"], extra:["w ← w + η × 기울기"], w:"기울기의 반대 방향으로 움직입니다."},
+    {t:"num", q:"z = [0, 0], 정답이 1번일 때 ∂L/∂z의 첫째 칸(오답 칸)은?", a:0.5, tol:0.001, w:"q − y = [0.5, 0.5] − [0, 1] = [0.5, −0.5]"},
+    {t:"mc", q:"논문이 쓴 학습률은?", o:["0.01","0.7","5"], a:1, w:"모멘텀 없는 SGD, 학습률 0.7"}
+  ],
+  day09: [
+    {t:"num", q:"주사위 4개 평균의 표준편차는? (주사위 σ ≈ 1.708)", a:0.854, tol:0.005, w:"1.708 / √4"},
+    {t:"num", q:"동전 100번 던진 앞면 개수의 표준편차는?", a:5, w:"√(100 × 0.25) = 5"},
+    {t:"num", q:"U(−0.08, 0.08)의 분산은? (a²/3, 소수 다섯째 자리)", a:0.00213, tol:0.00002, w:"0.0064 / 3 ≈ 0.00213"},
+    {t:"ox", q:"배치를 128에서 512로 늘리면 기울기 추정의 표준편차는 절반이 된다.", a:true, w:"√(128/512) = 1/2"},
+    {t:"ox", q:"중심극한정리는 원래 분포가 정규분포일 때만 성립한다.", a:false, w:"원래 모양과 상관없습니다."},
+    {t:"order", q:"중심극한정리 실험 순서대로 탭하세요.", tokens:["분포에서 n개 뽑기","평균 내기","여러 번 반복해 히스토그램 그리기"], w:"평균값들의 분포가 종 모양이 됩니다."},
+    {t:"mc", q:"입력이 1000개에서 4000개로 늘 때 분산을 유지하려면 초기화 범위 a는?", o:["2배","1/2배","4배"], a:1, w:"n·a²이 같아야 하므로 a는 1/√4 = 1/2"}
+  ],
+  day10: [
+    {t:"num", q:"tanh(0) = ?", a:0, w:"tanh는 원점을 지납니다."},
+    {t:"order", q:"정답이 '나는 밥을 먹었다 <EOS>'일 때 teacher forcing 디코더 입력을 순서대로 탭하세요.", tokens:["<BOS>","나는","밥을","먹었다"], extra:["<EOS>","빵을"], w:"입력은 정답을 한 칸 밀어 놓은 것입니다."},
+    {t:"ox", q:"실제 번역(추론) 때도 정답 이전 단어를 입력으로 넣을 수 있다.", a:false, w:"추론 때는 정답을 모르니 자기 예측을 넣습니다."},
+    {t:"num", q:"정답 확률 0.9, 0.45, 0.9, 0.9인 문장의 teacher forcing 손실은? (소수 셋째 자리)", a:1.115, tol:0.005, w:"0.105 + 0.799 + 0.105 + 0.105"},
+    {t:"mc", q:"논문이 추론에 쓴 디코딩 방법은?", o:["빔 서치","teacher forcing","dropout"], a:0, w:"left-to-right beam search"},
+    {t:"ox", q:"논문 본문에 'teacher forcing'이라는 단어가 직접 나온다.", a:false, w:"용어는 안 나오지만 학습 목표를 계산하는 방식이 teacher forcing입니다."},
+    {t:"num", q:"h₀ = 0, W_x = [1, −1]ᵀ, x₁ = 1일 때 h₁의 첫 칸은? (tanh 1, 소수 셋째 자리)", a:0.762, tol:0.002, w:"tanh(1) ≈ 0.762"}
+  ]
+};
+
+/* ---------- Duolingo-style practice ---------- */
+const SKEY = "seq2seq30-stats";
+function loadStats() { try { return Object.assign({ xp: 0, days: [], best: {} }, JSON.parse(localStorage.getItem(SKEY) || "{}")); } catch (e) { return { xp: 0, days: [], best: {} }; } }
+function saveStats(st) { try { localStorage.setItem(SKEY, JSON.stringify(st)); } catch (e) { } }
+let STATS = loadStats();
+function ymd(d) { return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function streak() {
+  const set = new Set(STATS.days); const d = new Date();
+  if (!set.has(ymd(d))) d.setDate(d.getDate() - 1);
+  let n = 0; while (set.has(ymd(d))) { n++; d.setDate(d.getDate() - 1); }
+  return n;
+}
+function updateChips() {
+  const sEl = document.getElementById("streak"), xEl = document.getElementById("xp");
+  if (sEl) sEl.textContent = "연속 " + streak() + "일";
+  if (xEl) xEl.textContent = STATS.xp + " XP";
+}
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function bankFor(id) { return [...(QUICK[id] || []).map(q => ({ t: "mc", ...q })), ...(DRILL[id] || [])].map(q => ({ ...q, day: id })); }
+function parseNum(s) {
+  s = String(s).trim().replace(/[−–]/g, "-").replace(/,/g, "").replace(/\s/g, "");
+  if (!s) return NaN;
+  const f = s.match(/^(-?\d+(?:\.\d+)?)\/(\d+(?:\.\d+)?)$/); if (f) return +f[1] / +f[2];
+  return /^-?\d*\.?\d+(e-?\d+)?$/.test(s) ? parseFloat(s) : NaN;
+}
+const TYPE_LABEL = { mc: "알맞은 답을 고르세요", num: "계산해서 답을 입력하세요", ox: "맞으면 O, 틀리면 X", order: "순서대로 탭해서 완성하세요" };
+const praise = ["정답!", "좋아요!", "완벽해요!", "훌륭해요!", "바로 그거예요!"];
+
+function renderPractice(id) {
+  const root = document.getElementById("practice");
+  const lessonId = id === "mix" ? null : id;
+  let pool = id === "mix" ? shuffle(LESSONS.flatMap(p => bankFor(p.id))).slice(0, 12) : shuffle(bankFor(id));
+  if (!pool.length) { location.hash = "home"; return; }
+  // keep the same question type from repeating three times in a row
+  const st = { queue: pool.map((q, i) => ({ ...q, key: i })), total: pool.length, done: new Set(), missed: new Set(), hearts: 3, xp: 0, combo: 0, bestCombo: 0 };
+  let cur = null, answer = null, checked = false;
+  const exitHref = lessonId ? "#" + lessonId : "#home";
+  root.innerHTML = "";
+  const bar = h("i", {}); const hearts = h("span", { class: "hearts", "aria-label": "남은 하트" });
+  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: exitHref, "aria-label": "연습 그만하기" }, "✕"), h("div", { class: "pr-bar" }, bar), hearts);
+  const card = h("div", { class: "pr-card" });
+  const foot = h("div", { class: "pr-foot" });
+  root.append(head, card, foot);
+
+  function drawHead() {
+    bar.style.width = (st.done.size / st.total * 100) + "%";
+    hearts.innerHTML = ""; for (let i = 0; i < 3; i++) hearts.append(h("span", { class: i < st.hearts ? "hf" : "he" }, "♥"));
+  }
+  function setFoot(state, title, msg, btnText, onBtn) {
+    foot.className = "pr-foot " + state; foot.innerHTML = "";
+    const left = h("div", { class: "pr-msg" }, title ? h("b", {}, title) : null, msg ? h("span", {}, msg) : null);
+    const b = h("button", { class: "pr-go", type: "button", id: "prgo" }, btnText);
+    b.disabled = state === "idle" && answer == null;
+    b.addEventListener("click", onBtn);
+    foot.append(left, b);
+  }
+  function next() {
+    checked = false; answer = null;
+    if (st.hearts <= 0) return fail();
+    if (!st.queue.length) return finish();
+    cur = st.queue.shift();
+    drawHead(); drawQ();
+  }
+  function ready(v) { answer = v; const b = document.getElementById("prgo"); if (b) b.disabled = v == null || v === ""; }
+  function drawQ() {
+    card.innerHTML = ""; card.classList.remove("pop-in"); void card.offsetWidth; card.classList.add("pop-in");
+    const tag = h("div", { class: "pr-type" }, (st.missed.has(cur.key) ? "다시 도전 · " : "") + TYPE_LABEL[cur.t] + (id === "mix" ? "  ·  " + cur.day.replace("day", "Day ") : ""));
+    card.append(tag, h("p", { class: "pr-q" }, cur.q));
+    if (cur.t === "mc") {
+      const box = h("div", { class: "pr-opts" });
+      cur.o.forEach((o, i) => box.append(h("button", { class: "pr-opt", type: "button", "data-i": i, onclick: () => { if (checked) return; box.querySelectorAll(".pr-opt").forEach(b => b.classList.toggle("sel", +b.dataset.i === i)); ready(i); } }, h("kbd", {}, i + 1), o)));
+      card.append(box);
+    } else if (cur.t === "ox") {
+      const box = h("div", { class: "pr-ox" });
+      [[true, "O"], [false, "X"]].forEach(([v, t]) => box.append(h("button", { class: "pr-oxb", type: "button", "data-v": t, onclick: () => { if (checked) return; box.querySelectorAll(".pr-oxb").forEach(b => b.classList.toggle("sel", b.dataset.v === t)); ready(v); } }, t)));
+      card.append(box);
+    } else if (cur.t === "num") {
+      const inp = h("input", { class: "pr-num", id: "prnum", type: "text", inputmode: "decimal", autocomplete: "off", placeholder: "숫자 입력 (예: 0.25, −1.4, 1/3)", "aria-label": "답" });
+      inp.addEventListener("input", () => ready(isNaN(parseNum(inp.value)) ? null : parseNum(inp.value)));
+      inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); document.getElementById("prgo")?.click(); } });
+      card.append(inp, h("p", { class: "w-hint" }, cur.tol ? `±${cur.tol} 이내면 정답으로 처리합니다.` : "정확한 값을 입력하세요."));
+      setTimeout(() => inp.focus(), 50);
+    } else if (cur.t === "order") {
+      const picked = [];
+      const ans = h("div", { class: "pr-ans" }), bank = h("div", { class: "pr-bank" });
+      const all = shuffle([...cur.tokens, ...(cur.extra || [])].map((t, i) => ({ t, i })));
+      const redraw = () => {
+        ans.innerHTML = ""; bank.innerHTML = "";
+        if (!picked.length) ans.append(h("span", { class: "w-hint" }, "아래 카드를 순서대로 탭하세요"));
+        picked.forEach((tk, k) => ans.append(h("button", { class: "pr-tok", type: "button", onclick: () => { if (checked) return; picked.splice(k, 1); redraw(); } }, tk.t)));
+        all.forEach(tk => { const used = picked.includes(tk); bank.append(h("button", { class: "pr-tok" + (used ? " used" : ""), type: "button", disabled: used ? "" : null, onclick: () => { if (checked || used) return; picked.push(tk); redraw(); } }, tk.t)); });
+        ready(picked.length ? picked.map(x => x.t) : null);
+      };
+      redraw(); card.append(ans, bank);
+    }
+    setFoot("idle", "", "", "확인", check);
+  }
+  function correctText() {
+    if (cur.t === "mc") return cur.o[cur.a];
+    if (cur.t === "ox") return cur.a ? "O" : "X";
+    if (cur.t === "num") return String(cur.a).replace("-", "−");
+    return cur.tokens.join("  →  ");
+  }
+  function check() {
+    if (checked || answer == null) return;
+    checked = true;
+    let ok;
+    if (cur.t === "num") ok = Math.abs(answer - cur.a) <= (cur.tol || 1e-9);
+    else if (cur.t === "order") ok = answer.length === cur.tokens.length && answer.every((t, i) => t === cur.tokens[i]);
+    else ok = answer === cur.a;
+    if (cur.t === "mc") card.querySelectorAll(".pr-opt").forEach(b => { const i = +b.dataset.i; if (i === cur.a) b.classList.add("right"); else if (i === answer) b.classList.add("wrong"); });
+    if (cur.t === "ox") card.querySelectorAll(".pr-oxb").forEach(b => { const v = b.dataset.v === "O"; if (v === cur.a) b.classList.add("right"); else if (v === answer) b.classList.add("wrong"); });
+    if (cur.t === "num") card.querySelector(".pr-num").classList.add(ok ? "right" : "wrong");
+    if (cur.t === "order") card.querySelector(".pr-ans").classList.add(ok ? "right" : "wrong");
+    if (ok) {
+      const gain = st.missed.has(cur.key) ? 5 : 10;
+      st.xp += gain; st.combo++; st.bestCombo = Math.max(st.bestCombo, st.combo); st.done.add(cur.key);
+      drawHead();
+      setFoot("good", praise[Math.floor(Math.random() * praise.length)] + `  +${gain} XP` + (st.combo >= 3 ? `  · ${st.combo}연속` : ""), cur.w, "계속", next);
+    } else {
+      st.hearts--; st.combo = 0; st.missed.add(cur.key);
+      st.queue.push(cur);
+      drawHead();
+      setFoot("bad", "정답: " + correctText(), cur.w + "  이 문제는 뒤에서 다시 나와요.", st.hearts > 0 ? "계속" : "결과 보기", next);
+    }
+    setTimeout(() => document.getElementById("prgo")?.focus(), 30);
+  }
+  function fail() {
+    card.innerHTML = ""; drawHead();
+    card.append(h("div", { class: "pr-end" }, h("div", { class: "pr-big bad" }, "♥ 0"), h("h2", {}, "하트를 모두 썼어요"), h("p", {}, `${st.done.size} / ${st.total}문제까지 왔어요. 틀린 부분을 본문에서 한 번 더 보고 다시 도전해 보세요.`)));
+    setFoot("idle end", "", "", "다시 도전", () => renderPractice(id));
+    foot.prepend(h("a", { class: "btn", href: exitHref, style: "text-decoration:none" }, lessonId ? "본문 다시 보기" : "처음으로"));
+    document.getElementById("prgo").disabled = false;
+  }
+  function finish() {
+    drawHead();
+    const acc = Math.round((st.total - st.missed.size) / st.total * 100);
+    const today = ymd(new Date());
+    if (!STATS.days.includes(today)) STATS.days.push(today);
+    STATS.xp += st.xp;
+    if (lessonId) { STATS.best[lessonId] = Math.max(STATS.best[lessonId] || 0, acc); DONE.add(lessonId); saveDone(DONE); }
+    saveStats(STATS); updateChips(); buildRail("practice-" + id);
+    const nextL = lessonId ? byId[ORDER[ORDER.indexOf(lessonId) + 1]] : null;
+    card.innerHTML = "";
+    card.append(h("div", { class: "pr-end" },
+      h("div", { class: "pr-big" }, acc === 100 ? "완벽!" : "완료!"),
+      h("h2", {}, lessonId ? `${lessonId.replace("day", "Day ")} 연습을 끝냈어요` : "전체 복습을 끝냈어요"),
+      h("div", { class: "readout", style: "width:100%" },
+        h("div", { class: "ro big" }, h("small", {}, "얻은 XP"), h("b", {}, "+" + st.xp)),
+        h("div", { class: "ro big" }, h("small", {}, "한 번에 맞힌 비율"), h("b", {}, acc + "%")),
+        h("div", { class: "ro big" }, h("small", {}, "연속 학습"), h("b", {}, streak() + "일")),
+        h("div", { class: "ro big" }, h("small", {}, "최고 연속 정답"), h("b", {}, st.bestCombo))),
+      h("p", { class: "w-hint" }, acc < 70 ? "틀린 문제의 해설을 본문에서 다시 확인하고 한 번 더 풀면 기억에 오래 남아요." : "내일 같은 시간에 다음 레슨으로 연속 기록을 이어 가세요.")));
+    setFoot("idle end", "", "", nextL && nextL.id !== "roadmap" ? `다음: ${nextL.id.replace("day", "Day ")}` : "처음으로", () => { location.hash = nextL && nextL.id !== "roadmap" ? nextL.id : "home"; });
+    foot.prepend(h("button", { class: "btn", type: "button", onclick: () => renderPractice(id) }, "한 번 더"));
+    document.getElementById("prgo").disabled = false;
+  }
+  root.onkeydown = null;
+  next();
+}
+document.addEventListener("keydown", e => {
+  const root = document.getElementById("practice");
+  if (!root || root.hidden || e.target.closest("input,textarea")) return;
+  if (/^[1-4]$/.test(e.key)) { root.querySelector(`.pr-opt[data-i="${+e.key - 1}"]`)?.click(); }
+  if (e.key === "o" || e.key === "O") root.querySelector('.pr-oxb[data-v="O"]')?.click();
+  if (e.key === "x" || e.key === "X") root.querySelector('.pr-oxb[data-v="X"]')?.click();
+  if (e.key === "Enter" && !e.target.closest("button")) { const b = document.getElementById("prgo"); if (b && !b.disabled) { e.preventDefault(); b.click(); } }
+});
+function practiceCard(id) {
+  const best = STATS.best[id];
+  return h("div", { class: "prcard" },
+    h("div", {}, h("b", {}, "연습 문제 " + bankFor(id).length + "개로 실력 확인"), h("span", {}, "하트 3개 · 객관식, 계산, O/X, 순서 맞추기 · 틀린 문제는 다시 나와요" + (best != null ? ` · 최고 기록 ${best}%` : ""))),
+    h("a", { class: "btn pri", href: "#practice-" + id, style: "text-decoration:none;white-space:nowrap" }, best != null ? "다시 연습" : "연습 시작"));
+}
+
+/* ---------- storage ---------- */
+const KEY = "seq2seq30-done";
+function loadDone() { try { return new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); } catch (e) { return new Set(); } }
+function saveDone(sd) { try { localStorage.setItem(KEY, JSON.stringify([...sd])); } catch (e) { } }
+let DONE = loadDone();
+const LESSONS = PAGES.filter(p => p.id.startsWith("day"));
+const ORDER = ["home", ...LESSONS.map(p => p.id), "roadmap"];
+const byId = Object.fromEntries(PAGES.map(p => [p.id, p]));
+
+/* ---------- markdown ---------- */
+function renderMD(md) {
+  const codes = [], maths = [];
+  md = md.replace(/```[\s\S]*?```/g, m => { codes.push(m); return `KXCODE${codes.length - 1}KX`; });
+  md = md.replace(/`[^`\n]+`/g, m => { codes.push(m); return `KXCODE${codes.length - 1}KX`; });
+  md = md.replace(/\$\$([\s\S]+?)\$\$/g, (m, t) => { maths.push([t, true]); return `KXMATH${maths.length - 1}KX`; });
+  md = md.replace(/\$([^$\n]+?)\$/g, (m, t) => { maths.push([t, false]); return `KXMATH${maths.length - 1}KX`; });
+  md = md.replace(/KXCODE(\d+)KX/g, (m, i) => codes[+i]);
+  let html = window.marked ? marked.parse(md) : "<pre>" + md.replace(/</g, "&lt;") + "</pre>";
+  html = html.replace(/KXMATH(\d+)KX/g, (m, i) => {
+    const [t, disp] = maths[+i];
+    if (!window.katex) return disp ? `<div class="calc">${t}</div>` : `<code>${t}</code>`;
+    try { return katex.renderToString(t, { displayMode: disp, output: "mathml", throwOnError: false, strict: false }); } catch (e) { return `<code>${t}</code>`; }
+  });
+  return html;
+}
+function hlPy(code) {
+  const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const re = /(#[^\n]*)|([fr]?"(?:[^"\\\n]|\\.)*"|[fr]?'(?:[^'\\\n]|\\.)*')|\b(\d+(?:_\d+)*(?:\.\d+)?(?:e-?\d+)?)\b|\b(import|from|as|def|return|for|in|if|elif|else|while|lambda|True|False|None|and|or|not|with|class|try|except|print|range|len|sum|zip|enumerate)\b/g;
+  let out = "", last = 0, m;
+  while ((m = re.exec(code))) {
+    out += esc(code.slice(last, m.index));
+    const cls = m[1] ? "co" : m[2] ? "st" : m[3] ? "nu" : "kw";
+    out += `<span class="${cls}">${esc(m[0])}</span>`;
+    last = re.lastIndex;
+  }
+  return out + esc(code.slice(last));
+}
+
+/* ---------- rail + progress ---------- */
+const rail = document.getElementById("rail");
+function buildRail(cur) {
+  rail.innerHTML = "";
+  const link = (id, dn, title, done, soon) => h("a", { href: "#" + id, class: (id === cur || "practice-" + id === cur ? "on " : "") + (soon ? "soon" : "") }, h("span", { class: "dn" }, dn), h("span", {}, title), done != null ? h("span", { class: "ck" + (done ? " done" : "") }) : null);
+  rail.append(h("h4", {}, "시작"), link("home", "00", "교재 소개와 논문 지도"), link("practice-mix", "✦", "전체 복습 퀴즈 (랜덤 12문제)"));
+  rail.append(h("h4", {}, "1주차 · 논문을 읽기 위한 언어"));
+  LESSONS.slice(0, 5).forEach(p => rail.append(link(p.id, p.id.slice(3), p.short, DONE.has(p.id))));
+  rail.append(h("h4", {}, "2주차 · 모델은 어떻게 배우는가"));
+  LESSONS.slice(5).forEach(p => rail.append(link(p.id, p.id.slice(3), p.short, DONE.has(p.id))));
+  rail.append(h("h4", {}, "3~4주차 · 준비 중"), link("roadmap", "11+", "모델 해부와 미니 구현 (개요)", null, true));
+  rail.append(h("h4", {}, "논문"), h("a", { href: "https://arxiv.org/abs/1409.3215", target: "_blank", rel: "noopener" }, h("span", { class: "dn" }, "↗"), h("span", {}, "원문 PDF (arXiv 1409.3215)")));
+  const n = LESSONS.filter(p => DONE.has(p.id)).length;
+  document.getElementById("progbar").style.width = (n / LESSONS.length * 100) + "%";
+  document.getElementById("progtxt").textContent = `완료 ${n}/${LESSONS.length}`;
+}
+
+/* ---------- glossary ---------- */
+let pop = null;
+function closePop() { if (pop) { pop.remove(); pop = null; } }
+function showPop(btnEl, g) {
+  closePop();
+  pop = h("div", { class: "pop", role: "tooltip" }, h("b", {}, g[0]), g[1], h("div", { style: "margin-top:6px;font-size:12px;opacity:.75" }, "처음 나오는 곳: " + g[2].replace("day", "Day ")));
+  document.body.append(pop);
+  const r = btnEl.getBoundingClientRect();
+  const left = Math.min(window.scrollX + r.left, window.scrollX + document.documentElement.clientWidth - pop.offsetWidth - 16);
+  pop.style.left = Math.max(16, left) + "px";
+  pop.style.top = (window.scrollY + r.bottom + 6) + "px";
+}
+document.addEventListener("click", e => { if (pop && !e.target.closest(".term") && !e.target.closest(".pop")) closePop(); });
+function annotate(root) {
+  const terms = [...GLOSSARY].sort((a, b) => b[0].length - a[0].length);
+  const used = new Set();
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(n) {
+      const p = n.parentElement;
+      if (!p || p.closest("pre,code,a,h1,h2,h3,math,.widget,.quick,summary,.hook,.term,.meta,table th,.eyebrow,.finish")) return NodeFilter.FILTER_REJECT;
+      return n.nodeValue.trim() ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+    }
+  });
+  const nodes = []; while (walker.nextNode()) nodes.push(walker.currentNode);
+  for (const g of terms) {
+    if (used.size > 14) break;
+    for (const n of nodes) {
+      if (!n.parentNode) continue;
+      const txt = n.nodeValue, i = txt.toLowerCase().indexOf(g[0].toLowerCase());
+      if (i < 0) continue;
+      const after = n.splitText(i); const rest = after.splitText(g[0].length);
+      const b = h("button", { class: "term", type: "button", "aria-label": g[0] + " 뜻 보기" }, after.nodeValue);
+      b.addEventListener("click", e => { e.stopPropagation(); showPop(b, g); });
+      after.replaceWith(b);
+      nodes.push(rest);
+      used.add(g[0]); break;
+    }
+  }
+}
+function openGlossary() {
+  if (document.querySelector(".modal")) return;
+  const list = h("div", { class: "gl" });
+  const inp = h("input", { type: "search", id: "glq", placeholder: "용어 검색 (예: 엔트로피, softmax)", "aria-label": "용어 검색" });
+  const fill = () => {
+    const q = inp.value.trim().toLowerCase(); list.innerHTML = "";
+    GLOSSARY.filter(g => !q || (g[0] + g[1]).toLowerCase().includes(q)).sort((a, b) => a[2].localeCompare(b[2])).forEach(g => list.append(h("div", {}, h("b", {}, g[0]), h("span", {}, g[1] + " "), h("a", { href: "#" + g[2], onclick: close }, g[2].replace("day", "Day ")))));
+  };
+  const modal = h("div", { class: "modal", onclick: e => { if (e.target === modal) close(); } },
+    h("div", { class: "sheet", role: "dialog", "aria-label": "용어 사전" }, h("div", { style: "display:flex;justify-content:space-between;align-items:center;margin-bottom:10px" }, h("b", { style: "font-size:18px" }, "용어 사전"), h("button", { class: "iconbtn", type: "button", onclick: () => close() }, "닫기")), inp, list));
+  function close() { modal.remove(); }
+  inp.addEventListener("input", fill);
+  document.body.append(modal); fill(); inp.focus();
+}
+document.getElementById("fab").addEventListener("click", openGlossary);
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") { closePop(); document.querySelector(".modal")?.remove(); rail.classList.remove("open"); }
+  if (e.key === "?" && !e.target.closest("input,textarea")) { e.preventDefault(); openGlossary(); }
+});
+
+/* ---------- quick quiz ---------- */
+function quickQuiz(id) {
+  const qs = QUICK[id]; if (!qs) return null;
+  let right = 0, answered = 0;
+  const score = h("div", { class: "score" }, `0 / ${qs.length}`);
+  const box = h("section", { class: "quick" }, h("h3", {}, "빠른 확인"), h("p", { class: "sub" }, "보기를 누르면 바로 채점됩니다. 아래 셀프 체크 퀴즈 전에 몸풀기로 풀어 보세요."));
+  qs.forEach(q => {
+    const why = h("div", { class: "why", hidden: "" }, q.w);
+    const opts = h("div", { class: "opts" });
+    let done = false;
+    q.o.forEach((o, i) => opts.append(h("button", { class: "opt", type: "button", onclick: e => {
+      if (done) return; done = true; answered++;
+      const ok = i === q.a; if (ok) right++;
+      e.currentTarget.classList.add(ok ? "right" : "wrong");
+      opts.children[q.a].classList.add("right");
+      why.hidden = false; why.textContent = (ok ? "정답! " : "아쉬워요. ") + q.w;
+      score.textContent = `${right} / ${qs.length}` + (answered === qs.length ? (right === qs.length ? "  · 완벽합니다" : "  · 틀린 문제는 본문에서 다시 확인해 보세요") : "");
+    } }, o)));
+    box.append(h("div", { class: "q" }, h("p", {}, q.q), opts, why));
+  });
+  box.append(score);
+  return box;
+}
+
+/* ---------- pages ---------- */
+const lessonEl = document.getElementById("lesson"), tocEl = document.getElementById("toc");
+function decorate(root) {
+  root.querySelectorAll("table").forEach(t => { const w = h("div", { class: "tablewrap" }); t.replaceWith(w); w.append(t); });
+  root.querySelectorAll("pre > code").forEach(c => {
+    const pre = c.parentElement, py = /language-python/.test(c.className), raw = c.textContent;
+    if (py) c.innerHTML = hlPy(raw);
+    const cb = h("button", { class: "copy", type: "button" }, "복사");
+    cb.addEventListener("click", () => {
+      const ok = () => { cb.textContent = "복사됨"; setTimeout(() => cb.textContent = "복사", 1400); };
+      try { navigator.clipboard.writeText(raw).then(ok, () => selectText(c)); } catch (e) { selectText(c); }
+    });
+    pre.append(cb); if (py) pre.append(h("span", { class: "lang" }, "python"));
+  });
+  root.querySelectorAll(".widget[data-w]").forEach(el => { const f = W[el.dataset.w]; if (f) { try { f(el); } catch (e) { el.textContent = "위젯을 불러오지 못했습니다: " + e.message; } } });
+}
+function selectText(el) { const r = document.createRange(); r.selectNodeContents(el); const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r); }
+function buildToc(root) {
+  tocEl.innerHTML = ""; const hs = [...root.querySelectorAll("h2")];
+  if (!hs.length) return;
+  tocEl.append(h("b", {}, "이 문서에서"));
+  hs.forEach((x, i) => { x.id = "s" + i; tocEl.append(h("a", { href: "#" + location.hash.slice(1), onclick: e => { e.preventDefault(); x.scrollIntoView({ behavior: "smooth", block: "start" }); } }, x.textContent.replace(/\s*\(\d+분\)/, ""))); });
+}
+function renderLesson(p) {
+  lessonEl.innerHTML = renderMD(p.md);
+  const h1 = lessonEl.querySelector("h1");
+  const wk = LESSONS.indexOf(p) < 5 ? "1주차" : "2주차";
+  h1.before(h("div", { class: "eyebrow" }, `${wk} · ${p.id.replace("day", "Day ")} · 하루 30분`));
+  const meta = h1.nextElementSibling; if (meta && meta.tagName === "P") meta.classList.add("meta");
+  if (HOOKS[p.id]) (meta || h1).after(h("div", { class: "hook" }, h("span", { class: "tag" }, "오늘의 장면"), h("p", {}, HOOKS[p.id])));
+  lessonEl.querySelector(".hook")?.after(practiceCard(p.id));
+  const quizH = [...lessonEl.querySelectorAll("h2")].find(x => x.textContent.includes("셀프 체크"));
+  const qq = quickQuiz(p.id); if (qq && quizH) quizH.before(qq);
+  decorate(lessonEl);
+  annotate(lessonEl);
+  const i = ORDER.indexOf(p.id), prev = byId[ORDER[i - 1]], next = byId[ORDER[i + 1]];
+  const db = h("button", { class: "donebtn", type: "button" });
+  const sync = () => { const d = DONE.has(p.id); db.textContent = d ? "✓ 오늘 학습 완료 (다시 누르면 취소)" : "오늘 30분 학습 완료 체크"; db.classList.toggle("is-done", d); };
+  db.addEventListener("click", () => { DONE.has(p.id) ? DONE.delete(p.id) : DONE.add(p.id); saveDone(DONE); sync(); buildRail(p.id); });
+  sync();
+  lessonEl.append(h("div", { class: "finish" }, practiceCard(p.id), db, h("nav", { class: "pn", "aria-label": "이전 다음" },
+    prev ? h("a", { href: "#" + prev.id }, h("small", {}, "이전"), prev.short) : h("span"),
+    next ? h("a", { href: "#" + next.id, class: "next" }, h("small", {}, "다음"), next.short) : h("span"))));
+  buildToc(lessonEl);
+}
+function renderHome() {
+  const p = byId.home;
+  lessonEl.innerHTML = "";
+  const n = LESSONS.filter(x => DONE.has(x.id)).length;
+  const nextL = LESSONS.find(x => !DONE.has(x.id)) || LESSONS[0];
+  lessonEl.append(
+    h("div", { class: "hero" },
+      h("div", { class: "eyebrow" }, "Sutskever · Vinyals · Le  ·  NIPS 2014"),
+      h("h1", {}, "논문 한 편으로 배우는 ", h("em", {}, "AI 수학")),
+      h("p", {}, "\"Sequence to Sequence Learning with Neural Networks\"를 하루 30분씩 손으로 풀어 봅니다. 선형대수, 베이즈 정리, 엔트로피, 중심극한정리, teacher forcing이 모두 이 9쪽짜리 논문 안에 있습니다."),
+      h("div", { class: "btns" }, h("a", { class: "btn pri", href: "#" + nextL.id, style: "text-decoration:none" }, n ? `이어서 하기: ${nextL.id.replace("day", "Day ")}` : "Day 01부터 시작"), h("a", { class: "btn", href: "https://arxiv.org/abs/1409.3215", target: "_blank", rel: "noopener", style: "text-decoration:none" }, "논문 원문 ↗"), h("a", { class: "btn", href: "#practice-mix", style: "text-decoration:none" }, "전체 복습 퀴즈"), h("button", { class: "btn", type: "button", onclick: openGlossary }, "용어 사전 (?)")),
+      h("div", { class: "stats" }, h("div", {}, h("small", {}, "연속 학습"), h("b", {}, streak() + "일")), h("div", {}, h("small", {}, "누적 XP"), h("b", {}, STATS.xp)), h("div", {}, h("small", {}, "완료한 레슨"), h("b", {}, n + " / " + LESSONS.length)))),
+    h("div", { class: "widget", "data-w": "papermap" }),
+    h("h2", {}, "하루 30분 루틴"),
+    h("div", { style: "overflow-x:auto" }, h("div", { class: "routine" },
+      ...[["1분", "목표 확인", 1], ["8분", "개념 + 직관", 8], ["6분", "예제 따라 풀기", 6], ["10분", "손계산 + 코드 + 실습 위젯", 10], ["4분", "퀴즈", 4], ["1분", "한 줄 정리", 1]].map(([t, l, w]) => h("div", { style: `flex:${w + 1.2}` }, h("b", {}, t), l)))),
+    h("h2", {}, "학습 경로"),
+    h("div", { class: "cards" }, ...LESSONS.map(x => h("a", { class: "card", href: "#" + x.id }, h("small", {}, x.id.replace("day", "DAY ") + (DONE.has(x.id) ? " · 완료" : " · 30분")), h("b", {}, x.short), h("span", {}, x.link))), h("a", { class: "card", href: "#roadmap" }, h("small", {}, "DAY 11–20 · 개요"), h("b", {}, "3~4주차: 모델 해부와 미니 구현"), h("span", {}, "LSTM 게이트, 입력 뒤집기, 빔 서치, BLEU, 숫자열 뒤집기 seq2seq 만들기"))),
+  );
+  const rest = h("div", {}); rest.innerHTML = renderMD(p.md.replace(/^# .*\n/, "").replace(/## 3\. 전체 일정[\s\S]*?(?=## 4\.)/, ""));
+  lessonEl.append(...rest.childNodes);
+  decorate(lessonEl);
+  annotate(lessonEl);
+  buildToc(lessonEl);
+}
+function renderRoadmap() {
+  lessonEl.innerHTML = renderMD(byId.roadmap.md);
+  lessonEl.querySelector("h1")?.before(h("div", { class: "eyebrow" }, "3~4주차 · 개요"));
+  decorate(lessonEl); annotate(lessonEl); buildToc(lessonEl);
+  lessonEl.append(h("div", { class: "finish" }, h("nav", { class: "pn" }, h("a", { href: "#day10" }, h("small", {}, "이전"), byId.day10.short), h("a", { href: "#home", class: "next" }, h("small", {}, "처음으로"), "교재 소개"))));
+}
+function route() {
+  REDRAW.length = 0;
+  closePop(); document.querySelector(".modal")?.remove();
+  let id = location.hash.slice(1);
+  const prac = id.startsWith("practice-") && (id === "practice-mix" || (byId[id.slice(9)] && id.slice(9).startsWith("day")));
+  document.querySelector(".page").hidden = !!prac; document.getElementById("practice").hidden = !prac; document.getElementById("fab").hidden = !!prac;
+  if (prac) { buildRail(id); rail.classList.remove("open"); window.scrollTo(0, 0); renderPractice(id.slice(9)); document.title = "연습 · 손으로 푸는 Seq2Seq"; return; }
+  if (!byId[id]) id = "home";
+  buildRail(id);
+  if (id === "home") renderHome(); else if (id === "roadmap") renderRoadmap(); else renderLesson(byId[id]);
+  rail.classList.remove("open");
+  window.scrollTo(0, 0);
+  document.title = id === "home" ? "손으로 푸는 Seq2Seq" : (byId[id].short + " · 손으로 푸는 Seq2Seq");
+}
+window.addEventListener("hashchange", route);
+document.getElementById("menu").addEventListener("click", () => rail.classList.toggle("open"));
+const mq = matchMedia("(prefers-color-scheme: dark)");
+const redrawAll = () => REDRAW.forEach(f => f());
+mq.addEventListener?.("change", redrawAll);
+new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+updateChips();
+route();
+
+</script>
+</body>
+</html>
