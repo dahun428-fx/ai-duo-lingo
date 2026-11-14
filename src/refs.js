@@ -1,0 +1,69 @@
+// 근거와 참고 자료. 레슨 id별 배열, 첫 줄이 채점 화면에도 붙는다.
+// t: 저자(연도) 제목, u: 링크, w: 어느 부분, n: 이 레슨이 그 자료에서 가져온 것
+const S2S = "https://arxiv.org/abs/1409.3215";
+const DLB = "https://www.deeplearningbook.org/contents/";
+const REFS = {
+  day01: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "2장, 3.8절", n: "문장을 고정 길이 벡터 v 하나로 바꾼다는 구조와, 뜻이 비슷한 문장의 벡터가 가까이 모인다는 관찰" },
+    { t: "Mikolov 외 (2013) Efficient Estimation of Word Representations in Vector Space", u: "https://arxiv.org/abs/1301.3781", w: "4장", n: "단어 벡터의 방향이 뜻을 담고, 코사인 유사도로 비슷한 단어를 찾는다는 내용" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 선형대수 (2.1, 2.5)", n: "벡터, 내적, 노름의 정의" }
+  ],
+  day02: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "4층 LSTM, 층마다 1000개 셀, 1000차원 임베딩, 파라미터 3억 8천4백만 개라는 숫자" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 선형대수 (2.2)", n: "행렬과 벡터의 곱, shape 규칙" }
+  ],
+  day03: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "2장 식 (1)", n: "출력 문장의 확률을 단어별 조건부확률의 곱으로 쓰는 식" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "prob.html", w: "3장 확률 (3.5, 3.6)", n: "조건부확률의 정의와 연쇄법칙" }
+  ],
+  day04: [
+    { t: "Brown 외 (1993) The Mathematics of Statistical Machine Translation", u: "https://aclanthology.org/J93-2003/", w: "1~2장", n: "번역을 베이즈 정리로 쪼개는 방식: 가능도(번역 모델) × 사전확률(언어 모델)" },
+    { t: "Gigerenzer, Hoffrage (1995) How to Improve Bayesian Reasoning Without Instruction: Frequency Formats", u: "https://doi.org/10.1037/0033-295X.102.4.684", w: "", n: "확률 대신 '1,000명 중 몇 명'으로 세면 베이즈 문제를 훨씬 잘 푼다는 실험. 이 레슨이 사람 수로 먼저 세는 이유" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.2절", n: "가장 그럴듯한 번역을 고르는 argmax 식" }
+  ],
+  day05: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "2장, 3.2절", n: "어휘 전체에 대한 소프트맥스와, 로그 확률을 더하는 학습 목표" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "numerical.html", w: "4장 수치 계산 (4.1)", n: "소프트맥스에서 최댓값을 빼 넘침을 막는 방법" },
+    { t: "Hinton, Vinyals, Dean (2015) Distilling the Knowledge in a Neural Network", u: "https://arxiv.org/abs/1503.02531", w: "2장", n: "temperature로 소프트맥스 분포를 부드럽게 만드는 식" }
+  ],
+  day06: [
+    { t: "Shannon (1948) A Mathematical Theory of Communication", u: "https://doi.org/10.1002/j.1538-7305.1948.tb01338.x", w: "6절", n: "엔트로피 H = −Σ p log p의 정의와 비트 단위" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.3절", n: "입력을 뒤집자 perplexity가 5.8에서 4.7로 내려갔다는 결과" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "prob.html", w: "3장 (3.13 정보이론)", n: "놀람(자기 정보)과 엔트로피의 관계" }
+  ],
+  day07: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.2절", n: "정답 번역의 로그 확률을 최대화하는 학습 목표 (= 크로스엔트로피 최소화)" },
+    { t: "Kullback, Leibler (1951) On Information and Sufficiency", u: "https://doi.org/10.1214/aoms/1177729694", w: "", n: "두 분포의 차이를 재는 KL 발산의 정의" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "prob.html", w: "3장 (3.13)", n: "H(p, q) = H(p) + KL(p‖q) 관계" }
+  ],
+  day08: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "모멘텀 없는 SGD, 학습률 0.7, 배치 128, 그래디언트 노름이 5를 넘으면 줄이는 설정" },
+    { t: "Robbins, Monro (1951) A Stochastic Approximation Method", u: "https://doi.org/10.1214/aoms/1177729586", w: "", n: "일부 표본만 보고 조금씩 고쳐 가는 확률적 경사하강법의 뿌리" },
+    { t: "Pascanu, Mikolov, Bengio (2013) On the Difficulty of Training Recurrent Neural Networks", u: "https://arxiv.org/abs/1211.5063", w: "3.2절", n: "기울기 폭발과 그래디언트 클리핑" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "optimization.html", w: "8장 최적화 (8.1, 8.3)", n: "미니배치와 학습률" }
+  ],
+  day09: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "파라미터를 −0.08 ~ 0.08 균등분포로 초기화하고 128문장 배치의 평균 기울기를 쓴다는 설정" },
+    { t: "Glorot, Bengio (2010) Understanding the Difficulty of Training Deep Feedforward Neural Networks", u: "https://proceedings.mlr.press/v9/glorot10a.html", w: "4장", n: "초기값의 분산이 층을 지나며 신호 크기를 어떻게 바꾸는지" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "prob.html", w: "3장 (3.9.3 정규분포)", n: "중심극한정리와 정규분포가 자주 나오는 이유" }
+  ],
+  day10: [
+    { t: "Williams, Zipser (1989) A Learning Algorithm for Continually Running Fully Recurrent Neural Networks", u: "https://doi.org/10.1162/neco.1989.1.2.270", w: "", n: "teacher forcing이라는 이름과 방법이 처음 나온 논문" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "2장", n: "RNN 식, 인코더와 디코더, <EOS>로 문장을 끝내는 방식" },
+    { t: "Bengio 외 (2015) Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks", u: "https://arxiv.org/abs/1506.03099", w: "2장", n: "학습 때와 실전의 입력이 달라 생기는 문제(노출 편향)와 완화 방법" },
+    { t: "Hochreiter, Schmidhuber (1997) Long Short-Term Memory", u: "https://doi.org/10.1162/neco.1997.9.8.1735", w: "", n: "LSTM의 원 논문 (3주차에서 자세히)" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "rnn.html", w: "10장 (10.2.1)", n: "teacher forcing 설명" }
+  ]
+};
+// 이 앱의 학습 방식(문제를 풀며 떠올리기, 능동 학습)이 기대는 연구
+const METHOD_REFS = [
+  { t: "Roediger, Karpicke (2006) Test-Enhanced Learning: Taking Memory Tests Improves Long-Term Retention", u: "https://doi.org/10.1111/j.1467-9280.2006.01693.x", w: "", n: "다시 읽는 것보다 문제를 풀며 떠올릴 때 오래 기억한다는 실험. 레슨마다 연습 문제를 두고 틀린 문제를 다시 내는 이유" },
+  { t: "Freeman 외 (2014) Active Learning Increases Student Performance in Science, Engineering, and Mathematics", u: "https://doi.org/10.1073/pnas.1319030111", w: "", n: "듣기만 하는 수업보다 직접 해 보는 수업의 성적이 높다는 225개 연구 종합. 손계산과 실습 위젯을 넣은 이유" }
+];
+function refList(list) {
+  return h("ol", { class: "refs" }, ...list.map(r => h("li", {}, h("a", { href: r.u, target: "_blank", rel: "noopener" }, r.t), r.w ? h("span", { class: "ref-w" }, r.w) : null, /doi\.org/.test(r.u) ? null : h("span", { class: "ref-w ok" }, "열람 확인"), h("p", {}, r.n))));
+}
+function refSection(id) {
+  if (!REFS[id]) return null;
+  return h("section", { class: "refbox" }, h("h2", {}, "근거와 참고 자료"), h("p", { class: "w-hint" }, "이 레슨의 설명과 문제는 아래 자료를 바탕으로 만들었습니다. 제목을 누르면 원문이 열립니다."), refList(REFS[id]), h("a", { href: "#refs", class: "ref-all" }, "전체 참고 자료 보기"));
+}

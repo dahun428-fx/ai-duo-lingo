@@ -17,7 +17,7 @@
 - **목표:** 단순 RNN이 긴 문장을 못 외우는 이유와 LSTM이 그걸 고치는 방식을 설명한다.
 - **내용:** 연쇄 미분(chain rule, 미분 버전) · 작은 수를 계속 곱하면 0 (Day 03 underflow와 같은 구조) · sigmoid 게이트(0~1 "밸브") · 원소별 곱 ⊙ · 셀 상태의 "덧셈 고속도로"
 - **연습:** 0.9를 50번 곱하기 vs 1.0 근처 유지 · numpy로 LSTM 한 스텝 손계산 (입력/망각/출력 게이트)
-- **논문 연결:** 2장 "the LSTM's ability to learn long range temporal dependencies"
+- **논문 연결:** 1장(서론)에서 LSTM이 멀리 떨어진 단어 사이의 관계(long range temporal dependencies)를 배울 수 있다고 말하는 대목
 - **준비된 질문:** 망각 게이트가 항상 1이면 어떤 일이 생길까?
 
 ### Day 13. 인코더-디코더와 고정 길이 벡터 v

@@ -1,4 +1,4 @@
-import re, json, glob, os
+import re, json, glob, os, hashlib
 ROOT=os.path.dirname(os.path.abspath(__file__))
 SRC=os.path.join(ROOT,'lessons')
 HERE=os.path.join(ROOT,'src')
@@ -26,14 +26,23 @@ for f in sorted(glob.glob(f'{SRC}/week[12]/day*.md')):
 rm=open(f'{SRC}/week3-4_개요.md').read()
 pages.append(dict(id='roadmap',short='3~4주차 개요',md=clean(rm),link=''))
 css=open(f'{HERE}/style.css').read()
-js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/app.js').read()
+js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/refs.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/speak-data.js').read()+'\n'+open(f'{HERE}/speak.js').read()+'\n'+open(f'{HERE}/app.js').read()+'\n'+open(f'{HERE}/pwa.js').read()
 html=f'''<!doctype html>
 <html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="description" content="Seq2Seq 논문(2014)으로 선형대수·베이즈·엔트로피·중심극한정리·teacher forcing을 하루 30분씩 배우는 인터랙티브 교재">
-<title>손으로 푸는 Seq2Seq</title>
+<title>AI 듀오링고</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f131b" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AI 듀오링고">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
@@ -45,9 +54,9 @@ body{{margin:0}}img{{max-width:100%}}[hidden]{{display:none!important}}
 <body>
 <header class="top">
   <button class="iconbtn menu-btn" id="menu" type="button" aria-label="목차 열기">목차</button>
-  <a class="brand" href="#home"><b>손으로 푸는 Seq2Seq</b><span>하루 30분 · AI 논문 학습 교재</span></a>
+  <a class="brand" href="#home"><b>AI 듀오링고</b><span>하루 30분 · 문제로 익히는 AI 수학</span></a>
   <div class="grow"></div>
-  <span class="chip" id="streak">연속 0일</span><span class="chip" id="xp">0 XP</span>
+  <span class="chip" id="lvl">Lv.1</span><span class="chip" id="streak">연속 0일</span><span class="chip" id="xp">0 XP</span>
   <div class="prog"><span id="progtxt">완료 0/10</span><div class="bar"><i id="progbar" style="width:0"></i></div></div>
 </header>
 <div class="shell">
@@ -55,14 +64,22 @@ body{{margin:0}}img{{max-width:100%}}[hidden]{{display:none!important}}
   <main id="main"><div class="page"><article class="lesson" id="lesson"></article><aside class="toc" id="toc"></aside></div><section class="practice" id="practice" hidden aria-label="연습 문제"></section></main>
 </div>
 <button class="fab" id="fab" type="button">용어 사전<kbd>?</kbd></button>
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script src="vendor/marked.min.js"></script>
+<script src="vendor/katex.min.js"></script>
 <script>
 {js}
 </script>
 </body>
 </html>
 '''
-out=os.path.join(ROOT,'index.html')
+PUB=os.path.join(ROOT,'public')
+bid=hashlib.sha256(html.encode()).hexdigest()[:10]
+html=html.replace('__BUILD__',bid)
+out=os.path.join(PUB,'index.html')
 open(out,'w').write(html)
-print(out, len(html))
+# 서비스 워커: 빌드마다 첫 줄의 id가 달라져야 브라우저가 새 버전을 설치한다
+sw=open(f'{HERE}/sw.js').read()
+first='const BUILD_ID = "dev";'
+assert sw.startswith(first)
+open(os.path.join(PUB,'sw.js'),'w').write(f'const BUILD_ID = "{bid}";'+sw[len(first):])
+print(out, len(html), 'build', bid)

@@ -38,16 +38,24 @@ function hlPy(code) {
 
 /* ---------- rail + progress ---------- */
 const rail = document.getElementById("rail");
+function chapterOf(id) {
+  for (const sub of SUBJECTS) { const k = sub.chapters.findIndex(c => c.l === id); if (k >= 0) return { sub, k, ch: sub.chapters[k] }; }
+  return null;
+}
+function stars(id) { const b = STATS.best[id]; return b == null ? 0 : b >= 100 ? 3 : b >= 80 ? 2 : 1; }
+function starText(n) { return "★".repeat(n) + "☆".repeat(3 - n); }
+function nextLesson() { return LESSONS.find(x => !DONE.has(x.id)) || LESSONS[0]; }
 function buildRail(cur) {
   rail.innerHTML = "";
-  const link = (id, dn, title, done, soon) => h("a", { href: "#" + id, class: (id === cur || "practice-" + id === cur ? "on " : "") + (soon ? "soon" : "") }, h("span", { class: "dn" }, dn), h("span", {}, title), done != null ? h("span", { class: "ck" + (done ? " done" : "") }) : null);
-  rail.append(h("h4", {}, "시작"), link("home", "00", "교재 소개와 논문 지도"), link("practice-mix", "✦", "전체 복습 퀴즈 (랜덤 12문제)"));
-  rail.append(h("h4", {}, "1주차 · 논문을 읽기 위한 언어"));
-  LESSONS.slice(0, 5).forEach(p => rail.append(link(p.id, p.id.slice(3), p.short, DONE.has(p.id))));
-  rail.append(h("h4", {}, "2주차 · 모델은 어떻게 배우는가"));
-  LESSONS.slice(5).forEach(p => rail.append(link(p.id, p.id.slice(3), p.short, DONE.has(p.id))));
-  rail.append(h("h4", {}, "3~4주차 · 준비 중"), link("roadmap", "11+", "모델 해부와 미니 구현 (개요)", null, true));
-  rail.append(h("h4", {}, "논문"), h("a", { href: "https://arxiv.org/abs/1409.3215", target: "_blank", rel: "noopener" }, h("span", { class: "dn" }, "↗"), h("span", {}, "원문 PDF (arXiv 1409.3215)")));
+  const link = (id, dn, title, done, soon, extra) => h("a", { href: "#" + id, class: (id === cur || "practice-" + id === cur ? "on " : "") + (soon ? "soon" : "") }, h("span", { class: "dn" }, dn), h("span", {}, title, extra ? h("small", { class: "st" }, extra) : null), done != null ? h("span", { class: "ck" + (done ? " done" : "") }) : null);
+  rail.append(h("h4", {}, "홈"), link("home", "⌂", "학습 지도"), link("practice-mix", "✦", "전체 복습 퀴즈"), link("course-seq2seq", "▤", "논문 코스: Seq2Seq"), link("speak", "◉", "면접에서 말해보기"), link("refs", "§", "참고 자료"), link("settings", "⚙", "앱 설치와 진도"));
+  SUBJECTS.forEach(sub => {
+    rail.append(h("h4", {}, sub.name));
+    sub.chapters.forEach((c, k) => {
+      if (c.l) rail.append(link(c.l, String(k + 1), c.name, DONE.has(c.l), false, stars(c.l) ? starText(stars(c.l)) : null));
+      else rail.append(h("a", { class: "soon locked", "aria-disabled": "true" }, h("span", { class: "dn" }, String(k + 1)), h("span", {}, c.soon, h("small", { class: "st" }, "준비 중"))));
+    });
+  });
   const n = LESSONS.filter(p => DONE.has(p.id)).length;
   document.getElementById("progbar").style.width = (n / LESSONS.length * 100) + "%";
   document.getElementById("progtxt").textContent = `완료 ${n}/${LESSONS.length}`;
@@ -163,7 +171,8 @@ function renderLesson(p) {
   lessonEl.innerHTML = renderMD(p.md);
   const h1 = lessonEl.querySelector("h1");
   const wk = LESSONS.indexOf(p) < 5 ? "1주차" : "2주차";
-  h1.before(h("div", { class: "eyebrow" }, `${wk} · ${p.id.replace("day", "Day ")} · 하루 30분`));
+  const co = chapterOf(p.id);
+  h1.before(h("div", { class: "eyebrow" }, `${co ? co.sub.name + " · 챕터 " + (co.k + 1) : wk} · Seq2Seq 코스 ${p.id.replace("day", "Day ")} · 30분`));
   const meta = h1.nextElementSibling; if (meta && meta.tagName === "P") meta.classList.add("meta");
   if (HOOKS[p.id]) (meta || h1).after(h("div", { class: "hook" }, h("span", { class: "tag" }, "오늘의 장면"), h("p", {}, HOOKS[p.id])));
   lessonEl.querySelector(".hook")?.after(practiceCard(p.id));
@@ -176,23 +185,56 @@ function renderLesson(p) {
   const sync = () => { const d = DONE.has(p.id); db.textContent = d ? "✓ 오늘 학습 완료 (다시 누르면 취소)" : "오늘 30분 학습 완료 체크"; db.classList.toggle("is-done", d); };
   db.addEventListener("click", () => { DONE.has(p.id) ? DONE.delete(p.id) : DONE.add(p.id); saveDone(DONE); sync(); buildRail(p.id); });
   sync();
-  lessonEl.append(h("div", { class: "finish" }, practiceCard(p.id), db, h("nav", { class: "pn", "aria-label": "이전 다음" },
+  const rs = refSection(p.id); if (rs) lessonEl.append(rs);
+  lessonEl.append(h("div", { class: "finish" }, practiceCard(p.id), speakCard(p.id), db, h("nav", { class: "pn", "aria-label": "이전 다음" },
     prev ? h("a", { href: "#" + prev.id }, h("small", {}, "이전"), prev.short) : h("span"),
     next ? h("a", { href: "#" + next.id, class: "next" }, h("small", {}, "다음"), next.short) : h("span"))));
   buildToc(lessonEl);
 }
 function renderHome() {
+  lessonEl.innerHTML = "";
+  const n = LESSONS.filter(x => DONE.has(x.id)).length, nextL = nextLesson();
+  const totalStars = LESSONS.reduce((a, x) => a + stars(x.id), 0);
+  lessonEl.append(
+    h("div", { class: "hero" },
+      h("div", { class: "eyebrow" }, "AI 학습 듀오링고"),
+      h("h1", {}, "하루 30분, 문제로 익히는 ", h("em", {}, "AI 수학")),
+      h("p", {}, "과목을 고르고 챕터를 하나씩 깨 보세요. 챕터마다 읽을거리, 직접 만져보는 실습, 연습 문제 10개가 있습니다. 문제를 풀면 XP가 쌓이고 레벨이 오릅니다."),
+      h("div", { class: "btns" }, h("a", { class: "btn pri", href: "#" + nextL.id, style: "text-decoration:none" }, n ? "이어서 하기: " + chapterOf(nextL.id).ch.name : "첫 챕터 시작"), h("a", { class: "btn", href: "#practice-mix", style: "text-decoration:none" }, "전체 복습 퀴즈"), h("a", { class: "btn", href: "#speak", style: "text-decoration:none" }, "면접에서 말해보기"), h("a", { class: "btn", href: "#course-seq2seq", style: "text-decoration:none" }, "논문 코스로 보기"), h("button", { class: "btn", type: "button", onclick: openGlossary }, "용어 사전 (?)")),
+      levelBar(STATS.xp),
+      h("div", { class: "stats" }, h("div", {}, h("small", {}, "연속 학습"), h("b", {}, streak() + "일")), h("div", {}, h("small", {}, "누적 XP"), h("b", {}, STATS.xp)), h("div", {}, h("small", {}, "완료한 챕터"), h("b", {}, n + " / " + LESSONS.length)), h("div", {}, h("small", {}, "모은 별"), h("b", {}, totalStars + " / " + LESSONS.length * 3)))));
+  const off = [0, 56, 96, 56];
+  SUBJECTS.forEach((sub, si) => {
+    const live = sub.chapters.filter(c => c.l), dn = live.filter(c => DONE.has(c.l)).length;
+    const path = h("div", { class: "path" });
+    sub.chapters.forEach((c, k) => {
+      const st = c.l ? stars(c.l) : 0, isNext = c.l === nextL.id, done = c.l && DONE.has(c.l);
+      const node = c.l
+        ? h("a", { class: "node" + (done ? " done" : "") + (isNext ? " next" : ""), href: "#" + c.l, "aria-label": c.name }, isNext ? h("span", { class: "bubble" }, n ? "이어서" : "시작") : null, h("span", { class: "num" }, done ? "✓" : k + 1))
+        : h("span", { class: "node locked", "aria-label": c.soon + " (준비 중)" }, h("span", { class: "num" }, k + 1));
+      path.append(h("div", { class: "step", style: `--off:${off[k % 4]}px` }, node,
+        h("div", { class: "step-txt" }, h("b", {}, c.l ? c.name : c.soon), h("span", {}, c.l ? (st ? starText(st) + "  최고 " + STATS.best[c.l] + "%" : done ? "읽음 · 연습 전" : "읽기 + 실습 + 문제 10개") : "준비 중"))));
+    });
+    lessonEl.append(h("section", { class: "unit u" + (si % 5) },
+      h("div", { class: "unit-head" }, h("div", {}, h("small", {}, "과목 " + (si + 1)), h("h2", {}, sub.name), h("p", {}, sub.desc)),
+        h("div", { class: "unit-prog" }, h("b", {}, dn + " / " + live.length), h("div", { class: "lvl-track" }, h("i", { style: `width:${live.length ? dn / live.length * 100 : 0}%` })))),
+      path));
+  });
+  lessonEl.append(h("h2", {}, "논문 코스"), h("div", { class: "cards" }, h("a", { class: "card", href: "#course-seq2seq" }, h("small", {}, "10일 · 하루 30분"), h("b", {}, "Seq2Seq (Sutskever 외, 2014)"), h("span", {}, "위 챕터들을 논문 한 편을 읽는 순서로 따라갑니다. 논문 지도와 하루 루틴도 여기 있어요.")), h("a", { class: "card", href: "#roadmap" }, h("small", {}, "준비 중"), h("b", {}, "3~4주차: 모델 해부와 미니 구현"), h("span", {}, "LSTM 게이트, 입력 뒤집기, 빔 서치, BLEU, 숫자열 뒤집기 seq2seq"))));
+  buildToc(lessonEl);
+}
+function renderCourse() {
   const p = byId.home;
   lessonEl.innerHTML = "";
   const n = LESSONS.filter(x => DONE.has(x.id)).length;
   const nextL = LESSONS.find(x => !DONE.has(x.id)) || LESSONS[0];
   lessonEl.append(
     h("div", { class: "hero" },
-      h("div", { class: "eyebrow" }, "Sutskever · Vinyals · Le  ·  NIPS 2014"),
+      h("div", { class: "eyebrow" }, "논문 코스 · Sutskever · Vinyals · Le · NIPS 2014"),
       h("h1", {}, "논문 한 편으로 배우는 ", h("em", {}, "AI 수학")),
       h("p", {}, "\"Sequence to Sequence Learning with Neural Networks\"를 하루 30분씩 손으로 풀어 봅니다. 선형대수, 베이즈 정리, 엔트로피, 중심극한정리, teacher forcing이 모두 이 9쪽짜리 논문 안에 있습니다."),
       h("div", { class: "btns" }, h("a", { class: "btn pri", href: "#" + nextL.id, style: "text-decoration:none" }, n ? `이어서 하기: ${nextL.id.replace("day", "Day ")}` : "Day 01부터 시작"), h("a", { class: "btn", href: "https://arxiv.org/abs/1409.3215", target: "_blank", rel: "noopener", style: "text-decoration:none" }, "논문 원문 ↗"), h("a", { class: "btn", href: "#practice-mix", style: "text-decoration:none" }, "전체 복습 퀴즈"), h("button", { class: "btn", type: "button", onclick: openGlossary }, "용어 사전 (?)")),
-      h("div", { class: "stats" }, h("div", {}, h("small", {}, "연속 학습"), h("b", {}, streak() + "일")), h("div", {}, h("small", {}, "누적 XP"), h("b", {}, STATS.xp)), h("div", {}, h("small", {}, "완료한 레슨"), h("b", {}, n + " / " + LESSONS.length)))),
+ ),
     h("div", { class: "widget", "data-w": "papermap" }),
     h("h2", {}, "하루 30분 루틴"),
     h("div", { style: "overflow-x:auto" }, h("div", { class: "routine" },
@@ -212,19 +254,27 @@ function renderRoadmap() {
   decorate(lessonEl); annotate(lessonEl); buildToc(lessonEl);
   lessonEl.append(h("div", { class: "finish" }, h("nav", { class: "pn" }, h("a", { href: "#day10" }, h("small", {}, "이전"), byId.day10.short), h("a", { href: "#home", class: "next" }, h("small", {}, "처음으로"), "교재 소개"))));
 }
+function renderRefs() {
+  lessonEl.innerHTML = "";
+  lessonEl.append(h("div", { class: "eyebrow" }, "근거"), h("h1", {}, "참고 자료"),
+    h("p", { class: "meta" }, "레슨의 설명, 숫자, 문제가 어디에서 왔는지 모아 둔 곳입니다. 논문에 없는 내용을 지어내지 않기 위해, 각 레슨은 여기 적힌 자료의 해당 부분만 다룹니다."),
+    h("h2", {}, "학습 방식의 근거"), refList(METHOD_REFS));
+  LESSONS.forEach(p => { if (REFS[p.id]) lessonEl.append(h("h2", {}, h("a", { href: "#" + p.id }, chapterOf(p.id) ? chapterOf(p.id).ch.name : p.short)), refList(REFS[p.id])); });
+  buildToc(lessonEl);
+}
 function route() {
-  REDRAW.length = 0;
+  REDRAW.length = 0; stopSpeak();
   closePop(); document.querySelector(".modal")?.remove();
   let id = location.hash.slice(1);
   const prac = id.startsWith("practice-") && (id === "practice-mix" || (byId[id.slice(9)] && id.slice(9).startsWith("day")));
   document.querySelector(".page").hidden = !!prac; document.getElementById("practice").hidden = !prac; document.getElementById("fab").hidden = !!prac;
-  if (prac) { buildRail(id); rail.classList.remove("open"); window.scrollTo(0, 0); renderPractice(id.slice(9)); document.title = "연습 · 손으로 푸는 Seq2Seq"; return; }
-  if (!byId[id]) id = "home";
+  if (prac) { buildRail(id); rail.classList.remove("open"); window.scrollTo(0, 0); renderPractice(id.slice(9)); document.title = "연습 · AI 듀오링고"; return; }
+  if (!byId[id] && id !== "course-seq2seq" && id !== "refs" && id !== "settings" && id !== "speak" && !(id.startsWith("speak-") && SPEAK[id.slice(6)])) id = "home";
   buildRail(id);
-  if (id === "home") renderHome(); else if (id === "roadmap") renderRoadmap(); else renderLesson(byId[id]);
+  if (id === "home") renderHome(); else if (id === "course-seq2seq") renderCourse(); else if (id === "roadmap") renderRoadmap(); else if (id === "refs") renderRefs(); else if (id === "settings") renderSettings(); else if (id === "speak") renderSpeakList(); else if (id.startsWith("speak-")) renderSpeak(id.slice(6)); else renderLesson(byId[id]);
   rail.classList.remove("open");
   window.scrollTo(0, 0);
-  document.title = id === "home" ? "손으로 푸는 Seq2Seq" : (byId[id].short + " · 손으로 푸는 Seq2Seq");
+  document.title = id === "home" ? "AI 듀오링고" : ((byId[id] ? byId[id].short : id === "refs" ? "참고 자료" : id === "settings" ? "설정" : id.startsWith("speak") ? "면접에서 말해보기" : "논문 코스: Seq2Seq") + " · AI 듀오링고");
 }
 window.addEventListener("hashchange", route);
 document.getElementById("menu").addEventListener("click", () => rail.classList.toggle("open"));
@@ -233,4 +283,3 @@ const redrawAll = () => REDRAW.forEach(f => f());
 mq.addEventListener?.("change", redrawAll);
 new MutationObserver(redrawAll).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 updateChips();
-route();
