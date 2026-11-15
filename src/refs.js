@@ -51,7 +51,7 @@ const REFS = {
     { t: "Williams, Zipser (1989) A Learning Algorithm for Continually Running Fully Recurrent Neural Networks", u: "https://doi.org/10.1162/neco.1989.1.2.270", w: "", n: "teacher forcing이라는 이름과 방법이 처음 나온 논문" },
     { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "2장", n: "RNN 식, 인코더와 디코더, <EOS>로 문장을 끝내는 방식" },
     { t: "Bengio 외 (2015) Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks", u: "https://arxiv.org/abs/1506.03099", w: "2장", n: "학습 때와 실전의 입력이 달라 생기는 문제(노출 편향)와 완화 방법" },
-    { t: "Hochreiter, Schmidhuber (1997) Long Short-Term Memory", u: "https://doi.org/10.1162/neco.1997.9.8.1735", w: "", n: "LSTM의 원 논문 (3주차에서 자세히)" },
+    { t: "Hochreiter, Schmidhuber (1997) Long Short-Term Memory", u: "https://doi.org/10.1162/neco.1997.9.8.1735", w: "", n: "LSTM의 원 논문 (Day 11에서 자세히)" },
     { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "rnn.html", w: "10장 (10.2.1)", n: "teacher forcing 설명" }
   ],
   prep01: [
@@ -86,6 +86,30 @@ const REFS = {
   dx01: [
     { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "학습률 0.7의 SGD로 학습했다는 설정" },
     { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "numerical.html", w: "4장 4.3절", n: "기울기와 경사하강, 학습률의 정의" }
+  ],
+  prep07: [
+    { t: "NumPy 공식 문서: the absolute basics for beginners", u: "https://numpy.org/doc/stable/user/absolute_beginners.html", w: "", n: "배열 만들기, shape, 인덱싱을 처음부터 설명하는 공식 입문서 (영어)" },
+    { t: "Harris 외 (2020) Array programming with NumPy", u: "https://doi.org/10.1038/s41586-020-2649-2", w: "", n: "numpy가 과학 계산의 표준 도구가 된 과정과 배열 계산의 개념을 정리한 Nature 논문" }
+  ],
+  nd01: [
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "prob.html", w: "3장 3.9.3절", n: "정규분포(가우시안)의 정의와 평균, 분산" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "문장 128개 묶음으로 기울기를 구해 그 수로 나눈다는 설정" },
+    { t: "Seeing Theory (Brown University)", u: "https://seeing-theory.brown.edu/", w: "Probability Distributions", n: "정규분포와 중심극한정리를 움직이는 그림으로 보여 주는 무료 사이트" }
+  ],
+  day11: [
+    { t: "Hochreiter, Schmidhuber (1997) Long Short-Term Memory", u: "https://doi.org/10.1162/neco.1997.9.8.1735", w: "", n: "LSTM의 원 논문. 기억을 더하기로 전달해 기울기 소실을 피하는 아이디어" },
+    { t: "Olah (2015) Understanding LSTM Networks", u: "https://colah.github.io/posts/2015-08-Understanding-LSTMs/", w: "", n: "게이트와 셀 상태를 그림으로 풀어 쓴 가장 유명한 해설 글" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "1장, 3.4절", n: "LSTM을 고른 이유, 4층 LSTM에 층마다 셀 1000개라는 설정" },
+    { t: "Pascanu, Mikolov, Bengio (2013) On the difficulty of training recurrent neural networks", u: "https://arxiv.org/abs/1211.5063", w: "2장", n: "기울기 소실과 폭발이 반복되는 곱셈에서 나온다는 분석" }
+  ],
+  day12: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.3절", n: "입력을 뒤집어 perplexity 5.8→4.7, BLEU 25.9→30.6이 된 결과와 minimal time lag 설명" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.2절, 표 1", n: "빔 서치 절차와 빔 크기 1, 2, 12의 BLEU" }
+  ],
+  day13: [
+    { t: "Papineni, Roukos, Ward, Zhu (2002) BLEU: a Method for Automatic Evaluation of Machine Translation", u: "https://aclanthology.org/P02-1040/", w: "2장", n: "BLEU의 원 논문. 클리핑한 n-gram 정밀도와 짧은 번역 벌점의 정의" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.6절, 표 1과 표 2", n: "BLEU 34.81 대 기준선 33.30, 다시 채점했을 때 36.5" },
+    { t: "Post (2018) A Call for Clarity in Reporting BLEU Scores", u: "https://arxiv.org/abs/1804.08771", w: "", n: "같은 BLEU라도 계산 설정에 따라 점수가 달라진다는 지적 (BLEU를 읽을 때의 주의점)" }
   ]
 };
 // 이 앱의 학습 방식(문제를 풀며 떠올리기, 능동 학습)이 기대는 연구

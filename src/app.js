@@ -224,7 +224,7 @@ function renderHome() {
         h("div", { class: "unit-prog" }, h("b", {}, dn + " / " + live.length), h("div", { class: "lvl-track" }, h("i", { style: `width:${live.length ? dn / live.length * 100 : 0}%` })))),
       path));
   });
-  lessonEl.append(h("h2", {}, "논문 코스"), h("div", { class: "cards" }, h("a", { class: "card", href: "#course-seq2seq" }, h("small", {}, "10일 · 하루 30분"), h("b", {}, "Seq2Seq (Sutskever 외, 2014)"), h("span", {}, "위 챕터들을 논문 한 편을 읽는 순서로 따라갑니다. 논문 지도와 하루 루틴도 여기 있어요.")), h("a", { class: "card", href: "#roadmap" }, h("small", {}, "준비 중"), h("b", {}, "3~4주차: 모델 해부와 미니 구현"), h("span", {}, "LSTM 게이트, 입력 뒤집기, 빔 서치, BLEU, 숫자열 뒤집기 seq2seq"))));
+  lessonEl.append(h("h2", {}, "논문 코스"), h("div", { class: "cards" }, h("a", { class: "card", href: "#course-seq2seq" }, h("small", {}, COURSE.length + "일 · 하루 30분"), h("b", {}, "Seq2Seq (Sutskever 외, 2014)"), h("span", {}, "위 챕터들을 논문 한 편을 읽는 순서로 따라갑니다. 논문 지도와 하루 루틴도 여기 있어요.")), h("a", { class: "card", href: "#roadmap" }, h("small", {}, "Day 11 ~ 13"), h("b", {}, "3주차: 모델 해부"), h("span", {}, "LSTM 게이트, 입력 뒤집기와 빔 서치, BLEU"))));
   buildToc(lessonEl);
 }
 function renderCourse() {
@@ -254,9 +254,9 @@ function renderCourse() {
 }
 function renderRoadmap() {
   lessonEl.innerHTML = renderMD(byId.roadmap.md);
-  lessonEl.querySelector("h1")?.before(h("div", { class: "eyebrow" }, "3~4주차 · 개요"));
+  lessonEl.querySelector("h1")?.before(h("div", { class: "eyebrow" }, "3주차 · 안내"));
   decorate(lessonEl); annotate(lessonEl); buildToc(lessonEl);
-  lessonEl.append(h("div", { class: "finish" }, h("nav", { class: "pn" }, h("a", { href: "#day10" }, h("small", {}, "이전"), byId.day10.short), h("a", { href: "#home", class: "next" }, h("small", {}, "처음으로"), "교재 소개"))));
+  lessonEl.append(h("div", { class: "finish" }, h("nav", { class: "pn" }, h("a", { href: "#day13" }, h("small", {}, "이전"), byId.day13.short), h("a", { href: "#home", class: "next" }, h("small", {}, "처음으로"), "교재 소개"))));
 }
 function renderRefs() {
   lessonEl.innerHTML = "";

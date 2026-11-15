@@ -7,10 +7,10 @@ WID={'day01':['dot'],'day02':['matvec'],'day03':['condprob'],'day04':['bayes'],'
 def clean(md): return EMO.sub('', md)
 pages=[]
 cur=open(f'{SRC}/00_커리큘럼.md').read()
-cur=re.sub(r'\((week[12])/(day\d\d)_[^)]*\.md\)', lambda m:f'(#{m.group(2)})', cur)
+cur=re.sub(r'\((week\d)/(day\d\d)_[^)]*\.md\)', lambda m:f'(#{m.group(2)})', cur)
 cur=cur.replace('(week3-4_개요.md)','(#roadmap)')
 pages.append(dict(id='home',short='교재 소개',md=clean(cur),link=''))
-LESSON_FILES=sorted(glob.glob(f'{SRC}/stage*/*.md'))+sorted(glob.glob(f'{SRC}/week[12]/day*.md'))
+LESSON_FILES=sorted(glob.glob(f'{SRC}/stage*/*.md'))+sorted(glob.glob(f'{SRC}/week*/day*.md'))
 for f in LESSON_FILES:
     did=os.path.basename(f).split('_')[0]
     md=open(f).read()
@@ -28,7 +28,7 @@ for f in LESSON_FILES:
     link=re.sub(r'\s+',' ',link)[:70]
     pages.append(dict(id=did,short=title,md=md,link=('논문 연결: '+link) if link else '',lesson=True))
 rm=open(f'{SRC}/week3-4_개요.md').read()
-pages.append(dict(id='roadmap',short='3~4주차 개요',md=clean(rm),link=''))
+pages.append(dict(id='roadmap',short='3주차 안내',md=clean(rm),link=''))
 css=open(f'{HERE}/style.css').read()+'\n'+open(f'{HERE}/play.css').read()
 js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/play.js').read()+'\n'+open(f'{HERE}/refs.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/speak-data.js').read()+'\n'+open(f'{HERE}/speak.js').read()+'\n'+open(f'{HERE}/app.js').read()+'\n'+open(f'{HERE}/pwa.js').read()
 html=f'''<!doctype html>
