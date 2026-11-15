@@ -191,6 +191,43 @@ const REFS = {
   ],
   dif01: [
     { t: "Ho, Jain, Abbeel (2020) Denoising Diffusion Probabilistic Models", u: "https://arxiv.org/abs/2006.11239", w: "2장, 3장, 4장", n: "DDPM. 정방향과 역방향 과정, 잡음을 예측하는 단순한 손실, T = 1000" }
+  ],
+  pf01: [
+    { t: "Axler (2024) Linear Algebra Done Right, 4판 (무료 공개)", u: "https://linear.axler.net/", w: "", n: "정의, 정리, 증명의 형식으로 쓰인 대학원 입문 선형대수 교재" },
+    { t: "Hammack (2018) Book of Proof, 3판 (무료 공개)", u: "https://richardhammack.github.io/BookOfProof/", w: "4장, 6장, 9장", n: "직접 증명, 귀류법, 반례를 처음부터 가르치는 교재" }
+  ],
+  sp01: [
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 2.7절", n: "대칭 행렬의 고유분해, 양의 정부호와 양의 준정부호" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "numerical.html", w: "4장 4.3절", n: "헤시안의 고유값으로 극소점, 극대점, 안장점을 가르는 법" },
+    { t: "Strang, MIT 18.06 Linear Algebra (MIT OpenCourseWare)", u: "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/", w: "", n: "대칭 행렬과 양의 정부호 강의가 들어 있는 무료 강좌" }
+  ],
+  nm01: [
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 2.5절", n: "L1, L2, 최대 노름과 프로베니우스 노름" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "numerical.html", w: "4장 4.2절, 4.3절", n: "조건수, 그리고 조건수가 나쁠 때 경사하강이 느린 이유" }
+  ],
+  lr01: [
+    { t: "Hu 외 (2021) LoRA: Low-Rank Adaptation of Large Language Models", u: "https://arxiv.org/abs/2106.09685", w: "4.1절", n: "LoRA의 원 논문. W + BA, B는 0으로 시작, 학습 후 합치기" },
+    { t: "Eckart, Young (1936) The approximation of one matrix by another of lower rank", u: "https://doi.org/10.1007/BF02288367", w: "", n: "SVD에서 큰 특이값만 남긴 것이 가장 좋은 저랭크 근사라는 정리" }
+  ],
+  sl01: [
+    { t: "Kaplan, McCandlish, Henighan 외 (2020) Scaling Laws for Neural Language Models", u: "https://arxiv.org/abs/2001.08361", w: "초록, 1장", n: "손실이 모델 크기, 데이터, 계산량에 대해 거듭제곱 법칙을 따른다는 관찰" },
+    { t: "Hoffmann 외 (2022) Training Compute-Optimal Large Language Models", u: "https://arxiv.org/abs/2203.15556", w: "초록", n: "Chinchilla. 모델 크기와 학습 토큰을 같은 비율로. 700억 개 Chinchilla가 2800억 개 Gopher를 앞섬" }
+  ],
+  rl01: [
+    { t: "Ouyang 외 (2022) Training language models to follow instructions with human feedback", u: "https://arxiv.org/abs/2203.02155", w: "초록, 3장", n: "InstructGPT. 시범, 보상 모델, 강화학습의 세 걸음. 13억 개 모델의 답이 1750억 개 GPT-3보다 선호됨" },
+    { t: "Rafailov 외 (2023) Direct Preference Optimization: Your Language Model is Secretly a Reward Model", u: "https://arxiv.org/abs/2305.18290", w: "초록, 4장", n: "DPO. 단순한 분류 손실만으로 RLHF 문제를 푸는 방법" },
+    { t: "Schulman 외 (2017) Proximal Policy Optimization Algorithms", u: "https://arxiv.org/abs/1707.06347", w: "", n: "InstructGPT가 쓴 강화학습 방법 PPO (선택)" }
+  ],
+  rag01: [
+    { t: "Lewis 외 (2020) Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", u: "https://arxiv.org/abs/2005.11401", w: "초록, 2장", n: "RAG의 원 논문. 위키백과의 벡터 색인에서 문서를 찾아 생성에 쓰는 방법" },
+    { t: "Wei 외 (2022) Chain-of-Thought Prompting Elicits Reasoning in Large Language Models", u: "https://arxiv.org/abs/2201.11903", w: "초록, 2장", n: "풀이가 달린 예시 8개만으로 수학 문장제(GSM8K) 성능이 크게 오름" }
+  ],
+  moe01: [
+    { t: "Fedus, Zoph, Shazeer (2021) Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity", u: "https://arxiv.org/abs/2101.03961", w: "초록, 2장", n: "토큰마다 전문가 한 명만 고르는 MoE. T5-XXL보다 4배 빠른 학습" }
+  ],
+  mm01: [
+    { t: "Dosovitskiy 외 (2020) An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale", u: "https://arxiv.org/abs/2010.11929", w: "3.1절", n: "ViT. 그림을 패치로 잘라 트랜스포머에 넣는 방법" },
+    { t: "Radford 외 (2021) Learning Transferable Visual Models From Natural Language Supervision", u: "https://arxiv.org/abs/2103.00020", w: "초록, 2장", n: "CLIP. 그림과 글 4억 쌍의 대조 학습, 이미지넷 제로샷 분류" }
   ]
 };
 // 이 앱의 학습 방식(문제를 풀며 떠올리기, 능동 학습)이 기대는 연구
