@@ -158,6 +158,39 @@ const REFS = {
     { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.8절, 그림 2", n: "문장 벡터를 PCA로 2차원에 그린 그림" },
     { t: "Eckart, Young (1936) The approximation of one matrix by another of lower rank", u: "https://doi.org/10.1007/BF02288367", w: "", n: "특이값이 큰 조각만 남긴 것이 가장 좋은 저랭크 근사라는 정리" },
     { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 2.8절, 2.12절", n: "특이값 분해와 PCA 유도" }
+  ],
+  att01: [
+    { t: "Bahdanau, Cho, Bengio (2014) Neural Machine Translation by Jointly Learning to Align and Translate", u: "https://arxiv.org/abs/1409.0473", w: "3장", n: "어텐션을 처음 제안한 논문. 고정 길이 벡터의 병목과 가중 평균 문맥 벡터" },
+    { t: "Luong, Pham, Manning (2015) Effective Approaches to Attention-based Neural Machine Translation", u: "https://arxiv.org/abs/1508.04025", w: "3장", n: "내적 등 여러 점수 계산 방식을 비교" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "2장", n: "문장을 벡터 하나로 압축하는 원래 구조" }
+  ],
+  sa01: [
+    { t: "Vaswani 외 (2017) Attention Is All You Need", u: "https://arxiv.org/abs/1706.03762", w: "3.2.1절", n: "Scaled Dot-Product Attention의 식과 √d_k로 나누는 이유" },
+    { t: "Alammar (2018) The Illustrated Transformer", u: "https://jalammar.github.io/illustrated-transformer/", w: "", n: "Q, K, V 계산을 그림으로 한 단계씩 보여 주는 해설" }
+  ],
+  mh01: [
+    { t: "Vaswani 외 (2017) Attention Is All You Need", u: "https://arxiv.org/abs/1706.03762", w: "3.2.2절, 3.5절", n: "헤드 8개와 d_k = 64, sin과 cos 위치 인코딩" },
+    { t: "Vaswani 외 (2017) Attention Is All You Need", u: "https://arxiv.org/abs/1706.03762", w: "그림 1, 6장", n: "Transformer 전체 구조와 큰 모델의 번역 결과 (BLEU 28.4, 41.8)" },
+    { t: "Alammar (2018) The Illustrated Transformer", u: "https://jalammar.github.io/illustrated-transformer/", w: "", n: "멀티헤드와 위치 인코딩 그림" }
+  ],
+  bg01: [
+    { t: "Devlin, Chang, Lee, Toutanova (2018) BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding", u: "https://arxiv.org/abs/1810.04805", w: "3.1절", n: "15%를 가리고 맞히는 마스크 언어 모델 사전학습" },
+    { t: "Brown 외 (2020) Language Models are Few-Shot Learners", u: "https://arxiv.org/abs/2005.14165", w: "2장", n: "1750억 파라미터 GPT-3와 예시 몇 개로 일을 시키는 few-shot 방식" },
+    { t: "Vaswani 외 (2017) Attention Is All You Need", u: "https://arxiv.org/abs/1706.03762", w: "3.1절", n: "디코더에서 뒤쪽 위치를 보지 못하게 가리는 마스크" }
+  ],
+  mle01: [
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "ml.html", w: "5장 5.5절, 5.6절", n: "최대가능도 추정, 베이즈 통계와 MAP 추정" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.2절", n: "정답 번역의 로그 확률을 최대화하는 학습 목표 (최대가능도)" },
+    { t: "Seeing Theory (Brown University)", u: "https://seeing-theory.brown.edu/", w: "Bayesian Inference", n: "가능도와 사전, 사후 분포를 움직이는 그림으로 보여 주는 무료 사이트" }
+  ],
+  vae01: [
+    { t: "Kingma, Welling (2013) Auto-Encoding Variational Bayes", u: "https://arxiv.org/abs/1312.6114", w: "2장, 3장", n: "VAE의 원 논문. 재매개변수화와 복원 오차 + KL 손실" }
+  ],
+  gan01: [
+    { t: "Goodfellow 외 (2014) Generative Adversarial Networks", u: "https://arxiv.org/abs/1406.2661", w: "3장, 4장", n: "GAN의 원 논문. 생성자와 판별자의 목표와 균형점 D = 1/2" }
+  ],
+  dif01: [
+    { t: "Ho, Jain, Abbeel (2020) Denoising Diffusion Probabilistic Models", u: "https://arxiv.org/abs/2006.11239", w: "2장, 3장, 4장", n: "DDPM. 정방향과 역방향 과정, 잡음을 예측하는 단순한 손실, T = 1000" }
   ]
 };
 // 이 앱의 학습 방식(문제를 풀며 떠올리기, 능동 학습)이 기대는 연구
