@@ -71,7 +71,7 @@ main{padding-block:20px calc(var(--tabs-h) + 40px + env(safe-area-inset-bottom,0
 @media (min-width:1024px){.tabs{display:none}main{padding-bottom:80px}}
 @media (max-width:1023px){
   .shell{grid-template-columns:minmax(0,1fr)}
-  .rail{position:fixed;top:0;left:0;bottom:0;height:auto;width:min(320px,88vw);z-index:45;transform:translateX(-102%);transition:transform .22s;background:var(--card);padding-top:calc(18px + env(safe-area-inset-top,0px));padding-bottom:calc(var(--tabs-h) + 30px)}
+  .rail{position:fixed;top:0;left:0;bottom:0;height:100vh;height:100dvh;max-height:100dvh;box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;width:min(320px,88vw);z-index:45;transform:translateX(-102%);transition:transform .22s;background:var(--card);padding-top:calc(18px + env(safe-area-inset-top,0px));padding-bottom:calc(var(--tabs-h) + 30px)}
   .rail.open{transform:none;box-shadow:0 0 40px rgba(0,0,0,.3)}
 }
 .rail{border-right:2px solid var(--line);background:var(--card)}
