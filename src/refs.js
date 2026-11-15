@@ -110,6 +110,54 @@ const REFS = {
     { t: "Papineni, Roukos, Ward, Zhu (2002) BLEU: a Method for Automatic Evaluation of Machine Translation", u: "https://aclanthology.org/P02-1040/", w: "2장", n: "BLEU의 원 논문. 클리핑한 n-gram 정밀도와 짧은 번역 벌점의 정의" },
     { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.6절, 표 1과 표 2", n: "BLEU 34.81 대 기준선 33.30, 다시 채점했을 때 36.5" },
     { t: "Post (2018) A Call for Clarity in Reporting BLEU Scores", u: "https://arxiv.org/abs/1804.08771", w: "", n: "같은 BLEU라도 계산 설정에 따라 점수가 달라진다는 지적 (BLEU를 읽을 때의 주의점)" }
+  ],
+  bp01: [
+    { t: "Rumelhart, Hinton, Williams (1986) Learning representations by back-propagating errors", u: "https://doi.org/10.1038/323533a0", w: "", n: "역전파로 여러 층짜리 신경망을 학습할 수 있음을 보여 널리 알린 논문" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "mlp.html", w: "6장 6.5절", n: "계산 그래프와 연쇄법칙으로 역전파를 설명" },
+    { t: "3Blue1Brown: Neural Networks", u: "https://www.3blue1brown.com/?topic=neural-networks", w: "", n: "역전파가 하는 일을 그림으로 보여 주는 영상 시리즈 (한글 자막)" }
+  ],
+  gv01: [
+    { t: "Pascanu, Mikolov, Bengio (2013) On the difficulty of training recurrent neural networks", u: "https://arxiv.org/abs/1211.5063", w: "2장, 3.2절", n: "기울기 소실과 폭발의 원인 분석, 기울기 노름 자르기 제안" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "기울기 노름이 5를 넘으면 5로 줄인다는 설정, ±0.08 초기화" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "mlp.html", w: "6장 6.3절", n: "ReLU와 시그모이드 같은 은닉층 함수의 비교" }
+  ],
+  opt01: [
+    { t: "Kingma, Ba (2014) Adam: A Method for Stochastic Optimization", u: "https://arxiv.org/abs/1412.6980", w: "2장, 알고리즘 1", n: "Adam의 식과 기본값 (β₁ = 0.9, β₂ = 0.999, 학습률 0.001)" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "optimization.html", w: "8장 8.3절, 8.5절", n: "모멘텀과 가중치별 학습률 방법(Adam 포함)" },
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.4절", n: "학습률 0.7에서 시작해 5 에폭 이후 반 에폭마다 절반으로 줄인 설정" }
+  ],
+  norm01: [
+    { t: "Ioffe, Szegedy (2015) Batch Normalization", u: "https://arxiv.org/abs/1502.03167", w: "3장", n: "배치 정규화의 식과 γ, β" },
+    { t: "Ba, Kiros, Hinton (2016) Layer Normalization", u: "https://arxiv.org/abs/1607.06450", w: "3장", n: "층 정규화. 배치 대신 한 샘플 안에서 통계를 구함" },
+    { t: "He, Zhang, Ren, Sun (2015) Deep Residual Learning for Image Recognition", u: "https://arxiv.org/abs/1512.03385", w: "3장", n: "잔차 연결 y = x + F(x)와 152층 ResNet" }
+  ],
+  pt01: [
+    { t: "Paszke 외 (2019) PyTorch: An Imperative Style, High-Performance Deep Learning Library", u: "https://arxiv.org/abs/1912.01703", w: "", n: "PyTorch의 설계와 자동 미분을 설명한 논문" },
+    { t: "PyTorch 공식 튜토리얼: Learn the Basics", u: "https://docs.pytorch.org/tutorials/beginner/basics/intro.html", w: "", n: "텐서, 자동 미분, 학습 루프를 처음부터 따라 하는 공식 입문서 (영어)" }
+  ],
+  vs01: [
+    { t: "Mikolov, Chen, Corrado, Dean (2013) Efficient Estimation of Word Representations in Vector Space", u: "https://arxiv.org/abs/1301.3781", w: "", n: "단어 벡터의 덧셈과 뺄셈으로 뜻의 관계를 찾는 실험 (King − Man + Woman ≈ Queen)" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 2.4절", n: "선형종속과 생성(span)의 정의" },
+    { t: "3Blue1Brown: Essence of Linear Algebra", u: "https://www.3blue1brown.com/?topic=linear-algebra", w: "", n: "선형결합, 생성, 기저를 움직이는 그림으로 설명 (한글 자막)" }
+  ],
+  rk01: [
+    { t: "Strang, MIT 18.06 Linear Algebra (MIT OpenCourseWare)", u: "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/", w: "", n: "열공간, 영공간, 랭크를 처음부터 다루는 무료 강의" },
+    { t: "3Blue1Brown: Essence of Linear Algebra", u: "https://www.3blue1brown.com/?topic=linear-algebra", w: "", n: "선형변환, 행렬식, 랭크와 영공간을 그림으로 설명" },
+    { t: "Hu 외 (2021) LoRA: Low-Rank Adaptation of Large Language Models", u: "https://arxiv.org/abs/2106.09685", w: "4.1절", n: "랭크가 낮은 행렬만 학습해 큰 모델을 고치는 방법 (7단계에서 자세히)" }
+  ],
+  or01: [
+    { t: "Strang, MIT 18.06 Linear Algebra (MIT OpenCourseWare)", u: "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/", w: "", n: "직교, 사영, 최소제곱법 강의" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 2.6절", n: "직교 벡터와 정규직교 행렬의 정의" }
+  ],
+  eg01: [
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 2.7절", n: "고유값 분해의 정의와 성질" },
+    { t: "Pascanu, Mikolov, Bengio (2013) On the difficulty of training recurrent neural networks", u: "https://arxiv.org/abs/1211.5063", w: "2장", n: "RNN 가중치 행렬의 가장 큰 고유값(특이값)이 크기가 1보다 작은지 큰지로 소실과 폭발의 조건을 설명" },
+    { t: "3Blue1Brown: Essence of Linear Algebra", u: "https://www.3blue1brown.com/?topic=linear-algebra", w: "", n: "고유벡터와 고유값을 그림으로 설명" }
+  ],
+  svd01: [
+    { t: "Sutskever, Vinyals, Le (2014) Sequence to Sequence Learning with Neural Networks", u: S2S, w: "3.8절, 그림 2", n: "문장 벡터를 PCA로 2차원에 그린 그림" },
+    { t: "Eckart, Young (1936) The approximation of one matrix by another of lower rank", u: "https://doi.org/10.1007/BF02288367", w: "", n: "특이값이 큰 조각만 남긴 것이 가장 좋은 저랭크 근사라는 정리" },
+    { t: "Goodfellow, Bengio, Courville (2016) Deep Learning", u: DLB + "linear_algebra.html", w: "2장 2.8절, 2.12절", n: "특이값 분해와 PCA 유도" }
   ]
 };
 // 이 앱의 학습 방식(문제를 풀며 떠올리기, 능동 학습)이 기대는 연구
