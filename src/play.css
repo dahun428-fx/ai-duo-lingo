@@ -331,3 +331,5 @@ body{word-break:keep-all;overflow-wrap:break-word}
 .unit-later .unit-head > svg{width:28px;height:28px;flex:none;opacity:.8}
 .later-list{list-style:none;margin:10px 0 28px;padding:0;display:flex;flex-wrap:wrap;gap:8px}
 .later-list li{font-size:14px;padding:6px 12px;border:2px solid var(--line);border-radius:999px;background:var(--card);color:var(--muted)}
+
+.pr-numrow .sign-btn{border-radius:16px;border-bottom-width:4px}

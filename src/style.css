@@ -357,3 +357,9 @@ a.node:active{transform:translateY(3px);border-bottom-width:4px}
 .syncstat.ok{background:var(--good-soft);color:var(--good)}
 .syncstat.error{background:var(--bad-soft);color:var(--bad)}
 input.codebox{font-size:14px}
+
+/* 부호(±) 버튼: 폰 숫자 키패드에 마이너스 키가 없을 때 사용 */
+.sign-btn{font:700 16px var(--f-mono);min-width:44px;min-height:36px;justify-content:center}
+.pr-numrow{display:flex;gap:8px;align-items:stretch}
+.pr-numrow .pr-num{flex:1;min-width:0}
+.pr-numrow .sign-btn{min-width:64px;font-size:24px;border-radius:14px}
