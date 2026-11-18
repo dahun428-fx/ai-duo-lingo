@@ -1,4 +1,4 @@
-# 6단계. VAE: 압축했다 되살리며 배우기
+# 8단계. VAE: 압축했다 되살리며 배우기
 
 ⏱ 30분 · 📄 논문 연결: Kingma, Welling (2013) "Auto-Encoding Variational Bayes". 새 데이터를 만들어 내는 생성 모델의 첫 갈래
 

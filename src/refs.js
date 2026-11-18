@@ -143,7 +143,7 @@ const REFS = {
   rk01: [
     { t: "Strang, MIT 18.06 Linear Algebra (MIT OpenCourseWare)", u: "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/", w: "", n: "열공간, 영공간, 랭크를 처음부터 다루는 무료 강의" },
     { t: "3Blue1Brown: Essence of Linear Algebra", u: "https://www.3blue1brown.com/?topic=linear-algebra", w: "", n: "선형변환, 행렬식, 랭크와 영공간을 그림으로 설명" },
-    { t: "Hu 외 (2021) LoRA: Low-Rank Adaptation of Large Language Models", u: "https://arxiv.org/abs/2106.09685", w: "4.1절", n: "랭크가 낮은 행렬만 학습해 큰 모델을 고치는 방법 (7단계에서 자세히)" }
+    { t: "Hu 외 (2021) LoRA: Low-Rank Adaptation of Large Language Models", u: "https://arxiv.org/abs/2106.09685", w: "4.1절", n: "랭크가 낮은 행렬만 학습해 큰 모델을 고치는 방법 (10단계에서 자세히)" }
   ],
   or01: [
     { t: "Strang, MIT 18.06 Linear Algebra (MIT OpenCourseWare)", u: "https://ocw.mit.edu/courses/18-06-linear-algebra-spring-2010/", w: "", n: "직교, 사영, 최소제곱법 강의" },

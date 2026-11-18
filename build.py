@@ -4,6 +4,7 @@ SRC=os.path.join(ROOT,'lessons')
 HERE=os.path.join(ROOT,'src')
 EMO=re.compile(r'[\U0001F300-\U0001FAFF☀-✒✕-➿⬀-⯿⏩-⏿️]\s?')
 WID={'day01':['dot'],'day02':['matvec'],'day03':['condprob'],'day04':['bayes'],'day05':['softmax'],'day06':['entropy'],'day07':['crossent'],'day08':['gd'],'day09':['clt'],'day10':['rnn','tf']}
+WID.update(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'src','widget-map.json'))))
 def clean(md): return EMO.sub('', md)
 pages=[]
 cur=open(f'{SRC}/00_커리큘럼.md').read()

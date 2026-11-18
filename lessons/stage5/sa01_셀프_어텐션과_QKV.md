@@ -1,4 +1,4 @@
-# 5단계. 셀프 어텐션과 Q·K·V
+# 7단계. 셀프 어텐션과 Q·K·V
 
 ⏱ 30분 · 📄 논문 연결: Vaswani 외 (2017) "Attention Is All You Need" **3.2.1절** Scaled Dot-Product Attention. GPT와 Claude의 뼈대인 Transformer 논문
 

@@ -1,4 +1,4 @@
-# 8단계. RLHF와 DPO: 사람의 선호로 다듬기
+# 11단계. RLHF와 DPO: 사람의 선호로 다듬기
 
 ⏱ 30분 · 📄 논문 연결: Ouyang 외 (2022) "Training language models to follow instructions with human feedback" (InstructGPT), Rafailov 외 (2023) "Direct Preference Optimization". 글을 잇던 모델이 "말을 듣는 비서"가 된 방법
 

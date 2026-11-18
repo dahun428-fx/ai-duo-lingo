@@ -243,9 +243,9 @@ const GLOSSARY = [
   ["디코더","벡터 v에서 출발해 출력 문장을 한 단어씩 만드는 부분.","day01"]
 ];
 
-// 과목 → 챕터. l: 레슨 id (lessons/ 의 dayNN), soon: 준비 중인 챕터 이름
 // 학습 로드맵: 단계(과목) → 챕터. l = 레슨 id, soon = 아직 준비 중인 챕터.
 // 순서 기준: 도구는 쓰기 직전에 배우고, 수학 단계와 논문 단계를 번갈아 둔다.
+// 2026-11 보강: 모델 평가(4), 고전 머신러닝(6), 강화학습 기초(9) 단계와 CNN·토큰·샘플링·에이전트·모델 줄이기 챕터 추가.
 const SUBJECTS = [
   { id: "prep", stage: "0단계", name: "수학 준비편", desc: "논문 수식을 읽기 위한 계산 근육", chapters: [
     { l: "prep01", name: "분수, 소수, 비율" }, { l: "prep02", name: "거듭제곱과 지수법칙" },
@@ -265,15 +265,26 @@ const SUBJECTS = [
   { id: "train", stage: "3단계", name: "신경망 학습의 기초", desc: "그냥 쓰고 넘어간 학습 기법 열어 보기", chapters: [
     { l: "bp01", name: "역전파를 손으로" }, { l: "gv01", name: "기울기 소실과 폭발" }, { l: "opt01", name: "Adam과 학습률" },
     { l: "norm01", name: "정규화와 잔차 연결" }, { l: "pt01", name: "PyTorch로 첫 모델" }] },
-  { id: "la2", stage: "4단계", name: "선형대수 II", desc: "학부 과정: 공간, 기저, 고유값, SVD", chapters: [
+  { id: "eval", stage: "4단계", name: "모델 평가와 과적합", desc: "이 모델, 믿어도 될까? 점수를 읽는 힘", chapters: [
+    { l: "logi01", name: "로지스틱 회귀" }, { l: "split01", name: "훈련·검증·테스트와 교차 검증" }, { l: "of01", name: "과적합과 과소적합" },
+    { l: "reg01", name: "규제: L2, 드롭아웃, 조기 중단" }, { l: "cm01", name: "혼동 행렬, 정밀도, 재현율" }, { l: "roc01", name: "임계값, ROC, AUC" }] },
+  { id: "la2", stage: "5단계", name: "선형대수 II", desc: "학부 과정: 공간, 기저, 고유값, SVD", chapters: [
     { l: "vs01", name: "벡터공간과 기저" }, { l: "rk01", name: "랭크와 선형변환" }, { l: "or01", name: "직교와 사영" },
     { l: "eg01", name: "고유값과 고유벡터" }, { l: "svd01", name: "SVD와 PCA" }] },
-  { id: "tf", stage: "5단계", name: "어텐션과 Transformer", desc: "고정 길이 벡터의 한계를 넘어서", chapters: [
-    { l: "att01", name: "어텐션" }, { l: "sa01", name: "셀프 어텐션과 Q·K·V" }, { l: "mh01", name: "멀티헤드와 위치 인코딩" }, { l: "bg01", name: "BERT와 GPT" }] },
-  { id: "gen", stage: "6단계", name: "확률 심화와 생성 모델", desc: "그림과 글을 만드는 AI의 수학", chapters: [
+  { id: "ml", stage: "6단계", name: "고전 머신러닝", desc: "딥러닝 이전의 강자들, 면접 단골", chapters: [
+    { l: "knn01", name: "k-NN과 k-평균" }, { l: "tree01", name: "결정 트리" }, { l: "ens01", name: "랜덤 포레스트와 부스팅" }, { l: "svm01", name: "SVM" }] },
+  { id: "tf", stage: "7단계", name: "CNN, 어텐션과 Transformer", desc: "그림을 보는 신경망에서 글을 읽는 신경망까지", chapters: [
+    { l: "cnn01", name: "합성곱과 풀링" }, { l: "cnn02", name: "CNN 계보: LeNet에서 ResNet까지" },
+    { l: "att01", name: "어텐션" }, { l: "sa01", name: "셀프 어텐션과 Q·K·V" }, { l: "mh01", name: "멀티헤드와 위치 인코딩" },
+    { l: "tok01", name: "토큰과 컨텍스트 윈도우" }, { l: "bg01", name: "BERT와 GPT" }, { l: "smp01", name: "온도와 샘플링" }] },
+  { id: "gen", stage: "8단계", name: "확률 심화와 생성 모델", desc: "그림과 글을 만드는 AI의 수학", chapters: [
     { l: "mle01", name: "최대가능도와 MAP" }, { l: "vae01", name: "VAE" }, { l: "gan01", name: "GAN" }, { l: "dif01", name: "확산 모델" }] },
-  { id: "la3", stage: "7단계", name: "선형대수 III", desc: "대학원 수준: 증명과 행렬 방법론", chapters: [
+  { id: "rlb", stage: "9단계", name: "강화학습 기초", desc: "보상으로 배우는 AI, RLHF의 바탕", chapters: [
+    { l: "mab01", name: "탐색과 활용: 슬롯머신" }, { l: "mdp01", name: "강화학습의 말: MDP" }, { l: "bel01", name: "가치 함수와 벨만 방정식" },
+    { l: "ql01", name: "Q러닝과 DQN" }, { l: "pg01", name: "정책 경사와 REINFORCE" }, { l: "ac01", name: "액터-크리틱과 PPO" }] },
+  { id: "la3", stage: "10단계", name: "선형대수 III", desc: "대학원 수준: 증명과 행렬 방법론", chapters: [
     { l: "pf01", name: "증명 읽고 쓰기" }, { l: "sp01", name: "스펙트럼 정리와 양의 정부호" }, { l: "nm01", name: "행렬 노름과 조건수" }, { l: "lr01", name: "저랭크 근사와 LoRA" }] },
-  { id: "now", stage: "8단계", name: "최신 개념", desc: "지금 쓰이는 AI를 논문으로", chapters: [
-    { l: "sl01", name: "스케일링 법칙" }, { l: "rl01", name: "RLHF와 DPO" }, { l: "rag01", name: "RAG와 생각의 사슬" }, { l: "moe01", name: "Mixture of Experts" }, { l: "mm01", name: "멀티모달: ViT와 CLIP" }] }
+  { id: "now", stage: "11단계", name: "최신 개념", desc: "지금 쓰이는 AI를 논문으로", chapters: [
+    { l: "sl01", name: "스케일링 법칙" }, { l: "rl01", name: "RLHF와 DPO" }, { l: "rag01", name: "RAG와 생각의 사슬" }, { l: "agt01", name: "에이전트: ReAct와 MCP" },
+    { l: "moe01", name: "Mixture of Experts" }, { l: "kd01", name: "모델 줄이기: 양자화와 증류" }, { l: "mm01", name: "멀티모달: ViT와 CLIP" }] }
 ];
