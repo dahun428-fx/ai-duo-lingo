@@ -23,6 +23,25 @@ let UID = 0;
 const REDRAW = [];
 function cssv(n) { return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 function fmt(x, d = 3) { if (!isFinite(x)) return x > 0 ? "∞" : "−∞"; return (Math.round(x * 10 ** d) / 10 ** d).toString().replace("-", "−"); }
+// 숫자 칸: 폰 숫자 키패드(특히 아이폰)에는 마이너스 키가 없어서 부호 버튼(±)을 따로 둔다
+function toNum(v) { const t = String(v).trim().replace(/[−–]/g, "-").replace(/,/g, "").replace(/\s/g, ""); return t === "" || t === "-" || t === "." ? NaN : Number(t); }
+function flipSign(inp) {
+  const v = inp.value.trim();
+  inp.value = /^[-−–]/.test(v) ? v.replace(/^[-−–]\s*/, "") : "-" + v;
+  inp.dispatchEvent(new Event("input", { bubbles: true }));
+}
+function signBtn(getInp, text = "±") {
+  const b = h("button", { class: "btn sign-btn", type: "button", "aria-label": "부호 바꾸기 (플러스 ↔ 마이너스)", title: "부호 바꾸기 (+ ↔ −)" }, text);
+  const keep = e => e.preventDefault();   // 버튼을 눌러도 입력란에서 커서(키보드)가 빠지지 않게
+  b.addEventListener("pointerdown", keep); b.addEventListener("mousedown", keep);
+  b.addEventListener("click", () => { const inp = getInp(); if (!inp) return; flipSign(inp); inp.focus(); });
+  return b;
+}
+function numIn(value, label, on) {
+  const e = h("input", { class: "numin", type: "text", inputmode: "decimal", autocomplete: "off", value, "aria-label": label });
+  e.addEventListener("input", () => { const v = toNum(e.value); on(isNaN(v) ? 0 : v); });
+  return e;
+}
 function shell(root, lab, title, hint) {
   root.innerHTML = "";
   root.append(h("div", { class: "w-head" }, h("span", { class: "lab" }, lab), h("b", {}, title)));
@@ -197,7 +216,8 @@ W.matvec = function (root) {
   const body = shell(root, "실습 · Day 02", "행렬 × 벡터 계산기", "숫자를 바꿔 보세요. 결과 y의 칸에 마우스를 올리면(또는 탭하면) 그 칸을 만든 W의 행이 노랗게 표시됩니다.");
   const Wm = [[1, -1, 0], [2, 0, 1]], x = [3, 1, 2], b = [0.5, -1];
   let relu = true;
-  const mkIn = (arr, i, j) => { const e = h("input", { class: "numin", type: "number", step: "0.5", value: j == null ? arr[i] : arr[i][j], "aria-label": "값" }); e.addEventListener("input", () => { const v = parseFloat(e.value) || 0; if (j == null) arr[i] = v; else arr[i][j] = v; calc(); }); return e; };
+  let lastIn = null;
+  const mkIn = (arr, i, j) => { const e = numIn(j == null ? arr[i] : arr[i][j], "값", v => { if (j == null) arr[i] = v; else arr[i][j] = v; calc(); }); e.addEventListener("focus", () => { lastIn = e; }); return e; };
   const wIn = Wm.map((r, i) => r.map((_, j) => mkIn(Wm, i, j)));
   const xIn = x.map((_, i) => mkIn(x, i));
   const bIn = b.map((_, i) => mkIn(b, i));
@@ -239,7 +259,7 @@ W.matvec = function (root) {
   [m, n, k].forEach(e => e.addEventListener("input", shape));
   body.append(
     h("div", { class: "matrow" }, h("div", {}, h("small", { class: "w-hint" }, "W (2×3)"), h("br"), matW), sym("×"), h("div", {}, h("small", { class: "w-hint" }, "x"), h("br"), matX), sym("+"), h("div", {}, h("small", { class: "w-hint" }, "b"), h("br"), matB), sym("→"), h("div", {}, h("small", { class: "w-hint" }, "y"), h("br"), matY)),
-    h("div", { class: "btns" }, reluB, btn("예제로 되돌리기", () => { [[1, -1, 0], [2, 0, 1]].forEach((r, i) => r.forEach((v, j) => { Wm[i][j] = v; wIn[i][j].value = v; })); [3, 1, 2].forEach((v, i) => { x[i] = v; xIn[i].value = v; }); [0.5, -1].forEach((v, i) => { b[i] = v; bIn[i].value = v; }); calc(); })),
+    h("div", { class: "btns" }, reluB, signBtn(() => lastIn || wIn[0][0], "± 부호"), btn("예제로 되돌리기", () => { [[1, -1, 0], [2, 0, 1]].forEach((r, i) => r.forEach((v, j) => { Wm[i][j] = v; wIn[i][j].value = v; })); [3, 1, 2].forEach((v, i) => { x[i] = v; xIn[i].value = v; }); [0.5, -1].forEach((v, i) => { b[i] = v; bIn[i].value = v; }); calc(); })),
     lines,
     h("div", { style: "border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:8px" },
       h("b", {}, "shape 맞추기 연습"),
@@ -639,7 +659,8 @@ W.rnn = function (root) {
   const body = shell(root, "실습 · Day 10", "RNN 기억 상태 들여다보기", "입력 숫자를 바꾸면 h₁, h₂, h₃가 다시 계산됩니다. W_h를 키우면 과거를 더 오래 기억합니다.");
   const xs = [1, 2, -1];
   let wh = 0.5;
-  const ins = xs.map((v, i) => { const e = h("input", { class: "numin", type: "number", step: "0.5", value: v, "aria-label": "x" + (i + 1) }); e.addEventListener("input", () => { xs[i] = parseFloat(e.value) || 0; calc(); }); return e; });
+  let lastIn = null;
+  const ins = xs.map((v, i) => { const e = numIn(v, "x" + (i + 1), n => { xs[i] = n; calc(); }); e.addEventListener("focus", () => { lastIn = e; }); return e; });
   const sw = slider("W_h 대각값 (기억 유지 정도)", 0, 1.5, 0.05, wh, v => { wh = v; calc(); }, v => v.toFixed(2));
   const out = h("div", { class: "calc" });
   const bars = h("div", { style: "display:flex;gap:16px;flex-wrap:wrap" });
@@ -655,7 +676,7 @@ W.rnn = function (root) {
     });
     out.textContent = txt.trim();
   }
-  body.append(h("div", { class: "matrow" }, "입력 x₁, x₂, x₃:", ...ins), sw.el, bars, out);
+  body.append(h("div", { class: "matrow" }, "입력 x₁, x₂, x₃:", ...ins, signBtn(() => lastIn || ins[0], "± 부호")), h("p", { class: "w-hint" }, "마이너스는 칸을 누른 뒤 ± 버튼으로 바꿀 수 있어요."), sw.el, bars, out);
   calc();
 };
 

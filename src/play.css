@@ -393,3 +393,4 @@ body{word-break:keep-all;overflow-wrap:break-word}
 @media (prefers-reduced-motion:no-preference){.vm-item.wrong{animation:shake .3s}.vm-item.right{animation:lvpop .3s}}
 @media (hover:hover){.vm-item:not(:disabled):hover{border-color:var(--accent)}}
 .pr-end .vshelf-wrap{width:100%}
+.pr-numrow .sign-btn{border-radius:16px;border-bottom-width:4px}

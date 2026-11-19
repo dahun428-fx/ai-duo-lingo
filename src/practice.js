@@ -127,7 +127,7 @@ function renderPractice(id) {
       const inp = h("input", { class: "pr-num", id: "prnum", type: "text", inputmode: "decimal", autocomplete: "off", placeholder: "숫자 입력 (예: 0.25, −1.4, 1/3)", "aria-label": "답" });
       inp.addEventListener("input", () => ready(isNaN(parseNum(inp.value)) ? null : parseNum(inp.value)));
       inp.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); document.getElementById("prgo")?.click(); } });
-      card.append(inp, h("p", { class: "w-hint" }, cur.tol ? `±${cur.tol} 이내면 정답으로 처리합니다.` : "정확한 값을 입력하세요."));
+      card.append(h("div", { class: "pr-numrow" }, inp, signBtn(() => inp)), h("p", { class: "w-hint" }, (cur.tol ? `±${cur.tol} 이내면 정답으로 처리합니다.` : "정확한 값을 입력하세요.") + " 마이너스(−)는 옆의 ± 버튼으로 붙이거나 뗄 수 있어요."));
       if (cur.h) {
         const hb = h("button", { class: "btn pr-hint", type: "button" }, "힌트 보기 (정답 시 +7 XP)");
         const show = () => hb.replaceWith(h("p", { class: "pr-hintbox" }, h("b", {}, "힌트  "), cur.h));
