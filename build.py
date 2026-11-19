@@ -31,7 +31,7 @@ for f in LESSON_FILES:
 rm=open(f'{SRC}/week3-4_개요.md').read()
 pages.append(dict(id='roadmap',short='3주차 안내',md=clean(rm),link=''))
 css=open(f'{HERE}/style.css').read()+'\n'+open(f'{HERE}/play.css').read()
-js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/play.js').read()+'\n'+open(f'{HERE}/refs.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/vocab.js').read()+'\n'+open(f'{HERE}/speak-data.js').read()+'\n'+open(f'{HERE}/speak.js').read()+'\n'+open(f'{HERE}/app.js').read()+'\n'+open(f'{HERE}/pwa.js').read()
+js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/play.js').read()+'\n'+open(f'{HERE}/refs.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/dict-data.js').read()+'\n'+open(f'{HERE}/vocab.js').read()+'\n'+open(f'{HERE}/speak-data.js').read()+'\n'+open(f'{HERE}/speak.js').read()+'\n'+open(f'{HERE}/app.js').read()+'\n'+open(f'{HERE}/pwa.js').read()
 html=f'''<!doctype html>
 <html lang="ko">
 <head>

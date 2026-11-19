@@ -782,6 +782,11 @@ body{word-break:keep-all;overflow-wrap:break-word}
 .pr-end .vshelf-wrap{width:100%}
 .pr-numrow .sign-btn{border-radius:16px;border-bottom-width:4px}
 
+/* 단어장 덱 탭: 내 단어장 | AI 사전 퀴즈 */
+.vtabs{display:flex;gap:6px;margin:4px 0 14px;padding:4px;border-radius:999px;background:var(--accent-soft);max-width:100%}
+.vtab{flex:1;text-align:center;padding:9px 10px;border-radius:999px;font-weight:700;font-size:14px;color:var(--muted);text-decoration:none;white-space:nowrap}
+.vtab.on{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
 </style>
 </head>
 <body>
@@ -4968,6 +4973,188 @@ function refLine(day) {
   return h("span", { class: "pr-ref" }, "근거: ", h("a", { href: r.u, target: "_blank", rel: "noopener" }, r.t), r.w ? " · " + r.w : "");
 }
 
+// AI 사전 퀴즈: 위키독스 『인공지능(AI) & 머신러닝(ML) 사전』(https://wikidocs.net/book/5942)의 표제어 중
+// 이 앱의 로드맵과 겹치는 용어를 골랐다. 뜻풀이는 사전 본문을 옮기지 않고 이 앱이 직접 쓴 한 줄 설명이다.
+// [용어, 한 줄 뜻, 위키독스 페이지 번호]
+const DICT = [
+  // 기본 개념
+  ["인공지능 (AI)", "사람처럼 배우고 판단하는 일을 컴퓨터가 하게 만드는 기술 전체를 부르는 말.", 120146],
+  ["머신러닝 (ML)", "규칙을 직접 짜 주는 대신, 데이터에서 규칙을 스스로 찾게 하는 방법.", 120136],
+  ["딥러닝 (DL)", "층을 깊게 쌓은 신경망으로 하는 머신러닝.", 120131],
+  ["인공신경망 (ANN)", "뉴런을 흉내 낸 작은 계산 단위를 층층이 이어 만든 모델.", 120153],
+  ["퍼셉트론 (perceptron)", "입력에 가중치를 곱해 더한 뒤 기준을 넘으면 1을 내는 가장 단순한 뉴런 모델.", 120084],
+  ["다층 퍼셉트론 (MLP)", "퍼셉트론 층을 여러 개 쌓고 사이에 비선형 함수를 넣은 신경망.", 156948],
+  ["은닉층 (hidden layer)", "입력층과 출력층 사이에 있어 바깥에서 직접 보이지 않는 층.", 166993],
+  ["완전연결층 (dense layer)", "앞 층의 모든 값이 다음 층의 모든 값과 가중치로 연결된 층.", 126060],
+  ["가중치 (weight)", "입력을 얼마나 중요하게 볼지 정하는 숫자. 학습이 고치는 대상.", 120285],
+  ["편향 (bias)", "가중치 곱의 합에 더해 주는 상수. 기준선을 옮기는 역할.", 204700],
+  ["파라미터 (parameter)", "모델이 학습으로 정하는 숫자들. 가중치와 편향.", 238695],
+  ["하이퍼파라미터 (hyperparameter)", "학습률, 층 수처럼 학습 전에 사람이 정해 주는 설정값.", 120048],
+  ["특징 (feature)", "모델에 넣는 데이터의 한 가지 측정값. 집값 예측의 넓이, 방 수 같은 것.", 177875],
+  ["특징 공학 (feature engineering)", "모델이 배우기 쉽도록 사람이 입력 특징을 골라 만들고 다듬는 일.", 148349],
+  ["원핫 인코딩 (One-Hot encoding)", "범주를 한 칸만 1이고 나머지는 0인 벡터로 바꾸는 방법.", 183176],
+  ["텐서 (Tensor)", "숫자를 여러 방향으로 늘어놓은 배열. 벡터와 행렬을 일반화한 것.", 145650],
+  ["넘파이 (Numpy)", "파이썬에서 숫자 배열을 빠르게 계산하는 기본 도구.", 120070],
+  ["파이토치 (PyTorch)", "신경망을 만들고 자동으로 미분해 학습시키는 파이썬 라이브러리.", 145648],
+  ["자동 미분 (Autograd)", "계산 과정을 기록해 두었다가 기울기를 자동으로 구해 주는 기능.", 120079],
+  // 학습
+  ["손실 함수 (loss function)", "모델의 답이 정답에서 얼마나 틀렸는지 하나의 숫자로 재는 함수.", 120077],
+  ["경사 하강법 (gradient descent)", "손실이 줄어드는 내리막 방향으로 파라미터를 조금씩 옮기는 방법.", 120156],
+  ["확률적 경사 하강법 (SGD)", "데이터 일부만 뽑아 구한 기울기로 자주 조금씩 고치는 경사 하강법.", 120078],
+  ["미니 배치 경사 하강법 (mini-batch gradient descent)", "데이터를 작은 묶음으로 나눠 묶음마다 한 번씩 고치는 방법.", 145063],
+  ["학습률 (learning rate)", "경사 하강에서 한 번에 얼마나 크게 걸을지 정하는 숫자.", 126061],
+  ["역전파 (Back Propagation)", "출력의 오차를 거꾸로 전달하며 모든 가중치의 기울기를 한 번에 구하는 방법.", 120082],
+  ["순전파 (forward propagation)", "입력을 층마다 차례로 계산해 출력을 내는 과정.", 157192],
+  ["기울기 (gradient)", "각 파라미터를 조금 움직였을 때 손실이 얼마나 변하는지 모은 벡터.", 204828],
+  ["그래디언트 소실 (Vanishing Gradient)", "앞쪽 층으로 갈수록 학습 신호가 0에 가까워져 잘 배우지 못하는 현상.", 149213],
+  ["그래디언트 폭발 (Exploding Gradient)", "학습 신호가 층을 지나며 계속 커져 값이 터지는 현상.", 202624],
+  ["에포크 (epoch)", "훈련 데이터 전체를 한 바퀴 다 보는 것.", 120090],
+  ["옵티마이저 (optimizer)", "기울기를 써서 파라미터를 어떻게 고칠지 정하는 방법. SGD, Adam 등.", 120050],
+  ["아담 (Adam)", "기울기의 평균과 크기를 함께 기억해 파라미터마다 보폭을 맞춰 주는 옵티마이저.", 266023],
+  ["극소점 (local minima)", "주변보다는 낮지만 전체에서 가장 낮지는 않은 골짜기.", 141212],
+  ["안장점 (saddle point)", "한 방향으로는 내리막, 다른 방향으로는 오르막인 평평한 지점.", 221149],
+  ["활성화 함수 (activation function)", "층의 출력에 씌워 신경망이 곡선 관계를 배우게 하는 비선형 함수.", 120076],
+  ["시그모이드 (sigmoid)", "어떤 수든 0과 1 사이로 눌러 주는 S자 함수.", 120083],
+  ["하이퍼볼릭 탄젠트 (tanh)", "어떤 수든 −1과 1 사이로 눌러 주는 S자 함수.", 152159],
+  ["렐루 (ReLU)", "음수는 0으로, 양수는 그대로 내보내는 활성화 함수.", 120168],
+  ["소프트맥스 (softmax)", "점수 여러 개를 합이 1인 확률로 바꾸는 함수.", 120089],
+  ["배치 정규화 (batch normalization)", "층의 값을 묶음마다 평균 0, 분산 1 근처로 맞춰 학습을 안정시키는 방법.", 145646],
+  ["잔차 연결 (residual connection)", "층의 입력을 출력에 그대로 더해 주는 지름길. 깊은 망도 잘 배우게 한다.", 129665],
+  // 평가와 일반화
+  ["과적합 (overfitting)", "훈련 데이터에만 너무 맞춰져 새 데이터에서는 성능이 떨어지는 상태.", 120163],
+  ["일반화 (generalization)", "처음 보는 데이터에서도 잘 맞히는 능력.", 237358],
+  ["규제 (regularization)", "모델이 지나치게 복잡해지지 않도록 손실에 벌점 등을 더하는 방법.", 120052],
+  ["L2 규제 (L2 regularization)", "가중치 제곱의 합을 벌점으로 더해 가중치를 작게 유지하는 규제.", 152833],
+  ["가중치 감쇠 (weight decay)", "매 걸음 가중치를 조금씩 0 쪽으로 줄이는 방법. L2 규제와 비슷한 효과.", 263906],
+  ["드롭아웃 (dropout)", "학습 중 뉴런 일부를 무작위로 꺼서 특정 뉴런에 기대지 않게 하는 규제.", 120053],
+  ["조기 중단 (early stopping)", "검증 손실이 더 나아지지 않으면 학습을 멈추는 방법.", 120091],
+  ["검증 데이터 (validation data)", "학습에는 쓰지 않고 설정을 고르고 학습을 멈출 때를 정하는 데 쓰는 데이터.", 120284],
+  ["교차 검증 (cross-validation)", "데이터를 여러 조각으로 나눠 돌아가며 검증해 평균을 내는 방법.", 222640],
+  ["k-겹 교차 검증 (k-fold cross-validation)", "데이터를 k조각으로 나눠 k번 돌아가며 한 조각씩 검증에 쓰는 방법.", 222644],
+  ["데이터 누수 (data leakage)", "정답이나 미래 정보가 몰래 입력에 섞여 점수가 부풀려지는 실수.", 235569],
+  ["정확도 (accuracy)", "전체 중에서 맞힌 비율.", 151504],
+  ["정밀도 (precision)", "양성이라고 한 것 중 진짜 양성의 비율.", 238312],
+  ["혼동 행렬 (Confusion Matrix)", "예측과 정답을 맞힌 양성, 틀린 양성, 놓친 양성, 맞힌 음성으로 나눠 센 표.", 235865],
+  ["ROC 곡선 (ROC curve)", "기준을 바꿔 가며 놓치지 않은 비율과 괜히 울린 비율을 그린 곡선.", 235866],
+  ["AUC (area under the curve)", "ROC 곡선 아래 넓이. 1이면 완벽, 0.5면 동전 던지기 수준.", 151503],
+  ["평균 제곱 오차 (MSE)", "예측과 정답의 차이를 제곱해 평균 낸 값.", 170549],
+  ["평균 절대 오차 (MAE)", "예측과 정답의 차이의 절댓값을 평균 낸 값.", 235826],
+  ["이진 크로스 엔트로피 (Binary Cross Entropy)", "답이 둘 중 하나일 때 정답 확률의 음의 로그로 매기는 손실.", 235864],
+  ["교차 엔트로피 (cross-entropy)", "모델이 정답에 준 확률이 낮을수록 커지는 벌점. 분류 학습의 기본 손실.", 157190],
+  ["엔트로피 (Entropy)", "결과가 얼마나 예측하기 어려운지, 평균 놀라움을 잰 값.", 200967],
+  ["쿨백-라이블러 발산 (KLD)", "두 확률 분포가 얼마나 다른지 재는 값. 순서를 바꾸면 값이 달라진다.", 178041],
+  ["퍼플렉시티 (perplexity)", "언어 모델이 매번 평균 몇 개 후보 사이에서 고민하는지 나타내는 수.", 222633],
+  ["차원의 저주 (Curse of Dimensionality)", "특징 수가 많아질수록 데이터가 듬성듬성해져 배우기 어려워지는 현상.", 237404],
+  // 고전 머신러닝
+  ["지도학습 (supervised learning)", "입력과 정답 쌍을 보고 배우는 학습.", 120172],
+  ["비지도 학습 (unsupervised learning)", "정답 없이 데이터 안의 구조나 무리를 찾는 학습.", 120198],
+  ["분류 (classification)", "입력이 어느 범주에 속하는지 맞히는 문제.", 120197],
+  ["회귀 (regression)", "집값처럼 연속된 숫자를 맞히는 문제.", 120111],
+  ["선형 회귀 (linear regression)", "데이터에 가장 잘 맞는 직선이나 평면을 찾는 방법.", 120110],
+  ["로지스틱 회귀 (logistic regression)", "직선의 값을 시그모이드로 확률로 바꿔 둘 중 하나를 가르는 분류 모델.", 120081],
+  ["k 최근접 이웃 (k-NN)", "가장 가까운 k개 데이터의 다수결로 답을 정하는 방법.", 120085],
+  ["k 평균 군집법 (k-means clustering)", "중심 k개를 두고 가까운 점 배정, 중심 이동을 반복해 무리를 나누는 방법.", 120154],
+  ["클러스터링 (clustering)", "비슷한 데이터끼리 무리로 묶는 일.", 120176],
+  ["결정 트리 (decision tree)", "예/아니오 질문을 이어 가며 답을 정하는 나무 모양 모델.", 120144],
+  ["랜덤 포레스트 (random forest)", "조금씩 다른 데이터로 키운 결정 트리 여러 그루의 다수결.", 120092],
+  ["배깅 (bagging)", "데이터를 중복 허용으로 다시 뽑아 여러 모델을 따로 학습해 평균 내는 앙상블.", 152756],
+  ["부스팅 (boosting)", "앞 모델이 틀린 부분을 다음 모델이 이어받아 고치는 앙상블.", 152757],
+  ["앙상블 학습 (ensemble learning)", "여러 모델의 답을 합쳐 하나보다 나은 답을 얻는 방법.", 120277],
+  ["서포트 벡터 머신 (SVM)", "두 무리 사이에 가장 넓은 도로를 내는 경계를 찾는 분류 모델.", 120143],
+  ["정보 이득 (Information Gain)", "질문 하나로 나눴을 때 불확실성(엔트로피)이 얼마나 줄었는지.", 237395],
+  ["주성분 분석 (PCA)", "데이터가 가장 많이 퍼진 방향 몇 개만 남겨 차원을 줄이는 방법.", 174292],
+  ["특잇값 분해 (SVD)", "행렬을 회전, 늘이기, 회전 세 행렬의 곱으로 나누는 방법.", 230484],
+  ["저계수 근사 (Low Rank Approximation)", "큰 특잇값 몇 개만 남겨 행렬을 더 작은 정보로 비슷하게 표현하는 방법.", 230482],
+  // CNN과 비전
+  ["합성곱 신경망 (CNN)", "작은 필터를 그림 위에 미끄러뜨리며 무늬를 찾는 신경망.", 120327],
+  ["풀링 (pooling)", "작은 칸마다 최댓값이나 평균만 남겨 그림 크기를 줄이는 방법.", 182319],
+  ["레즈넷 (ResNet)", "잔차 연결로 100층 넘게 쌓아도 학습되게 만든 CNN.", 202619],
+  ["알렉스넷 (AlexNet)", "2012년 이미지 대회에서 큰 차이로 우승해 딥러닝 붐을 연 CNN.", 170551],
+  ["이미지 분류 (image classification)", "그림 한 장이 무엇인지 범주를 맞히는 일.", 120210],
+  ["객체 탐지 (object detection)", "그림 속 물체마다 위치(상자)와 이름을 찾는 일.", 120072],
+  ["비전 트랜스포머 (ViT)", "그림을 조각으로 잘라 낱말처럼 트랜스포머에 넣는 모델.", 219121],
+  ["MNIST", "손글씨 숫자 0~9 사진 7만 장으로 된 입문용 데이터셋.", 120171],
+  // 순차 데이터와 언어
+  ["순환 신경망 (RNN)", "앞 시점의 기억을 다음 시점에 넘기며 순서 있는 데이터를 처리하는 신경망.", 120325],
+  ["장단기 메모리 (LSTM)", "게이트로 기억을 지우고 더해 긴 문장도 기억하게 만든 RNN.", 120086],
+  ["GRU (Gated Recurrent Unit)", "LSTM보다 게이트를 줄여 단순하게 만든 순환 신경망.", 120326],
+  ["시퀀스 투 시퀀스 (seq2seq)", "인코더가 문장을 읽어 요약하고 디코더가 새 문장을 쓰는 구조.", 158319],
+  ["BPTT (Backpropagation Through Time)", "순환 신경망을 시간 순서로 펼쳐 놓고 역전파하는 방법.", 147606],
+  ["어텐션 (attention)", "답을 만들 때마다 입력의 어느 부분을 볼지 가중치로 정하는 방법.", 120275],
+  ["트랜스포머 (transformer)", "순환 없이 셀프 어텐션만으로 문장을 처리하는 신경망 구조.", 120087],
+  ["임베딩 (embedding)", "단어 같은 기호를 뜻을 담은 숫자 벡터로 바꾼 것.", 141213],
+  ["워드투벡 (word2vec)", "주변 단어를 맞히게 학습해 단어 벡터를 얻는 방법.", 142562],
+  ["토큰 (token)", "언어 모델이 글을 읽고 쓰는 단위 조각. 단어보다 작을 수 있다.", 237104],
+  ["컨텍스트 윈도우 (context window)", "모델이 한 번에 읽을 수 있는 토큰 수의 한계.", 149268],
+  ["언어 모델 (language model)", "다음 단어(토큰)의 확률을 매기는 모델.", 120215],
+  ["대형 언어 모델 (LLM)", "아주 많은 글로 사전학습한 수십억 개 이상 파라미터의 언어 모델.", 225412],
+  ["버트 (BERT)", "문장 가운데 가린 단어를 양쪽 문맥으로 맞히며 배우는 트랜스포머 인코더.", 120207],
+  ["GPT (Generative Pre-trained Transformer)", "다음 토큰 맞히기로 사전학습한 트랜스포머 디코더.", 169098],
+  ["사전 학습 (pre-training)", "특정 일을 배우기 전에 많은 데이터로 일반 능력을 먼저 기르는 학습.", 145649],
+  ["파인 튜닝 (fine-tuning)", "사전학습한 모델을 원하는 일의 데이터로 조금 더 학습시키는 것.", 120208],
+  ["전이 학습 (transfer learning)", "한 일에서 배운 모델을 다른 일에 가져다 쓰는 방법.", 120225],
+  ["온도 (temperature)", "소프트맥스 전에 점수를 나누는 수. 낮으면 확신, 높으면 다양해진다.", 278304],
+  ["인컨텍스트 러닝 (ICL)", "모델을 다시 학습시키지 않고 프롬프트 속 예시만 보고 일을 해내는 것.", 237982],
+  ["환각 (hallucination)", "모델이 그럴듯하지만 사실이 아닌 내용을 지어내는 현상.", 234669],
+  ["프롬프트 엔지니어링 (prompt engineering)", "원하는 답이 나오도록 모델에 주는 지시문을 설계하는 일.", 225974],
+  ["검색 증강 생성 (RAG)", "질문과 관련된 문서를 먼저 찾아 붙인 뒤 답을 쓰게 하는 방법.", 120236],
+  ["ReAct (Reason + Act)", "생각을 적고, 도구를 쓰고, 결과를 보는 과정을 번갈아 하는 에이전트 방식.", 250756],
+  ["MCP (Model Context Protocol)", "AI 앱과 외부 도구·데이터를 잇는 공개 연결 규격.", 120242],
+  ["로라 (LoRA)", "큰 가중치는 얼려 두고 얇은 행렬 두 개만 학습해 모델을 고치는 방법.", 230474],
+  ["양자화 (quantization)", "숫자를 적은 비트로 반올림해 저장해 모델을 가볍게 만드는 방법.", 120218],
+  ["지식 증류 (Knowledge Distillation)", "큰 선생 모델의 부드러운 확률을 작은 학생 모델이 따라 배우게 하는 방법.", 275240],
+  ["전문가 혼합 (MoE)", "여러 전문가 층 중 입력마다 몇 개만 골라 쓰는 구조.", 275230],
+  ["RLHF", "사람이 고른 더 나은 답을 보상으로 삼아 강화학습으로 모델을 다듬는 방법.", 225547],
+  ["직접 선호 최적화 (DPO)", "보상 모델 없이 비교 데이터로 언어 모델을 바로 고치는 방법.", 230477],
+  ["CLIP", "사진과 설명 글을 같은 공간에 놓도록 함께 학습한 모델.", 253346],
+  ["멀티모달 AI (Multimodal AI)", "글, 그림, 소리처럼 여러 종류의 입력을 함께 다루는 AI.", 253350],
+  // 생성 모델
+  ["생성 모델 (generative model)", "데이터가 만들어지는 분포를 배워 새 데이터를 만들어 내는 모델.", 157189],
+  ["오토인코더 (autoencoder)", "입력을 작은 숫자로 압축했다가 다시 되살리도록 학습하는 신경망.", 120041],
+  ["변분 오토인코더 (VAE)", "압축한 값이 정규분포를 따르게 해 새 그림을 만들 수 있게 한 오토인코더.", 120289],
+  ["생성적 적대 신경망 (GAN)", "만드는 쪽과 가려내는 쪽 두 신경망이 겨루며 함께 실력을 키우는 모델.", 120291],
+  ["확산 모델 (Diffusion Models)", "잡음을 조금씩 걷어 내는 법을 배워 잡음에서 그림을 만드는 모델.", 176449],
+  ["최대우도추정 (MLE)", "지금 데이터가 나올 확률을 가장 크게 만드는 파라미터를 고르는 방법.", 120274],
+  ["잠재 변수 모델 (Latent Variable Models)", "눈에 보이지 않는 숨은 변수가 데이터를 만든다고 보는 모델.", 200922],
+  // 강화학습
+  ["강화학습 (RL)", "보상을 많이 받는 쪽으로 행동을 고쳐 가며 배우는 학습.", 120149],
+  ["에이전트 (agent)", "강화학습에서 상황을 보고 행동을 고르는 주체.", 120358],
+  ["환경 (environment)", "에이전트의 행동을 받아 다음 상황과 보상을 돌려주는 바깥 세계.", 120361],
+  ["상태 (state)", "에이전트가 지금 놓인 상황을 나타내는 정보.", 120357],
+  ["행동 (action)", "에이전트가 한 걸음마다 고르는 선택.", 120360],
+  ["보상 (reward)", "행동 뒤에 환경이 주는 점수. 강화학습의 목표 신호.", 120356],
+  ["정책 (policy)", "상태마다 어떤 행동을 고를지 정한 규칙이나 확률.", 120363],
+  ["할인율 (discount factor)", "먼 미래의 보상을 얼마나 덜 쳐 줄지 정하는 0과 1 사이 수. 기호 γ.", 120366],
+  ["가치 함수 (value function)", "어떤 상태에서 앞으로 받을 보상 합의 기댓값.", 120407],
+  ["행동가치 함수 (action-value function)", "어떤 상태에서 어떤 행동을 했을 때 앞으로 받을 보상 합의 기댓값. Q로 쓴다.", 120376],
+  ["벨만 방정식 (Bellman equation)", "지금의 가치 = 지금 보상 + 할인한 다음 상태의 가치, 라는 관계식.", 132538],
+  ["마르코프 결정 과정 (MDP)", "상태, 행동, 보상, 전이 확률, 할인율로 강화학습 문제를 적는 틀.", 120150],
+  ["마르코프 성질 (Markov property)", "다음 일이 과거 전체가 아니라 지금 상태에만 달려 있다는 성질.", 120374],
+  ["에피소드 (episode)", "시작부터 끝(목표나 게임 오버)까지 한 판.", 120355],
+  ["탐색-활용 트레이드오프 (exploration-exploitation trade-off)", "아는 최선을 쓸지 새것을 시도해 볼지의 줄다리기.", 167325],
+  ["ε-탐욕 (ϵ-greedy)", "대부분은 지금 최선의 행동을, 확률 ε로는 무작위 행동을 고르는 방법.", 169097],
+  ["멀티암드 밴딧 (MAB)", "여러 슬롯머신 중 어느 것을 당길지 고르는, 상태 없는 강화학습 문제.", 168958],
+  ["Q러닝 (Q-Learning)", "다음 상태의 최고 Q값을 써서 Q표를 한 칸씩 고쳐 가는 방법.", 120148],
+  ["DQN (deep Q-Network)", "Q표 대신 신경망으로 Q값을 어림하는 Q러닝. 아타리 게임을 화면만 보고 배웠다.", 120194],
+  ["정책 경사 (policy gradient)", "보상이 좋았던 행동의 확률을 직접 올리는 쪽으로 정책을 고치는 방법.", 163304],
+  ["REINFORCE", "한 판의 리턴만큼 고른 행동의 로그 확률을 올리는 가장 기본적인 정책 경사 방법.", 168954],
+  ["액터-크리틱 (Actor-Critic)", "행동을 고르는 액터와 그 행동을 평가하는 크리틱을 함께 배우는 방법.", 163301],
+  ["A2C (Advantage Actor-Critic)", "기대보다 얼마나 좋았는지(어드밴티지)로 액터를 고치는 액터-크리틱.", 163302],
+  ["PPO (Proximal Policy Optimization)", "한 번에 정책을 너무 많이 바꾸지 않도록 비율을 잘라 주는 정책 경사 방법.", 222500],
+  ["몬테카를로 방법 (Monte Carlo Methods)", "무작위로 여러 번 해 본 결과의 평균으로 값을 어림하는 방법.", 120405],
+  ["동적 계획법 (dynamic programming)", "큰 문제를 작은 문제로 나눠 답을 저장하며 푸는 방법. 가치 반복이 한 예.", 120406],
+  ["알파고 (AlphaGo)", "신경망과 몬테카를로 트리 탐색을 합쳐 2016년 이세돌 9단을 이긴 바둑 AI.", 170692],
+  // AI 전반
+  ["범용 인공지능 (AGI)", "사람이 하는 거의 모든 지적인 일을 해낼 수 있는 가상의 AI.", 222567],
+  ["AI 정렬 (AI alignment)", "AI가 사람이 실제로 원하는 목표대로 움직이게 만드는 연구.", 222566],
+  ["AI 겨울 (AI Winter)", "기대가 꺼지며 AI 연구 투자와 관심이 크게 줄었던 시기.", 265511],
+  ["설명 가능 인공지능 (XAI)", "모델이 왜 그런 답을 냈는지 사람이 이해할 수 있게 하는 기술.", 188510],
+  ["자기 지도 학습 (self-supervised learning)", "데이터 일부를 가리고 맞히게 하는 식으로 정답표 없이 문제를 만들어 배우는 학습.", 167320],
+  ["퓨샷 러닝 (few-shot learning)", "예시 몇 개만 보고 새 일을 해내는 것.", 167327],
+  ["제로샷 학습 (ZSL)", "예시를 하나도 보지 않고 설명만으로 새 일을 해내는 것.", 225335],
+  ["SOTA (State of the Art)", "어떤 문제에서 지금까지 나온 것 중 가장 좋은 성능.", 238152]
+];
+
 /* ---------- 단어장: 용어 사전(GLOSSARY) 카드 + Leitner 5상자 간격 반복 ---------- */
 // 카드 = [용어, 뜻, 챕터id]. 그 챕터를 완료(DONE)해야 열린다.
 // 상자 1→1일, 2→2일, 3→4일, 4→8일, 5→16일 뒤 복습. 5에서 맞히면 졸업(상자 6), 30일 뒤 한 번 점검하고 끝.
@@ -4976,8 +5163,8 @@ const VKEY = "seq2seq30-vocab";
 const VBOX_DAYS = [0, 1, 2, 4, 8, 16], VGRAD_DAYS = 30;
 const VREV_CAP = 20, VNEW_CAP = 5, VNEW_GATE = 15, VLEECH = 4;
 function loadVocab() {
-  try { const v = JSON.parse(localStorage.getItem(VKEY) || "null"); if (v && typeof v === "object" && v.cards && typeof v.cards === "object") return { v: 1, cards: v.cards, day: v.day || null }; } catch (e) { }
-  return { v: 1, cards: {}, day: null };
+  try { const v = JSON.parse(localStorage.getItem(VKEY) || "null"); if (v && typeof v === "object" && v.cards && typeof v.cards === "object") return { v: 1, cards: v.cards, day: v.day || null, dayd: v.dayd || null }; } catch (e) { }
+  return { v: 1, cards: {}, day: null, dayd: null };
 }
 function saveVocab() { try { localStorage.setItem(VKEY, JSON.stringify(VOCAB)); } catch (e) { } }
 let VOCAB = loadVocab();
@@ -4991,27 +5178,41 @@ const VCARDS = (() => {
   return out;
 })();
 const VBY = Object.fromEntries(VCARDS.map(c => [c.id, c]));
+// AI 사전 퀴즈 카드(위키독스 사전 표제어). 챕터와 상관없이 처음부터 전부 열려 있다.
+const VDICT = (typeof DICT !== "undefined" ? DICT : []).map(([term, mean, pg]) => ({ id: "dict:" + term, term, mean, ch: "dict", url: "https://wikidocs.net/" + pg }));
+const VDICT_NEW = 10, VMORE_N = 10;
+let VDECK = "mine", VMORE = false;   // 지금 보는 덱("mine" 내 단어장 | "dict" AI 사전), 더 풀기 모드
+const vHome = () => VDECK === "dict" ? "#vocab-dict" : "#vocab";
+const vPool = () => VDECK === "dict" ? VDICT : VCARDS;
 let VORD = null;
 function vOrd(ch) { if (!VORD) VORD = Object.fromEntries(LESSONS.map((p, i) => [p.id, i])); return ch in VORD ? VORD[ch] : 999; }
 function vToday() { return ymd(new Date()); }
 function vAdd(d, n) { const [y, m, dd] = d.split("-").map(Number); return ymd(new Date(y, m - 1, dd + n)); }
 function vDiff(a, b) { const p = s => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((p(a) - p(b)) / 864e5); }
-function vDay() { const d = vToday(); if (!VOCAB.day || VOCAB.day.d !== d) VOCAB.day = { d, rev: 0, nw: 0 }; return VOCAB.day; }
+function vDay(deck = VDECK) { const d = vToday(), k = deck === "dict" ? "dayd" : "day"; if (!VOCAB[k] || VOCAB[k].d !== d) VOCAB[k] = { d, rev: 0, nw: 0 }; return VOCAB[k]; }
 function vState(c) { return VOCAB.cards[c.id] || null; }
-function vChName(ch) { const co = chapterOf(ch); return co ? co.ch.name : byId[ch] ? byId[ch].short : ch; }
-function vUnlocked() { return VCARDS.filter(c => DONE.has(c.ch)); }
+function vChName(ch) { if (ch === "dict") return "위키독스 AI 사전"; const co = chapterOf(ch); return co ? co.ch.name : byId[ch] ? byId[ch].short : ch; }
+function vUnlocked(deck = VDECK) { return deck === "dict" ? VDICT : VCARDS.filter(c => DONE.has(c.ch)); }
 // 오늘 할 일: 복습은 상한 20장(낮은 상자 → 오래 밀린 순), 새 카드는 오늘 예정 복습이 15장 이하일 때만 최대 5장
-function vPlan() {
-  const today = vToday(), dc = vDay(), open = vUnlocked();
+function vPlan(deck = VDECK) {
+  const today = vToday(), dc = vDay(deck), open = vUnlocked(deck), cap = deck === "dict" ? VDICT_NEW : VNEW_CAP;
   const due = open.filter(c => { const s = vState(c); return s && s.due && s.due <= today; })
     .sort((a, b) => vState(a).b - vState(b).b || vState(a).due.localeCompare(vState(b).due) || vOrd(a.ch) - vOrd(b.ch));
   const reviews = due.slice(0, Math.max(0, VREV_CAP - dc.rev));
   const fresh = open.filter(c => !vState(c)).sort((a, b) => vOrd(a.ch) - vOrd(b.ch));
   const newOk = due.length + dc.rev <= VNEW_GATE;
-  const news = newOk ? fresh.slice(0, Math.max(0, VNEW_CAP - dc.nw)) : [];
-  return { open, due, reviews, fresh, news, newOk, total: reviews.length + news.length, dc };
+  let news = newOk ? fresh.slice(0, Math.max(0, cap - dc.nw)) : [], more = false;
+  // AI 사전 "더 풀기": 하루 한도와 상관없이 10장 더. 안 본 카드부터, 다 봤으면 아무 카드나
+  if (deck === "dict" && VMORE) {
+    more = true;
+    const fr = shuffle(fresh.slice());
+    news = fr.slice(0, VMORE_N);
+    const extra = shuffle(open.filter(c => vState(c) && !reviews.includes(c))).slice(0, VMORE_N - news.length);
+    return { open, due, reviews: extra, fresh, news, newOk, total: extra.length + news.length, dc, cap, more };
+  }
+  return { open, due, reviews, fresh, news, newOk, total: reviews.length + news.length, dc, cap, more };
 }
-function vTodayCount() { try { return vPlan().total; } catch (e) { return 0; } }
+function vTodayCount() { try { return vPlan("mine").total; } catch (e) { return 0; } }
 function vBoxOf(c) { const s = vState(c); return s ? s.b : 0; }
 function vNextDue() {
   const today = vToday(); let best = null, n = 0;
@@ -5090,14 +5291,17 @@ function vMask(mean, term) {
 // 오답 보기: 같은 챕터 → 가까운 챕터의 다른 용어
 function vNear(c, n, key) {
   const o = vOrd(c.ch), seen = new Set([c[key]]), out = [];
-  const pool = VCARDS.filter(x => x.id !== c.id && x.term !== c.term && x.mean !== c.mean)
+  const pool = vPool().filter(x => x.id !== c.id && x.term !== c.term && x.mean !== c.mean)
     .map(x => [(x.ch === c.ch ? -1 : Math.abs(vOrd(x.ch) - o)) + Math.random() * 1.5, x]).sort((a, b) => a[0] - b[0]);
   for (const [, x] of pool) { if (seen.has(x[key])) continue; seen.add(x[key]); out.push(x); if (out.length >= n) break; }
   return out;
 }
 function vBack(c, extra) {
   return h("div", { class: "vback" }, h("b", {}, c.term), h("span", {}, c.mean),
-    h("span", { class: "vfrom" }, "배운 곳: ", h("a", { href: "#" + c.ch }, vChName(c.ch))), extra || null);
+    h("span", { class: "vfrom" }, ...vSrc(c)), extra || null);
+}
+function vSrc(c) {
+  return c.url ? ["출처: ", h("a", { href: c.url, target: "_blank", rel: "noopener" }, "위키독스 AI 사전 ↗")] : ["배운 곳: ", h("a", { href: "#" + c.ch }, vChName(c.ch))];
 }
 function vBoxLabel(b) { return b >= 6 ? "졸업" : b ? "상자 " + b : "새 카드"; }
 
@@ -5115,10 +5319,17 @@ function vShelf() {
   }
   return h("div", { class: "vshelf-wrap" }, shelf, cnt[0] ? h("p", { class: "w-hint" }, `아직 한 번도 안 본 새 카드 ${cnt[0]}장이 대기 중이에요.`) : null);
 }
+function vTabs() {
+  const t = (deck, href, label) => h("a", { class: "vtab" + (VDECK === deck ? " on" : ""), href, role: "tab", "aria-selected": String(VDECK === deck) }, label);
+  return h("div", { class: "vtabs", role: "tablist" }, t("mine", "#vocab", "내 단어장"), t("dict", "#vocab-dict", "AI 사전 퀴즈"));
+}
 function renderVocab() {
   lessonEl.innerHTML = ""; tocEl.innerHTML = "";
-  const p = vPlan(), open = p.open, locked = VCARDS.length - open.length;
-  lessonEl.append(h("div", { class: "eyebrow" }, "단어장 · 간격 반복"), h("h1", {}, "단어장"));
+  const dict = VDECK === "dict";
+  const p = vPlan(), open = p.open, locked = vPool().length - open.length;
+  lessonEl.append(h("div", { class: "eyebrow" }, dict ? "단어장 · 위키독스 AI 사전" : "단어장 · 간격 반복"), h("h1", {}, dict ? "AI 사전 퀴즈" : "단어장"), vTabs());
+  if (dict) lessonEl.append(h("p", { class: "w-hint" }, "위키독스 『인공지능(AI) & 머신러닝(ML) 사전』의 표제어 ", VDICT.length + "개로 만든 퀴즈예요. 챕터를 안 끝내도 전부 열려 있어요. 뜻풀이는 이 앱이 쉽게 다시 쓴 것이고, 카드마다 사전 원문 링크가 있어요. ",
+    h("a", { href: "https://wikidocs.net/book/5942", target: "_blank", rel: "noopener" }, "사전 보기 ↗")));
   if (!open.length) {
     const nl = nextLesson();
     lessonEl.append(h("section", { class: "greet vempty" }, mascot("think", 80),
@@ -5129,34 +5340,35 @@ function renderVocab() {
     return;
   }
   const nd = vNextDue();
+  const moreBtn = dict ? h("a", { class: "btn big", href: "#vocab-dict-play-more" }, ico("bolt"), `${VMORE_N}장 더 풀기`) : null;
   const say = p.total ? `오늘 복습 ${p.reviews.length}장${p.news.length ? `, 새 카드 ${p.news.length}장` : ""}이 기다려요. 5분이면 끝나요!`
     : `오늘 카드를 다 했어요!${nd ? ` 다음 복습은 ${vWhen(nd.d)} ${nd.n}장이에요.` : ""}`;
   lessonEl.append(h("section", { class: "greet" }, mascot(p.total ? "happy" : "cheer", 80),
     h("div", { class: "say" }, h("p", {}, say),
-      p.total ? h("a", { class: "btn pri big", href: "#vocab-play", id: "vgo" }, ico("play"), `시작하기 · ${p.total}장`) : h("a", { class: "btn big", href: "#home" }, ico("home"), "학습 지도로"))));
+      p.total ? h("a", { class: "btn pri big", href: dict ? "#vocab-dict-play" : "#vocab-play", id: "vgo" }, ico("play"), `시작하기 · ${p.total}장`) : dict ? null : h("a", { class: "btn big", href: "#home" }, ico("home"), "학습 지도로"), moreBtn)));
   lessonEl.append(h("div", { class: "vtoday" },
     h("div", { class: "mini" }, ico("target", "c-flame"), h("div", {}, h("small", {}, "오늘 복습"), h("b", {}, p.reviews.length + "장"))),
     h("div", { class: "mini" }, ico("gift", "c-sun"), h("div", {}, h("small", {}, "새 카드"), h("b", {}, p.news.length + "장")))));
   const notes = [];
   if (p.due.length > p.reviews.length) notes.push(`밀린 복습이 ${p.due.length}장이라 오늘은 낮은 상자부터 ${p.reviews.length}장만 해요. 나머지는 내일로 넘어가도 상자는 내려가지 않아요.`);
   if (!p.newOk && p.fresh.length) notes.push(`복습할 카드가 15장보다 많아서 오늘은 새 카드를 쉬어요. 복습이 줄면 새 카드가 다시 들어와요.`);
-  else if (p.newOk && p.fresh.length > p.news.length && p.dc.nw >= VNEW_CAP) notes.push(`새 카드는 하루 ${VNEW_CAP}장까지예요. 남은 ${p.fresh.length}장은 내일부터 들어와요.`);
+  else if (p.newOk && p.fresh.length > p.news.length && p.dc.nw >= p.cap) notes.push(`새 카드는 하루 ${p.cap}장까지예요. 남은 ${p.fresh.length}장은 내일부터 들어와요.${dict ? " 더 하고 싶으면 「더 풀기」를 누르세요." : ""}`);
   notes.forEach(t => lessonEl.append(h("p", { class: "vnote" }, t)));
   lessonEl.append(h("h2", {}, "내 카드 진열장"), vShelf());
   const leeches = open.filter(c => (vState(c) || {}).w >= VLEECH);
   if (leeches.length) lessonEl.append(h("h2", {}, "어려운 카드"), h("p", { class: "w-hint" }, "네 번 이상 틀린 카드예요. 배운 챕터를 1분만 다시 훑어보면 훨씬 쉬워져요."),
     h("div", { class: "vlist" }, ...leeches.map(c => vRow(c))));
-  const inp = h("input", { type: "search", class: "vsearch", placeholder: "열린 카드 검색 (예: 엔트로피, 상자 3)", "aria-label": "열린 카드 검색" });
+  const inp = h("input", { type: "search", class: "vsearch", placeholder: dict ? "카드 검색 (예: 드롭아웃, 새 카드)" : "열린 카드 검색 (예: 엔트로피, 상자 3)", "aria-label": "카드 검색" });
   const list = h("div", { class: "vlist" });
   const fill = () => {
     const q = inp.value.trim().toLowerCase(); list.innerHTML = "";
     const rows = open.filter(c => !q || (c.term + " " + c.mean + " " + vChName(c.ch) + " " + vBoxLabel(vBoxOf(c))).toLowerCase().includes(q))
-      .sort((a, b) => vOrd(a.ch) - vOrd(b.ch));
+      .sort((a, b) => dict ? a.term.localeCompare(b.term, "ko") : vOrd(a.ch) - vOrd(b.ch));
     rows.forEach(c => list.append(vRow(c)));
     if (!rows.length) list.append(h("p", { class: "w-hint" }, "찾는 카드가 없어요."));
   };
   inp.addEventListener("input", fill); fill();
-  lessonEl.append(h("h2", {}, `열린 카드 ${open.length}장`), locked ? h("p", { class: "w-hint" }, `잠긴 카드 ${locked}장은 챕터를 끝내면 열려요.`) : null, inp, list, vHow());
+  lessonEl.append(h("h2", {}, dict ? `전체 카드 ${open.length}장` : `열린 카드 ${open.length}장`), locked ? h("p", { class: "w-hint" }, `잠긴 카드 ${locked}장은 챕터를 끝내면 열려요.`) : null, inp, list, vHow());
 }
 function vRow(c) {
   const s = vState(c), b = s ? s.b : 0, leech = s && s.w >= VLEECH;
@@ -5164,7 +5376,7 @@ function vRow(c) {
   return h("div", { class: "vrow" + (leech ? " leech" : "") },
     h("span", { class: "vchip vb" + b }, vBoxLabel(b)),
     h("div", { class: "vrow-main" }, h("b", {}, c.term, leech ? h("span", { class: "vleech" }, "어려운 카드") : null), h("span", {}, c.mean),
-      h("small", {}, when, " · 배운 곳: ", h("a", { href: "#" + c.ch }, vChName(c.ch)))));
+      h("small", {}, when, " · ", ...vSrc(c))));
 }
 function vHow() {
   return h("details", { class: "vhow" }, h("summary", {}, "단어장은 어떻게 돌아가나요?"),
@@ -5174,7 +5386,7 @@ function vHow() {
 }
 // 홈 학습 길 위의 진입점
 function vocabQuest() {
-  const open = vUnlocked().length, n = open ? vTodayCount() : 0;
+  const open = vUnlocked("mine").length, n = open ? vTodayCount() : 0;
   return h("a", { class: "quest vquest" + (open && !n ? " hit" : ""), href: "#vocab", "aria-label": open ? `단어장, 오늘 ${n}장` : "단어장" },
     ico("cards", "c-flame"),
     h("div", { class: "quest-main" }, h("b", {}, "단어장"), h("span", { class: "vq-sub" }, !open ? "첫 챕터를 끝내면 카드가 생겨요" : n ? `오늘 복습 ${n}장 · 5분` : "오늘 카드 끝! 내일 또 만나요")),
@@ -5202,13 +5414,13 @@ function vBuildRounds(p) {
 function renderVocabPlay() {
   const root = document.getElementById("practice");
   const plan = vPlan();
-  if (!plan.total) { location.replace("#vocab"); return; }
+  if (!plan.total) { location.replace(vHome()); return; }
   const rounds = vBuildRounds(plan), repeat = [];
   const st = { total: plan.total, answered: 0, xp: 0, first: 0, up: 0, combo: 0, best: 0, graded: 0, moved: [] };
   let cur = null, answer = null, checked = false, hinted = false;
   root.innerHTML = "";
   const bar = h("i", {}), count = h("span", { class: "lcount" }), combo = h("span", { class: "combo", "aria-live": "polite" });
-  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: "#vocab", "aria-label": "단어장 그만하기" }, ico("close")), h("div", { class: "pr-bar", role: "progressbar", "aria-label": "진행" }, bar, combo), count);
+  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: vHome(), "aria-label": "단어장 그만하기" }, ico("close")), h("div", { class: "pr-bar", role: "progressbar", "aria-label": "진행" }, bar, combo), count);
   const card = h("div", { class: "pr-card" }), foot = h("div", { class: "pr-foot" });
   root.append(head, card, foot);
   function drawHead() {
@@ -5253,7 +5465,7 @@ function renderVocabPlay() {
   }
   function leechLine(x, r) {
     if (!r || !r.leech) return null;
-    return h("span", { class: "vleech-line" }, "자주 헷갈리는 카드예요. ", h("a", { href: "#" + x.c.ch }, "「" + vChName(x.c.ch) + "」 1분 다시 보기"));
+    return h("span", { class: "vleech-line" }, "자주 헷갈리는 카드예요. ", x.c.url ? h("a", { href: x.c.url, target: "_blank", rel: "noopener" }, "사전 원문 1분 읽기 ↗") : h("a", { href: "#" + x.c.ch }, "「" + vChName(x.c.ch) + "」 1분 다시 보기"));
   }
   function next() {
     checked = false; answer = null; hinted = false;
@@ -5387,13 +5599,13 @@ function renderVocabPlay() {
       vShelf(),
       h("p", { class: "w-hint" }, nd ? `다음 복습: ${vWhen(nd.d)} ${nd.n}장. 잊어버릴 즈음 다시 떠올리면 가장 오래 남아요.` : "잊어버릴 즈음 다시 떠올리면 가장 오래 남아요.")));
     setFoot("idle end", "", "", "학습 지도로", () => { location.hash = "home"; });
-    foot.prepend(h("a", { class: "btn", href: "#vocab", style: "text-decoration:none" }, "단어장 보기"));
+    foot.prepend(h("a", { class: "btn", href: VDECK === "dict" ? "#vocab-dict-play-more" : "#vocab", style: "text-decoration:none", onclick: VDECK === "dict" && location.hash === "#vocab-dict-play-more" ? (e => { e.preventDefault(); route(); }) : null }, VDECK === "dict" ? `${VMORE_N}장 더 풀기` : "단어장 보기"));
     document.getElementById("prgo").disabled = false;
-    buildRail("vocab-play");
+    buildRail(VDECK === "dict" ? "vocab-dict-play" : "vocab-play");
   }
   next();
 }
-function vocabRailNote() { const n = vUnlocked().length ? vTodayCount() : 0; return n ? `오늘 ${n}장` : null; }
+function vocabRailNote() { const n = vUnlocked("mine").length ? vTodayCount() : 0; return n ? `오늘 ${n}장` : null; }
 
 // 면접에서 말해보기. 레슨 id별로 질문 하나와 답변 스크립트.
 // q: 면접 질문, s: 답변 스크립트(한 문장씩, 소리 내어 40~60초), k: 답에 꼭 들어가야 하는 핵심어
@@ -5928,7 +6140,7 @@ function starText(n) { return "★".repeat(n) + "☆".repeat(3 - n); }
 function nextLesson() { return LESSONS.find(x => !DONE.has(x.id)) || LESSONS[0]; }
 function buildRail(cur) {
   rail.innerHTML = "";
-  const link = (id, dn, title, done, soon, extra) => h("a", { href: "#" + id, class: (id === cur || "practice-" + id === cur || (id === "vocab" && cur === "vocab-play") ? "on " : "") + (soon ? "soon" : "") }, h("span", { class: "dn" }, dn), h("span", {}, title, extra ? h("small", { class: "st" }, extra) : null), done != null ? h("span", { class: "ck" + (done ? " done" : "") }) : null);
+  const link = (id, dn, title, done, soon, extra) => h("a", { href: "#" + id, class: (id === cur || "practice-" + id === cur || (id === "vocab" && cur.startsWith("vocab")) ? "on " : "") + (soon ? "soon" : "") }, h("span", { class: "dn" }, dn), h("span", {}, title, extra ? h("small", { class: "st" }, extra) : null), done != null ? h("span", { class: "ck" + (done ? " done" : "") }) : null);
   rail.append(h("h4", {}, "홈"), link("home", "⌂", "학습 지도"), link("practice-mix", "✦", "전체 복습 퀴즈"), link("vocab", "▦", "단어장", null, false, vocabRailNote()), link("course-seq2seq", "▤", "논문 코스: Seq2Seq"), link("speak", "◉", "면접에서 말해보기"), link("refs", "§", "참고 자료"), link("settings", "⚙", "앱 설치와 진도"), h("a", { href: "#", onclick: e => { e.preventDefault(); rail.classList.remove("open"); openGlossary(); } }, h("span", { class: "dn" }, "?"), h("span", {}, "용어 사전")));
   SUBJECTS.forEach(sub => {
     rail.append(h("h4", {}, sub.stage + " " + sub.name));
@@ -6148,17 +6360,18 @@ function route() {
   REDRAW.length = 0; stopSpeak(); leaveSteps(); document.querySelector(".nsheet-wrap")?.remove();
   closePop(); document.querySelector(".modal")?.remove();
   let id = location.hash.slice(1);
-  const voc = id === "vocab-play";
+  if (id.startsWith("vocab")) { VDECK = id.startsWith("vocab-dict") ? "dict" : "mine"; VMORE = id === "vocab-dict-play-more"; }
+  const voc = id === "vocab-play" || id === "vocab-dict-play" || id === "vocab-dict-play-more";
   const prac = voc || (id.startsWith("practice-") && (id === "practice-mix" || (byId[id.slice(9)] && byId[id.slice(9)].lesson)));
   document.querySelector(".page").hidden = !!prac; document.getElementById("practice").hidden = !prac; document.getElementById("fab").hidden = !!prac;
   document.body.classList.toggle("focus-practice", !!prac); drawTabs(id || "home");
   if (prac) { buildRail(id); rail.classList.remove("open"); window.scrollTo(0, 0); if (voc) { renderVocabPlay(); document.title = "단어장 복습 · AI 듀오링고"; } else { renderPractice(id.slice(9)); document.title = "연습 · AI 듀오링고"; } return; }
-  if (!byId[id] && id !== "course-seq2seq" && id !== "refs" && id !== "settings" && id !== "speak" && id !== "vocab" && !(id.startsWith("speak-") && SPEAK[id.slice(6)])) id = "home";
+  if (!byId[id] && id !== "course-seq2seq" && id !== "refs" && id !== "settings" && id !== "speak" && id !== "vocab" && id !== "vocab-dict" && !(id.startsWith("speak-") && SPEAK[id.slice(6)])) id = "home";
   buildRail(id);
-  if (id === "home") renderPath(); else if (id === "course-seq2seq") renderCourse(); else if (id === "roadmap") renderRoadmap(); else if (id === "refs") renderRefs(); else if (id === "settings") renderSettings(); else if (id === "speak") renderSpeakList(); else if (id === "vocab") renderVocab(); else if (id.startsWith("speak-")) renderSpeak(id.slice(6)); else renderLesson(byId[id]);
+  if (id === "home") renderPath(); else if (id === "course-seq2seq") renderCourse(); else if (id === "roadmap") renderRoadmap(); else if (id === "refs") renderRefs(); else if (id === "settings") renderSettings(); else if (id === "speak") renderSpeakList(); else if (id === "vocab" || id === "vocab-dict") renderVocab(); else if (id.startsWith("speak-")) renderSpeak(id.slice(6)); else renderLesson(byId[id]);
   rail.classList.remove("open");
   window.scrollTo(0, 0);
-  document.title = id === "home" ? "AI 듀오링고" : ((byId[id] ? byId[id].short : id === "refs" ? "참고 자료" : id === "settings" ? "설정" : id === "vocab" ? "단어장" : id.startsWith("speak") ? "면접에서 말해보기" : "논문 코스: Seq2Seq") + " · AI 듀오링고");
+  document.title = id === "home" ? "AI 듀오링고" : ((byId[id] ? byId[id].short : id === "refs" ? "참고 자료" : id === "settings" ? "설정" : id === "vocab" ? "단어장" : id === "vocab-dict" ? "AI 사전 퀴즈" : id.startsWith("speak") ? "면접에서 말해보기" : "논문 코스: Seq2Seq") + " · AI 듀오링고");
 }
 window.addEventListener("hashchange", route);
 document.getElementById("menu")?.addEventListener("click", () => rail.classList.toggle("open"));
@@ -6169,7 +6382,7 @@ new MutationObserver(redrawAll).observe(document.documentElement, { attributes: 
 updateChips();
 
 /* ---------- 앱 설치, 오프라인, 진도 옮기기 ---------- */
-const APP_BUILD = "baf88586cb";
+const APP_BUILD = "0e8db35abd";
 if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
   window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => { }));
 }

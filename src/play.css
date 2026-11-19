@@ -394,3 +394,8 @@ body{word-break:keep-all;overflow-wrap:break-word}
 @media (hover:hover){.vm-item:not(:disabled):hover{border-color:var(--accent)}}
 .pr-end .vshelf-wrap{width:100%}
 .pr-numrow .sign-btn{border-radius:16px;border-bottom-width:4px}
+
+/* 단어장 덱 탭: 내 단어장 | AI 사전 퀴즈 */
+.vtabs{display:flex;gap:6px;margin:4px 0 14px;padding:4px;border-radius:999px;background:var(--accent-soft);max-width:100%}
+.vtab{flex:1;text-align:center;padding:9px 10px;border-radius:999px;font-weight:700;font-size:14px;color:var(--muted);text-decoration:none;white-space:nowrap}
+.vtab.on{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}

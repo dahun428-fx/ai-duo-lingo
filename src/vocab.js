@@ -6,8 +6,8 @@ const VKEY = "seq2seq30-vocab";
 const VBOX_DAYS = [0, 1, 2, 4, 8, 16], VGRAD_DAYS = 30;
 const VREV_CAP = 20, VNEW_CAP = 5, VNEW_GATE = 15, VLEECH = 4;
 function loadVocab() {
-  try { const v = JSON.parse(localStorage.getItem(VKEY) || "null"); if (v && typeof v === "object" && v.cards && typeof v.cards === "object") return { v: 1, cards: v.cards, day: v.day || null }; } catch (e) { }
-  return { v: 1, cards: {}, day: null };
+  try { const v = JSON.parse(localStorage.getItem(VKEY) || "null"); if (v && typeof v === "object" && v.cards && typeof v.cards === "object") return { v: 1, cards: v.cards, day: v.day || null, dayd: v.dayd || null }; } catch (e) { }
+  return { v: 1, cards: {}, day: null, dayd: null };
 }
 function saveVocab() { try { localStorage.setItem(VKEY, JSON.stringify(VOCAB)); } catch (e) { } }
 let VOCAB = loadVocab();
@@ -21,27 +21,41 @@ const VCARDS = (() => {
   return out;
 })();
 const VBY = Object.fromEntries(VCARDS.map(c => [c.id, c]));
+// AI 사전 퀴즈 카드(위키독스 사전 표제어). 챕터와 상관없이 처음부터 전부 열려 있다.
+const VDICT = (typeof DICT !== "undefined" ? DICT : []).map(([term, mean, pg]) => ({ id: "dict:" + term, term, mean, ch: "dict", url: "https://wikidocs.net/" + pg }));
+const VDICT_NEW = 10, VMORE_N = 10;
+let VDECK = "mine", VMORE = false;   // 지금 보는 덱("mine" 내 단어장 | "dict" AI 사전), 더 풀기 모드
+const vHome = () => VDECK === "dict" ? "#vocab-dict" : "#vocab";
+const vPool = () => VDECK === "dict" ? VDICT : VCARDS;
 let VORD = null;
 function vOrd(ch) { if (!VORD) VORD = Object.fromEntries(LESSONS.map((p, i) => [p.id, i])); return ch in VORD ? VORD[ch] : 999; }
 function vToday() { return ymd(new Date()); }
 function vAdd(d, n) { const [y, m, dd] = d.split("-").map(Number); return ymd(new Date(y, m - 1, dd + n)); }
 function vDiff(a, b) { const p = s => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); }; return Math.round((p(a) - p(b)) / 864e5); }
-function vDay() { const d = vToday(); if (!VOCAB.day || VOCAB.day.d !== d) VOCAB.day = { d, rev: 0, nw: 0 }; return VOCAB.day; }
+function vDay(deck = VDECK) { const d = vToday(), k = deck === "dict" ? "dayd" : "day"; if (!VOCAB[k] || VOCAB[k].d !== d) VOCAB[k] = { d, rev: 0, nw: 0 }; return VOCAB[k]; }
 function vState(c) { return VOCAB.cards[c.id] || null; }
-function vChName(ch) { const co = chapterOf(ch); return co ? co.ch.name : byId[ch] ? byId[ch].short : ch; }
-function vUnlocked() { return VCARDS.filter(c => DONE.has(c.ch)); }
+function vChName(ch) { if (ch === "dict") return "위키독스 AI 사전"; const co = chapterOf(ch); return co ? co.ch.name : byId[ch] ? byId[ch].short : ch; }
+function vUnlocked(deck = VDECK) { return deck === "dict" ? VDICT : VCARDS.filter(c => DONE.has(c.ch)); }
 // 오늘 할 일: 복습은 상한 20장(낮은 상자 → 오래 밀린 순), 새 카드는 오늘 예정 복습이 15장 이하일 때만 최대 5장
-function vPlan() {
-  const today = vToday(), dc = vDay(), open = vUnlocked();
+function vPlan(deck = VDECK) {
+  const today = vToday(), dc = vDay(deck), open = vUnlocked(deck), cap = deck === "dict" ? VDICT_NEW : VNEW_CAP;
   const due = open.filter(c => { const s = vState(c); return s && s.due && s.due <= today; })
     .sort((a, b) => vState(a).b - vState(b).b || vState(a).due.localeCompare(vState(b).due) || vOrd(a.ch) - vOrd(b.ch));
   const reviews = due.slice(0, Math.max(0, VREV_CAP - dc.rev));
   const fresh = open.filter(c => !vState(c)).sort((a, b) => vOrd(a.ch) - vOrd(b.ch));
   const newOk = due.length + dc.rev <= VNEW_GATE;
-  const news = newOk ? fresh.slice(0, Math.max(0, VNEW_CAP - dc.nw)) : [];
-  return { open, due, reviews, fresh, news, newOk, total: reviews.length + news.length, dc };
+  let news = newOk ? fresh.slice(0, Math.max(0, cap - dc.nw)) : [], more = false;
+  // AI 사전 "더 풀기": 하루 한도와 상관없이 10장 더. 안 본 카드부터, 다 봤으면 아무 카드나
+  if (deck === "dict" && VMORE) {
+    more = true;
+    const fr = shuffle(fresh.slice());
+    news = fr.slice(0, VMORE_N);
+    const extra = shuffle(open.filter(c => vState(c) && !reviews.includes(c))).slice(0, VMORE_N - news.length);
+    return { open, due, reviews: extra, fresh, news, newOk, total: extra.length + news.length, dc, cap, more };
+  }
+  return { open, due, reviews, fresh, news, newOk, total: reviews.length + news.length, dc, cap, more };
 }
-function vTodayCount() { try { return vPlan().total; } catch (e) { return 0; } }
+function vTodayCount() { try { return vPlan("mine").total; } catch (e) { return 0; } }
 function vBoxOf(c) { const s = vState(c); return s ? s.b : 0; }
 function vNextDue() {
   const today = vToday(); let best = null, n = 0;
@@ -120,14 +134,17 @@ function vMask(mean, term) {
 // 오답 보기: 같은 챕터 → 가까운 챕터의 다른 용어
 function vNear(c, n, key) {
   const o = vOrd(c.ch), seen = new Set([c[key]]), out = [];
-  const pool = VCARDS.filter(x => x.id !== c.id && x.term !== c.term && x.mean !== c.mean)
+  const pool = vPool().filter(x => x.id !== c.id && x.term !== c.term && x.mean !== c.mean)
     .map(x => [(x.ch === c.ch ? -1 : Math.abs(vOrd(x.ch) - o)) + Math.random() * 1.5, x]).sort((a, b) => a[0] - b[0]);
   for (const [, x] of pool) { if (seen.has(x[key])) continue; seen.add(x[key]); out.push(x); if (out.length >= n) break; }
   return out;
 }
 function vBack(c, extra) {
   return h("div", { class: "vback" }, h("b", {}, c.term), h("span", {}, c.mean),
-    h("span", { class: "vfrom" }, "배운 곳: ", h("a", { href: "#" + c.ch }, vChName(c.ch))), extra || null);
+    h("span", { class: "vfrom" }, ...vSrc(c)), extra || null);
+}
+function vSrc(c) {
+  return c.url ? ["출처: ", h("a", { href: c.url, target: "_blank", rel: "noopener" }, "위키독스 AI 사전 ↗")] : ["배운 곳: ", h("a", { href: "#" + c.ch }, vChName(c.ch))];
 }
 function vBoxLabel(b) { return b >= 6 ? "졸업" : b ? "상자 " + b : "새 카드"; }
 
@@ -145,10 +162,17 @@ function vShelf() {
   }
   return h("div", { class: "vshelf-wrap" }, shelf, cnt[0] ? h("p", { class: "w-hint" }, `아직 한 번도 안 본 새 카드 ${cnt[0]}장이 대기 중이에요.`) : null);
 }
+function vTabs() {
+  const t = (deck, href, label) => h("a", { class: "vtab" + (VDECK === deck ? " on" : ""), href, role: "tab", "aria-selected": String(VDECK === deck) }, label);
+  return h("div", { class: "vtabs", role: "tablist" }, t("mine", "#vocab", "내 단어장"), t("dict", "#vocab-dict", "AI 사전 퀴즈"));
+}
 function renderVocab() {
   lessonEl.innerHTML = ""; tocEl.innerHTML = "";
-  const p = vPlan(), open = p.open, locked = VCARDS.length - open.length;
-  lessonEl.append(h("div", { class: "eyebrow" }, "단어장 · 간격 반복"), h("h1", {}, "단어장"));
+  const dict = VDECK === "dict";
+  const p = vPlan(), open = p.open, locked = vPool().length - open.length;
+  lessonEl.append(h("div", { class: "eyebrow" }, dict ? "단어장 · 위키독스 AI 사전" : "단어장 · 간격 반복"), h("h1", {}, dict ? "AI 사전 퀴즈" : "단어장"), vTabs());
+  if (dict) lessonEl.append(h("p", { class: "w-hint" }, "위키독스 『인공지능(AI) & 머신러닝(ML) 사전』의 표제어 ", VDICT.length + "개로 만든 퀴즈예요. 챕터를 안 끝내도 전부 열려 있어요. 뜻풀이는 이 앱이 쉽게 다시 쓴 것이고, 카드마다 사전 원문 링크가 있어요. ",
+    h("a", { href: "https://wikidocs.net/book/5942", target: "_blank", rel: "noopener" }, "사전 보기 ↗")));
   if (!open.length) {
     const nl = nextLesson();
     lessonEl.append(h("section", { class: "greet vempty" }, mascot("think", 80),
@@ -159,34 +183,35 @@ function renderVocab() {
     return;
   }
   const nd = vNextDue();
+  const moreBtn = dict ? h("a", { class: "btn big", href: "#vocab-dict-play-more" }, ico("bolt"), `${VMORE_N}장 더 풀기`) : null;
   const say = p.total ? `오늘 복습 ${p.reviews.length}장${p.news.length ? `, 새 카드 ${p.news.length}장` : ""}이 기다려요. 5분이면 끝나요!`
     : `오늘 카드를 다 했어요!${nd ? ` 다음 복습은 ${vWhen(nd.d)} ${nd.n}장이에요.` : ""}`;
   lessonEl.append(h("section", { class: "greet" }, mascot(p.total ? "happy" : "cheer", 80),
     h("div", { class: "say" }, h("p", {}, say),
-      p.total ? h("a", { class: "btn pri big", href: "#vocab-play", id: "vgo" }, ico("play"), `시작하기 · ${p.total}장`) : h("a", { class: "btn big", href: "#home" }, ico("home"), "학습 지도로"))));
+      p.total ? h("a", { class: "btn pri big", href: dict ? "#vocab-dict-play" : "#vocab-play", id: "vgo" }, ico("play"), `시작하기 · ${p.total}장`) : dict ? null : h("a", { class: "btn big", href: "#home" }, ico("home"), "학습 지도로"), moreBtn)));
   lessonEl.append(h("div", { class: "vtoday" },
     h("div", { class: "mini" }, ico("target", "c-flame"), h("div", {}, h("small", {}, "오늘 복습"), h("b", {}, p.reviews.length + "장"))),
     h("div", { class: "mini" }, ico("gift", "c-sun"), h("div", {}, h("small", {}, "새 카드"), h("b", {}, p.news.length + "장")))));
   const notes = [];
   if (p.due.length > p.reviews.length) notes.push(`밀린 복습이 ${p.due.length}장이라 오늘은 낮은 상자부터 ${p.reviews.length}장만 해요. 나머지는 내일로 넘어가도 상자는 내려가지 않아요.`);
   if (!p.newOk && p.fresh.length) notes.push(`복습할 카드가 15장보다 많아서 오늘은 새 카드를 쉬어요. 복습이 줄면 새 카드가 다시 들어와요.`);
-  else if (p.newOk && p.fresh.length > p.news.length && p.dc.nw >= VNEW_CAP) notes.push(`새 카드는 하루 ${VNEW_CAP}장까지예요. 남은 ${p.fresh.length}장은 내일부터 들어와요.`);
+  else if (p.newOk && p.fresh.length > p.news.length && p.dc.nw >= p.cap) notes.push(`새 카드는 하루 ${p.cap}장까지예요. 남은 ${p.fresh.length}장은 내일부터 들어와요.${dict ? " 더 하고 싶으면 「더 풀기」를 누르세요." : ""}`);
   notes.forEach(t => lessonEl.append(h("p", { class: "vnote" }, t)));
   lessonEl.append(h("h2", {}, "내 카드 진열장"), vShelf());
   const leeches = open.filter(c => (vState(c) || {}).w >= VLEECH);
   if (leeches.length) lessonEl.append(h("h2", {}, "어려운 카드"), h("p", { class: "w-hint" }, "네 번 이상 틀린 카드예요. 배운 챕터를 1분만 다시 훑어보면 훨씬 쉬워져요."),
     h("div", { class: "vlist" }, ...leeches.map(c => vRow(c))));
-  const inp = h("input", { type: "search", class: "vsearch", placeholder: "열린 카드 검색 (예: 엔트로피, 상자 3)", "aria-label": "열린 카드 검색" });
+  const inp = h("input", { type: "search", class: "vsearch", placeholder: dict ? "카드 검색 (예: 드롭아웃, 새 카드)" : "열린 카드 검색 (예: 엔트로피, 상자 3)", "aria-label": "카드 검색" });
   const list = h("div", { class: "vlist" });
   const fill = () => {
     const q = inp.value.trim().toLowerCase(); list.innerHTML = "";
     const rows = open.filter(c => !q || (c.term + " " + c.mean + " " + vChName(c.ch) + " " + vBoxLabel(vBoxOf(c))).toLowerCase().includes(q))
-      .sort((a, b) => vOrd(a.ch) - vOrd(b.ch));
+      .sort((a, b) => dict ? a.term.localeCompare(b.term, "ko") : vOrd(a.ch) - vOrd(b.ch));
     rows.forEach(c => list.append(vRow(c)));
     if (!rows.length) list.append(h("p", { class: "w-hint" }, "찾는 카드가 없어요."));
   };
   inp.addEventListener("input", fill); fill();
-  lessonEl.append(h("h2", {}, `열린 카드 ${open.length}장`), locked ? h("p", { class: "w-hint" }, `잠긴 카드 ${locked}장은 챕터를 끝내면 열려요.`) : null, inp, list, vHow());
+  lessonEl.append(h("h2", {}, dict ? `전체 카드 ${open.length}장` : `열린 카드 ${open.length}장`), locked ? h("p", { class: "w-hint" }, `잠긴 카드 ${locked}장은 챕터를 끝내면 열려요.`) : null, inp, list, vHow());
 }
 function vRow(c) {
   const s = vState(c), b = s ? s.b : 0, leech = s && s.w >= VLEECH;
@@ -194,7 +219,7 @@ function vRow(c) {
   return h("div", { class: "vrow" + (leech ? " leech" : "") },
     h("span", { class: "vchip vb" + b }, vBoxLabel(b)),
     h("div", { class: "vrow-main" }, h("b", {}, c.term, leech ? h("span", { class: "vleech" }, "어려운 카드") : null), h("span", {}, c.mean),
-      h("small", {}, when, " · 배운 곳: ", h("a", { href: "#" + c.ch }, vChName(c.ch)))));
+      h("small", {}, when, " · ", ...vSrc(c))));
 }
 function vHow() {
   return h("details", { class: "vhow" }, h("summary", {}, "단어장은 어떻게 돌아가나요?"),
@@ -204,7 +229,7 @@ function vHow() {
 }
 // 홈 학습 길 위의 진입점
 function vocabQuest() {
-  const open = vUnlocked().length, n = open ? vTodayCount() : 0;
+  const open = vUnlocked("mine").length, n = open ? vTodayCount() : 0;
   return h("a", { class: "quest vquest" + (open && !n ? " hit" : ""), href: "#vocab", "aria-label": open ? `단어장, 오늘 ${n}장` : "단어장" },
     ico("cards", "c-flame"),
     h("div", { class: "quest-main" }, h("b", {}, "단어장"), h("span", { class: "vq-sub" }, !open ? "첫 챕터를 끝내면 카드가 생겨요" : n ? `오늘 복습 ${n}장 · 5분` : "오늘 카드 끝! 내일 또 만나요")),
@@ -232,13 +257,13 @@ function vBuildRounds(p) {
 function renderVocabPlay() {
   const root = document.getElementById("practice");
   const plan = vPlan();
-  if (!plan.total) { location.replace("#vocab"); return; }
+  if (!plan.total) { location.replace(vHome()); return; }
   const rounds = vBuildRounds(plan), repeat = [];
   const st = { total: plan.total, answered: 0, xp: 0, first: 0, up: 0, combo: 0, best: 0, graded: 0, moved: [] };
   let cur = null, answer = null, checked = false, hinted = false;
   root.innerHTML = "";
   const bar = h("i", {}), count = h("span", { class: "lcount" }), combo = h("span", { class: "combo", "aria-live": "polite" });
-  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: "#vocab", "aria-label": "단어장 그만하기" }, ico("close")), h("div", { class: "pr-bar", role: "progressbar", "aria-label": "진행" }, bar, combo), count);
+  const head = h("div", { class: "pr-head" }, h("a", { class: "pr-x", href: vHome(), "aria-label": "단어장 그만하기" }, ico("close")), h("div", { class: "pr-bar", role: "progressbar", "aria-label": "진행" }, bar, combo), count);
   const card = h("div", { class: "pr-card" }), foot = h("div", { class: "pr-foot" });
   root.append(head, card, foot);
   function drawHead() {
@@ -283,7 +308,7 @@ function renderVocabPlay() {
   }
   function leechLine(x, r) {
     if (!r || !r.leech) return null;
-    return h("span", { class: "vleech-line" }, "자주 헷갈리는 카드예요. ", h("a", { href: "#" + x.c.ch }, "「" + vChName(x.c.ch) + "」 1분 다시 보기"));
+    return h("span", { class: "vleech-line" }, "자주 헷갈리는 카드예요. ", x.c.url ? h("a", { href: x.c.url, target: "_blank", rel: "noopener" }, "사전 원문 1분 읽기 ↗") : h("a", { href: "#" + x.c.ch }, "「" + vChName(x.c.ch) + "」 1분 다시 보기"));
   }
   function next() {
     checked = false; answer = null; hinted = false;
@@ -417,10 +442,10 @@ function renderVocabPlay() {
       vShelf(),
       h("p", { class: "w-hint" }, nd ? `다음 복습: ${vWhen(nd.d)} ${nd.n}장. 잊어버릴 즈음 다시 떠올리면 가장 오래 남아요.` : "잊어버릴 즈음 다시 떠올리면 가장 오래 남아요.")));
     setFoot("idle end", "", "", "학습 지도로", () => { location.hash = "home"; });
-    foot.prepend(h("a", { class: "btn", href: "#vocab", style: "text-decoration:none" }, "단어장 보기"));
+    foot.prepend(h("a", { class: "btn", href: VDECK === "dict" ? "#vocab-dict-play-more" : "#vocab", style: "text-decoration:none", onclick: VDECK === "dict" && location.hash === "#vocab-dict-play-more" ? (e => { e.preventDefault(); route(); }) : null }, VDECK === "dict" ? `${VMORE_N}장 더 풀기` : "단어장 보기"));
     document.getElementById("prgo").disabled = false;
-    buildRail("vocab-play");
+    buildRail(VDECK === "dict" ? "vocab-dict-play" : "vocab-play");
   }
   next();
 }
-function vocabRailNote() { const n = vUnlocked().length ? vTodayCount() : 0; return n ? `오늘 ${n}장` : null; }
+function vocabRailNote() { const n = vUnlocked("mine").length ? vTodayCount() : 0; return n ? `오늘 ${n}장` : null; }
