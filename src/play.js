@@ -88,10 +88,10 @@ function drawStats() {
 }
 function drawTabs(cur) {
   const el = document.getElementById("tabs"); if (!el) return;
-  const tab = cur.startsWith("speak") ? "speak" : cur === "practice-mix" ? "review" : ["settings", "refs", "course-seq2seq", "roadmap"].includes(cur) ? "more" : "home";
-  const item = (key, icon, label, href, onclick) => h(href ? "a" : "button", { class: "tab" + (tab === key ? " on" : ""), href, type: href ? null : "button", onclick, "aria-current": tab === key ? "page" : null }, ico(icon), h("span", {}, label));
+  const tab = cur.startsWith("vocab") ? "vocab" : cur.startsWith("speak") ? "speak" : cur === "practice-mix" ? "review" : ["settings", "refs", "course-seq2seq", "roadmap"].includes(cur) ? "more" : "home";
+  const item = (key, icon, label, href, onclick, badge) => h(href ? "a" : "button", { class: "tab" + (tab === key ? " on" : ""), href, type: href ? null : "button", onclick, "aria-current": tab === key ? "page" : null, "aria-label": badge ? `${label}, 오늘 ${badge}장` : null }, ico(icon), badge ? h("i", { class: "tab-badge", "aria-hidden": "true" }, badge > 99 ? "99+" : badge) : null, h("span", {}, label));
   el.innerHTML = "";
-  el.append(item("home", "home", "학습", "#home"), item("review", "target", "복습", "#practice-mix"), item("speak", "mic", "말하기", "#speak"), item("more", "more", "더보기", null, () => rail.classList.toggle("open")));
+  el.append(item("home", "home", "학습", "#home"), item("review", "target", "복습", "#practice-mix"), item("vocab", "cards", "단어장", "#vocab", null, vTodayCount()), item("speak", "mic", "말하기", "#speak"), item("more", "more", "더보기", null, () => rail.classList.toggle("open")));
   const bm = document.getElementById("brandmark"); if (bm && !bm.firstChild) bm.append(mascot("happy", 34));
 }
 /* 학습 길 (홈) */
@@ -121,7 +121,7 @@ function renderPath() {
   lessonEl.append(
     h("section", { class: "greet" }, mascot(all || todayXp() >= DAILY_GOAL ? "cheer" : "happy", 80),
       h("div", { class: "say" }, h("p", {}, say), h("a", { class: "btn pri big", href: all ? "#practice-mix" : "#" + nextL.id }, ico("play"), all ? "전체 복습" : n ? "이어서 하기" : "시작하기"))),
-    goalRing());
+    goalRing(), vocabQuest());
   const zig = [0, 46, 72, 46, 0, -46, -72, -46];
   let gi = 0;
   SUBJECTS.forEach((sub, si) => {
