@@ -399,3 +399,44 @@ body{word-break:keep-all;overflow-wrap:break-word}
 .vtabs{display:flex;gap:6px;margin:4px 0 14px;padding:4px;border-radius:999px;background:var(--accent-soft);max-width:100%}
 .vtab{flex:1;text-align:center;padding:9px 10px;border-radius:999px;font-weight:700;font-size:14px;color:var(--muted);text-decoration:none;white-space:nowrap}
 .vtab.on{background:var(--card);color:var(--accent);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+
+/* 내 말로 설명하기 (explain.js) */
+.xquest{margin-top:12px}
+.xbadge{flex:none;padding:3px 10px;border-radius:999px;font-family:var(--f-display);font-size:14px;background:var(--line);color:var(--ink)}
+.xbadge.on{background:var(--accent);color:var(--on-accent)}
+.xans{width:100%;min-height:140px;resize:vertical;font:16px/1.6 var(--f-body);padding:14px 16px;border:2px solid var(--line);border-bottom-width:4px;border-radius:16px;background:var(--paper);color:var(--ink)}
+.xans:focus{border-color:var(--accent);outline:none}
+.xans:disabled{opacity:.85}
+.xrow{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.xcnt{color:var(--muted);font-size:13px}
+.xtips{padding:8px 14px;border:2px dashed var(--line);border-radius:14px}
+.xtips summary{cursor:pointer;font-weight:600;font-size:14.5px}
+.xtips ul{margin:8px 0 2px;padding-left:20px;font-size:14.5px;line-height:1.7}
+.xwait{display:flex;align-items:center;gap:10px;color:var(--muted);font-weight:600}
+.xdots{display:inline-flex;gap:5px}
+.xdots i{width:9px;height:9px;border-radius:50%;background:var(--accent);opacity:.35}
+@media (prefers-reduced-motion:no-preference){.xdots i{animation:xdot 1s infinite ease-in-out}.xdots i:nth-child(2){animation-delay:.15s}.xdots i:nth-child(3){animation-delay:.3s}}
+@keyframes xdot{0%,100%{opacity:.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-4px)}}
+.xresult{display:grid;gap:12px}
+.xres-head{display:flex;align-items:center;gap:14px}
+.xres-head>div:last-child{display:grid;gap:2px}
+.xres-t{font-family:var(--f-display);font-weight:400;font-size:22px}
+.xring{position:relative;flex:none;width:84px;height:84px;display:grid;place-items:center}
+.xring svg{position:absolute;inset:0}
+.xring b{font-family:var(--f-display);font-weight:400;font-size:26px;line-height:1;margin-top:-6px}
+.xring small{position:absolute;bottom:18px;font-size:11px;color:var(--muted)}
+.xring-bg{fill:none;stroke:var(--line);stroke-width:8}
+.xring-fg{fill:none;stroke-width:8;stroke-linecap:round;transition:stroke-dashoffset .8s ease-out}
+.xring-fg.good{stroke:var(--good)}.xring-fg.bad{stroke:var(--coral)}
+.xfb{padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--card)}
+.xfb b{display:flex;align-items:center;gap:8px;font-size:15px}
+.xfb ul{margin:6px 0 0;padding-left:20px;font-size:15px;line-height:1.6}
+.xfb-ico{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;font-size:14px;color:#fff;font-family:var(--f-display)}
+.xfb.good{border-color:color-mix(in srgb,var(--good) 45%,var(--line))}.xfb.good .xfb-ico{background:var(--good)}
+.xfb.miss{border-color:color-mix(in srgb,var(--sun-d) 45%,var(--line))}.xfb.miss .xfb-ico{background:var(--sun-d)}
+.xfb.bad{border-color:color-mix(in srgb,var(--bad) 45%,var(--line))}.xfb.bad .xfb-ico{background:var(--bad)}
+.xtip{margin:0;padding:10px 14px;border-radius:14px;background:var(--accent-soft);font-size:15px;line-height:1.6}
+.xself-q{font-size:16px}
+.xself{display:flex;flex-wrap:wrap;gap:8px}
+.xself .btn{flex:1;min-width:140px}
+.xref{margin:4px 0 -6px}

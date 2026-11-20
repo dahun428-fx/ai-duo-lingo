@@ -272,10 +272,11 @@ function route() {
   let id = location.hash.slice(1);
   if (id.startsWith("vocab")) { VDECK = id.startsWith("vocab-dict") ? "dict" : "mine"; VMORE = id === "vocab-dict-play-more"; }
   const voc = id === "vocab-play" || id === "vocab-dict-play" || id === "vocab-dict-play-more";
-  const prac = voc || (id.startsWith("practice-") && (id === "practice-mix" || (byId[id.slice(9)] && byId[id.slice(9)].lesson)));
+  const xpl = id === "vocab-explain" || id === "vocab-dict-explain";
+  const prac = voc || xpl || (id.startsWith("practice-") && (id === "practice-mix" || (byId[id.slice(9)] && byId[id.slice(9)].lesson)));
   document.querySelector(".page").hidden = !!prac; document.getElementById("practice").hidden = !prac; document.getElementById("fab").hidden = !!prac;
   document.body.classList.toggle("focus-practice", !!prac); drawTabs(id || "home");
-  if (prac) { buildRail(id); rail.classList.remove("open"); window.scrollTo(0, 0); if (voc) { renderVocabPlay(); document.title = "단어장 복습 · AI 듀오링고"; } else { renderPractice(id.slice(9)); document.title = "연습 · AI 듀오링고"; } return; }
+  if (prac) { buildRail(id); rail.classList.remove("open"); window.scrollTo(0, 0); if (xpl) { renderExplain(); document.title = "내 말로 설명하기 · AI 듀오링고"; } else if (voc) { renderVocabPlay(); document.title = "단어장 복습 · AI 듀오링고"; } else { renderPractice(id.slice(9)); document.title = "연습 · AI 듀오링고"; } return; }
   if (!byId[id] && id !== "course-seq2seq" && id !== "refs" && id !== "settings" && id !== "speak" && id !== "vocab" && id !== "vocab-dict" && !(id.startsWith("speak-") && SPEAK[id.slice(6)])) id = "home";
   buildRail(id);
   if (id === "home") renderPath(); else if (id === "course-seq2seq") renderCourse(); else if (id === "roadmap") renderRoadmap(); else if (id === "refs") renderRefs(); else if (id === "settings") renderSettings(); else if (id === "speak") renderSpeakList(); else if (id === "vocab" || id === "vocab-dict") renderVocab(); else if (id.startsWith("speak-")) renderSpeak(id.slice(6)); else renderLesson(byId[id]);

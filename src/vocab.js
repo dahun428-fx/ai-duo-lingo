@@ -6,8 +6,8 @@ const VKEY = "seq2seq30-vocab";
 const VBOX_DAYS = [0, 1, 2, 4, 8, 16], VGRAD_DAYS = 30;
 const VREV_CAP = 20, VNEW_CAP = 5, VNEW_GATE = 15, VLEECH = 4;
 function loadVocab() {
-  try { const v = JSON.parse(localStorage.getItem(VKEY) || "null"); if (v && typeof v === "object" && v.cards && typeof v.cards === "object") return { v: 1, cards: v.cards, day: v.day || null, dayd: v.dayd || null }; } catch (e) { }
-  return { v: 1, cards: {}, day: null, dayd: null };
+  try { const v = JSON.parse(localStorage.getItem(VKEY) || "null"); if (v && typeof v === "object" && v.cards && typeof v.cards === "object") return { v: 1, cards: v.cards, day: v.day || null, dayd: v.dayd || null, ex: v.ex && typeof v.ex === "object" ? v.ex : {} }; } catch (e) { }
+  return { v: 1, cards: {}, day: null, dayd: null, ex: {} };
 }
 function saveVocab() { try { localStorage.setItem(VKEY, JSON.stringify(VOCAB)); } catch (e) { } }
 let VOCAB = loadVocab();
@@ -192,6 +192,7 @@ function renderVocab() {
   lessonEl.append(h("div", { class: "vtoday" },
     h("div", { class: "mini" }, ico("target", "c-flame"), h("div", {}, h("small", {}, "오늘 복습"), h("b", {}, p.reviews.length + "장"))),
     h("div", { class: "mini" }, ico("gift", "c-sun"), h("div", {}, h("small", {}, "새 카드"), h("b", {}, p.news.length + "장")))));
+  lessonEl.append(vExplainQuest());
   const notes = [];
   if (p.due.length > p.reviews.length) notes.push(`밀린 복습이 ${p.due.length}장이라 오늘은 낮은 상자부터 ${p.reviews.length}장만 해요. 나머지는 내일로 넘어가도 상자는 내려가지 않아요.`);
   if (!p.newOk && p.fresh.length) notes.push(`복습할 카드가 15장보다 많아서 오늘은 새 카드를 쉬어요. 복습이 줄면 새 카드가 다시 들어와요.`);
@@ -212,6 +213,14 @@ function renderVocab() {
   };
   inp.addEventListener("input", fill); fill();
   lessonEl.append(h("h2", {}, dict ? `전체 카드 ${open.length}장` : `열린 카드 ${open.length}장`), locked ? h("p", { class: "w-hint" }, `잠긴 카드 ${locked}장은 챕터를 끝내면 열려요.`) : null, inp, list, vHow());
+}
+// 내 말로 설명하기(explain.js) 들어가는 카드. 서버가 연결돼 있으면 AI가 채점한다
+function vExplainQuest() {
+  const online = typeof SYNC !== "undefined" && !!SYNC;
+  return h("a", { class: "quest xquest", href: VDECK === "dict" ? "#vocab-dict-explain" : "#vocab-explain" },
+    ico("book", "c-sun"),
+    h("div", { class: "quest-main" }, h("b", {}, "내 말로 설명하기"), h("span", { class: "vq-sub" }, online ? `용어 ${XN}개를 내 말로 쓰면 AI 선생님이 채점해요` : `용어 ${XN}개를 내 말로 쓰고 뜻풀이와 비교해요 (설정에서 서버를 연결하면 AI 채점)`)),
+    h("span", { class: "xbadge" + (online ? " on" : "") }, online ? "AI" : "스스로"));
 }
 function vRow(c) {
   const s = vState(c), b = s ? s.b : 0, leech = s && s.w >= VLEECH;
