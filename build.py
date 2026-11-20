@@ -4,6 +4,7 @@ SRC=os.path.join(ROOT,'lessons')
 HERE=os.path.join(ROOT,'src')
 EMO=re.compile(r'[\U0001F300-\U0001FAFF☀-✒✕-➿⬀-⯿⏩-⏿️]\s?')
 WID={'day01':['dot'],'day02':['matvec'],'day03':['condprob'],'day04':['bayes'],'day05':['softmax'],'day06':['entropy'],'day07':['crossent'],'day08':['gd'],'day09':['clt'],'day10':['rnn','tf']}
+WID.update(json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),'src','widget-map.json'))))
 def clean(md): return EMO.sub('', md)
 pages=[]
 cur=open(f'{SRC}/00_커리큘럼.md').read()
@@ -30,7 +31,7 @@ for f in LESSON_FILES:
 rm=open(f'{SRC}/week3-4_개요.md').read()
 pages.append(dict(id='roadmap',short='3주차 안내',md=clean(rm),link=''))
 css=open(f'{HERE}/style.css').read()+'\n'+open(f'{HERE}/play.css').read()
-js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/play.js').read()+'\n'+open(f'{HERE}/refs.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/speak-data.js').read()+'\n'+open(f'{HERE}/speak.js').read()+'\n'+open(f'{HERE}/app.js').read()+'\n'+open(f'{HERE}/pwa.js').read()
+js='const PAGES = '+json.dumps(pages,ensure_ascii=False).replace('</','<\\/')+';\n'+open(f'{HERE}/data.js').read()+'\n'+open(f'{HERE}/widgets.js').read()+'\n'+open(f'{HERE}/play.js').read()+'\n'+open(f'{HERE}/refs.js').read()+'\n'+open(f'{HERE}/practice-data.js').read()+'\n'+open(f'{HERE}/practice.js').read()+'\n'+open(f'{HERE}/dict-data.js').read()+'\n'+open(f'{HERE}/vocab.js').read()+'\n'+open(f'{HERE}/explain.js').read()+'\n'+open(f'{HERE}/speak-data.js').read()+'\n'+open(f'{HERE}/speak.js').read()+'\n'+open(f'{HERE}/app.js').read()+'\n'+open(f'{HERE}/pwa.js').read()
 html=f'''<!doctype html>
 <html lang="ko">
 <head>

@@ -1,4 +1,4 @@
-# 5단계. BERT와 GPT
+# 7단계. BERT와 GPT
 
 ⏱ 30분 · 📄 논문 연결: Devlin 외 (2018) BERT, Brown 외 (2020) GPT-3. Transformer의 두 갈래
 

@@ -1,4 +1,4 @@
-# 8단계. RAG와 생각의 사슬
+# 11단계. RAG와 생각의 사슬
 
 ⏱ 30분 · 📄 논문 연결: Lewis 외 (2020) "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks", Wei 외 (2022) "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models". 모델을 다시 학습시키지 않고 더 똑똑하게 쓰는 두 가지 방법
 

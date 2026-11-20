@@ -1,4 +1,4 @@
-# 7단계. 저랭크 근사와 LoRA
+# 10단계. 저랭크 근사와 LoRA
 
 ⏱ 30분 · 📄 논문 연결: Hu 외 (2021) "LoRA: Low-Rank Adaptation of Large Language Models". 선형대수 한 줄로 거대한 모델을 값싸게 고치는 방법
 

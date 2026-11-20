@@ -26,13 +26,14 @@ function snapshot() {
 // 진도 코드: 서버 없이 이 기기의 진도를 글자 한 줄로 만들어 다른 기기에 붙여 넣는다
 function b64(o) { return btoa(unescape(encodeURIComponent(JSON.stringify(o)))); }
 function unb64(t) { return JSON.parse(decodeURIComponent(escape(atob(t)))); }
-function exportCode() { return "AIDUO2." + b64(snapshot()); }
+// 진도 코드에는 단어장 상태도 싣는다(서버로 보내는 snapshot()은 그대로). 합칠 때는 카드마다 더 최근 복습 기록이 남는다.
+function exportCode() { return "AIDUO2." + b64({ ...snapshot(), vocab: vSnapshot() }); }
 function importCode(code) {
   const m = String(code).trim().match(/^AIDUO([12])\.([A-Za-z0-9+/=]+)$/);
   if (!m) throw new Error("진도 코드 형식이 아니에요.");
   let d; try { d = unb64(m[2]); } catch (_) { d = null; }
   if (!d || !Array.isArray(d.done)) throw new Error("진도 코드를 읽을 수 없어요.");
-  if (m[1] === "2") { mergeIn(d); return; }
+  if (m[1] === "2") { mergeIn(d); mergeVocab(d.vocab); return; }
   // 예전 코드(총 XP만 있음): 모자란 만큼을 이 기기 칸에 더한다
   const st = d.stats || {};
   mergeIn({ done: d.done, days: st.days, best: st.best, spoke: st.spoke });

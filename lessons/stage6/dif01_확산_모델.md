@@ -1,4 +1,4 @@
-# 6단계. 확산 모델: 잡음을 지워 가며 그리기
+# 8단계. 확산 모델: 잡음을 지워 가며 그리기
 
 ⏱ 30분 · 📄 논문 연결: Ho, Jain, Abbeel (2020) "Denoising Diffusion Probabilistic Models" (DDPM). 지금의 이미지 생성 AI가 쓰는 방법
 

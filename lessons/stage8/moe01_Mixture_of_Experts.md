@@ -1,4 +1,4 @@
-# 8단계. Mixture of Experts: 전문가에게 나눠 맡기기
+# 11단계. Mixture of Experts: 전문가에게 나눠 맡기기
 
 ⏱ 30분 · 📄 논문 연결: Fedus, Zoph, Shazeer (2021) "Switch Transformers: Scaling to Trillion Parameter Models with Simple and Efficient Sparsity". 모델은 키우되 계산은 늘리지 않는 방법
 

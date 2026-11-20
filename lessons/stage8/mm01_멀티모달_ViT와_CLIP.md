@@ -1,4 +1,4 @@
-# 8단계. 멀티모달: ViT와 CLIP
+# 11단계. 멀티모달: ViT와 CLIP
 
 ⏱ 30분 · 📄 논문 연결: Dosovitskiy 외 (2020) "An Image is Worth 16x16 Words" (ViT), Radford 외 (2021) "Learning Transferable Visual Models From Natural Language Supervision" (CLIP). 글을 읽던 트랜스포머가 그림을 보게 된 방법
 

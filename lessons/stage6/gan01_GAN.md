@@ -1,4 +1,4 @@
-# 6단계. GAN: 위조범과 감별사의 대결
+# 8단계. GAN: 위조범과 감별사의 대결
 
 ⏱ 30분 · 📄 논문 연결: Goodfellow 외 (2014) "Generative Adversarial Networks". 두 신경망을 싸움 붙여 진짜 같은 데이터를 만드는 방법
 
